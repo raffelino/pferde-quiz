@@ -1,0 +1,26 @@
+{
+  "name": "Reitabzeichen Trainer",
+  "short_name": "RA Trainer",
+  "description": "Quiz-Training für Basispass Pferdekunde und Reitabzeichen – mit Karteikarten-System und Statistik.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10140f",
+  "theme_color": "#3f6b4f",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
