@@ -279,6 +279,45 @@ p:last-child { margin-bottom: 0; }
   gap: 6px;
 }
 
+.cat-item { display: flex; align-items: stretch; gap: 6px; }
+.cat-item .cat-row { flex: 1; min-width: 0; }
+
+.prio-btn {
+  flex: none;
+  width: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.prio-btn.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.prio-btn:active { transform: scale(.94); }
+
+.round-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.round-box p { margin: 0; }
+
+.order-fix {
+  margin-left: auto;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--ok);
+  white-space: nowrap;
+}
+.order-card .order-fix { margin: 0; }
+
 .cat-row {
   display: flex;
   align-items: center;

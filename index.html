@@ -43,6 +43,8 @@
         <button class="chip" id="cat-none" type="button">Keine</button>
       </div>
     </div>
+    <p class="muted small">Die Zahl rechts gewichtet eine Kategorie: Mit 2× oder 3× kommen
+      ihre Fragen innerhalb einer Runde deutlich früher dran – in kurzen Sitzungen also öfter.</p>
     <ul class="cat-list" id="cat-list"></ul>
   </section>
 
@@ -56,6 +58,10 @@
     <h2>Sitzung</h2>
     <p class="muted small">Wie lange möchtest du üben? Am Ende gibt es eine Auswertung.</p>
     <ul class="session-list" id="session-list"></ul>
+    <div class="round-box">
+      <p class="muted small" id="round-info"></p>
+      <button class="chip" id="btn-round-reset" type="button">Runde neu starten</button>
+    </div>
   </section>
 
   <section class="card">
@@ -121,6 +127,7 @@
       <span class="badge" id="q-cat">Kategorie</span>
       <span class="badge ghost" id="q-level">Stufe</span>
       <span class="badge box" id="q-box" title="Karteikasten-Fach">Fach 1</span>
+      <span class="badge box" id="q-round" title="Fortschritt in dieser Runde">Runde 1</span>
     </div>
     <h2 class="q-text" id="quiz-question">Frage</h2>
     <p class="q-hint" id="q-hint"></p>

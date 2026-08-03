@@ -4,10 +4,14 @@ import { QUESTIONS } from './data/index.js';
 import { CATEGORIES, LEVELS, CAT_BY_ID, LEVEL_BY_ID } from './data/categories.js';
 import { $, el, formatTime } from './util.js';
 import { loadState, save, saveNow, resetProgress } from './store.js';
-import { pickNext, recordAnswer, poolProgress, isHard, isMastered, MAX_BOX } from './srs.js';
+import {
+  recordAnswer, poolProgress, isHard, isMastered, MAX_BOX,
+  pickInRound, queueRetry, roundProgress, newRound, normalizeRound
+} from './srs.js';
 import { createAnswerUI, TYPE_HINTS } from './types.js';
 
 let state = loadState();
+state.round = normalizeRound(state.round);
 
 /* ------------------------------------------------------------ Sitzung */
 
@@ -176,7 +180,26 @@ function renderStart() {
         el('span', { class: 'cat-bar' }, [el('i', { style: `width:${pct}%` })])
       ])
     ]);
-    list.appendChild(el('li', {}, [row]));
+
+    // Priorität: 1x -> 2x -> 3x -> 1x
+    const prio = state.settings.prio?.[cat.id] || 1;
+    const prioBtn = el('button', {
+      type: 'button',
+      class: `prio-btn${prio > 1 ? ' on' : ''}`,
+      text: `${prio}×`,
+      title: `Gewichtung von ${cat.name}`,
+      'aria-label': `Gewichtung von ${cat.name}: ${prio}-fach, zum Ändern antippen`,
+      onclick: () => {
+        const next = prio >= 3 ? 1 : prio + 1;
+        state.settings.prio = { ...(state.settings.prio || {}) };
+        if (next === 1) delete state.settings.prio[cat.id];
+        else state.settings.prio[cat.id] = next;
+        save();
+        renderStart();
+      }
+    });
+
+    list.appendChild(el('li', { class: 'cat-item' }, [row, prioBtn]));
   }
 
   // Stufen
@@ -252,6 +275,12 @@ function updatePoolInfo() {
   }
   $('#btn-start').disabled = false;
   info.textContent = `${base.length} Fragen ausgewählt · ${prog.mastered} sitzen · ${prog.hard} zu wiederholen`;
+
+  const rp = roundProgress(base, state.round);
+  const rest = Math.max(0, rp.total - rp.seen);
+  $('#round-info').textContent = rest
+    ? `Runde ${rp.pass}: ${rp.seen} von ${rp.total} Fragen gesehen – ${rest} noch offen.`
+    : `Runde ${rp.pass} ist komplett – die nächste Runde startet automatisch.`;
 }
 
 /* ---------------------------------------------------------------- Quiz */
@@ -285,11 +314,19 @@ function nextQuestion() {
     if (refreshed.length) session.pool = refreshed;
   }
 
-  const q = pickNext(session.pool, state.settings.srs, session.lastId);
+  const pick = pickInRound(session.pool, state.round, {
+    useSrs: state.settings.srs,
+    lastId: session.lastId,
+    prio: state.settings.prio || {}
+  });
+  const q = pick.question;
   if (!q) { toast('Keine Fragen verfügbar.'); showScreen('start'); return; }
+  if (pick.newPass) toast(`Alle Fragen einmal durch – Runde ${state.round.pass} beginnt!`);
+  save();
 
   session.current = q;
   session.answered = false;
+  session.isRetry = pick.retry;
 
   const cat = CAT_BY_ID[q.cat];
   const lvl = LEVEL_BY_ID[q.level];
@@ -298,6 +335,10 @@ function nextQuestion() {
   $('#q-cat').textContent = `${cat.emoji} ${cat.name}`;
   $('#q-level').textContent = lvl ? lvl.name : '';
   $('#q-box').textContent = card ? `Fach ${card.box}/${MAX_BOX}` : 'neu';
+  const rp = roundProgress(session.pool, state.round);
+  $('#q-round').textContent = pick.retry
+    ? `Nachholrunde ${state.round.pass}`
+    : `Runde ${rp.pass} · ${rp.seen}/${rp.total}`;
   $('#quiz-question').textContent = q.q;
   $('#q-hint').textContent = TYPE_HINTS[q.type] || '';
 
@@ -330,6 +371,7 @@ function checkAnswer() {
   session.total++;
   if (correct) session.right++; else session.wrong++;
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
+  if (!correct) queueRetry(state.round, q.id);
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
 
   session.ui.reveal(correct);
@@ -527,6 +569,12 @@ $('#btn-home').addEventListener('click', () => {
   showScreen(activeScreen === 'stats' ? statsCameFrom : 'start');
 });
 $('#btn-res-home').addEventListener('click', () => showScreen('start'));
+$('#btn-round-reset').addEventListener('click', () => {
+  state.round = newRound(1);
+  save();
+  renderStart();
+  toast('Runde zurückgesetzt – alle Fragen kommen wieder dran.');
+});
 $('#btn-res-again').addEventListener('click', startQuiz);
 $('#btn-stats').addEventListener('click', () => {
   statsCameFrom = activeScreen;

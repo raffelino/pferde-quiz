@@ -289,6 +289,45 @@ p:last-child { margin-bottom: 0; }
   gap: 6px;
 }
 
+.cat-item { display: flex; align-items: stretch; gap: 6px; }
+.cat-item .cat-row { flex: 1; min-width: 0; }
+
+.prio-btn {
+  flex: none;
+  width: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.prio-btn.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.prio-btn:active { transform: scale(.94); }
+
+.round-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.round-box p { margin: 0; }
+
+.order-fix {
+  margin-left: auto;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--ok);
+  white-space: nowrap;
+}
+.order-card .order-fix { margin: 0; }
+
 .cat-row {
   display: flex;
   align-items: center;
@@ -834,6 +873,8 @@ p:last-child { margin-bottom: 0; }
         <button class="chip" id="cat-none" type="button">Keine</button>
       </div>
     </div>
+    <p class="muted small">Die Zahl rechts gewichtet eine Kategorie: Mit 2× oder 3× kommen
+      ihre Fragen innerhalb einer Runde deutlich früher dran – in kurzen Sitzungen also öfter.</p>
     <ul class="cat-list" id="cat-list"></ul>
   </section>
 
@@ -847,6 +888,10 @@ p:last-child { margin-bottom: 0; }
     <h2>Sitzung</h2>
     <p class="muted small">Wie lange möchtest du üben? Am Ende gibt es eine Auswertung.</p>
     <ul class="session-list" id="session-list"></ul>
+    <div class="round-box">
+      <p class="muted small" id="round-info"></p>
+      <button class="chip" id="btn-round-reset" type="button">Runde neu starten</button>
+    </div>
   </section>
 
   <section class="card">
@@ -912,6 +957,7 @@ p:last-child { margin-bottom: 0; }
       <span class="badge" id="q-cat">Kategorie</span>
       <span class="badge ghost" id="q-level">Stufe</span>
       <span class="badge box" id="q-box" title="Karteikasten-Fach">Fach 1</span>
+      <span class="badge box" id="q-round" title="Fortschritt in dieser Runde">Runde 1</span>
     </div>
     <h2 class="q-text" id="quiz-question">Frage</h2>
     <p class="q-hint" id="q-hint"></p>
@@ -4308,11 +4354,15 @@ var DEFAULT_STATE = () => ({
     srs: true,
     hardOnly: false,
     shuffle: true,
-    session: "endless"
+    session: "endless",
     // Sitzungslänge: endless | t5 | t10 | t20 | c20
+    prio: {}
+    // Kategorie-Gewichtung: { katId: 2 } = kommt doppelt so oft
   },
   // cards[fragenId] = { box, right, wrong, streak, seenAt }
   cards: {},
+  // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
+  round: { pass: 1, asked: [], retry: [], counts: {} },
   totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
   seq: 0
   // Zähler der beantworteten Fragen (für "zuletzt gesehen")
@@ -4328,6 +4378,8 @@ function loadState() {
       state.settings = { ...DEFAULT_STATE().settings, ...parsed.settings || {} };
       state.totals = { ...DEFAULT_STATE().totals, ...parsed.totals || {} };
       state.cards = parsed.cards || {};
+      state.settings.prio = parsed.settings?.prio || {};
+      state.round = parsed.round || DEFAULT_STATE().round;
     }
   } catch (err) {
     console.warn("Gespeicherter Fortschritt konnte nicht gelesen werden:", err);
@@ -4397,14 +4449,14 @@ function weightOf(id, recentWindow) {
   if (card.seenAt >= 0 && state3.seq - card.seenAt < recentWindow) w *= RECENT_PENALTY;
   return Math.max(w, 0.05);
 }
-function pickNext(pool, useSrs, lastId) {
+function pickNext(pool, useSrs, lastId, prio = {}) {
   if (!pool.length) return null;
   const candidates = pool.length > 1 ? pool.filter((q) => q.id !== lastId) : pool;
   if (!useSrs) {
     return candidates[Math.floor(Math.random() * candidates.length)];
   }
   const recentWindow = Math.min(Math.max(3, Math.floor(candidates.length / 3)), 12);
-  const weights = candidates.map((q) => weightOf(q.id, recentWindow));
+  const weights = candidates.map((q) => weightOf(q.id, recentWindow) * (prio[q.cat] || 1));
   const sum = weights.reduce((a, b) => a + b, 0);
   let roll = Math.random() * sum;
   for (let i = 0; i < candidates.length; i++) {
@@ -4412,6 +4464,58 @@ function pickNext(pool, useSrs, lastId) {
     if (roll <= 0) return candidates[i];
   }
   return candidates[candidates.length - 1];
+}
+var MAX_RETRIES = 2;
+var RETRY_GAP = 8;
+function newRound(pass = 1) {
+  return { pass, asked: [], retry: [], counts: {} };
+}
+function normalizeRound(round) {
+  if (!round || typeof round !== "object") return newRound();
+  const retry = (Array.isArray(round.retry) ? round.retry : []).map((entry) => typeof entry === "string" ? { id: entry, dueAt: 0 } : entry).filter((entry) => entry && typeof entry.id === "string");
+  return {
+    pass: Number.isInteger(round.pass) && round.pass > 0 ? round.pass : 1,
+    asked: Array.isArray(round.asked) ? round.asked.filter((id) => typeof id === "string") : [],
+    retry,
+    counts: round.counts && typeof round.counts === "object" ? round.counts : {}
+  };
+}
+function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = {}) {
+  if (!pool.length) return { question: null, newPass: false, retry: false };
+  const byId = new Map(pool.map((q) => [q.id, q]));
+  const usable = (entry) => byId.has(entry.id) && !(entry.id === lastId && pool.length > 1);
+  const dueIndex = round.retry.findIndex((e) => usable(e) && e.dueAt <= round.asked.length);
+  if (dueIndex >= 0) {
+    const [entry] = round.retry.splice(dueIndex, 1);
+    return { question: byId.get(entry.id), newPass: false, retry: true };
+  }
+  const asked = new Set(round.asked);
+  const open = pool.filter((q) => !asked.has(q.id) && !(q.id === lastId && pool.length > 1));
+  if (open.length) {
+    const question2 = pickNext(open, useSrs, lastId, prio) || open[0];
+    round.asked.push(question2.id);
+    return { question: question2, newPass: false, retry: false };
+  }
+  round.pass += 1;
+  round.asked = [];
+  round.counts = {};
+  round.retry = round.retry.filter((e) => byId.has(e.id)).map((e) => ({ id: e.id, dueAt: RETRY_GAP }));
+  const fresh = pool.filter((q) => !(q.id === lastId && pool.length > 1));
+  const question = pickNext(fresh, useSrs, lastId, prio) || fresh[0] || pool[0];
+  round.asked.push(question.id);
+  return { question, newPass: true, retry: false };
+}
+function queueRetry(round, id, gap = RETRY_GAP) {
+  const used = round.counts[id] || 0;
+  if (used >= MAX_RETRIES || round.retry.some((e) => e.id === id)) return false;
+  round.counts[id] = used + 1;
+  round.retry.push({ id, dueAt: round.asked.length + gap });
+  return true;
+}
+function roundProgress(pool, round) {
+  const ids = new Set(pool.map((q) => q.id));
+  const seen2 = round.asked.filter((id) => ids.has(id)).length;
+  return { pass: round.pass, seen: seen2, total: pool.length, retry: round.retry.length };
 }
 function recordAnswer(id, correct) {
   const state3 = getState();
@@ -4768,11 +4872,15 @@ function orderUI(q, { onChange } = {}) {
         btn.disabled = true;
         btn.classList.remove("picked");
         const chosenPos = picks.indexOf(orig);
-        btn.querySelector(".marker").textContent = String(orig + 1);
+        btn.querySelector(".marker").textContent = chosenPos >= 0 ? String(chosenPos + 1) : "\u2013";
         const caption = btn.querySelector(".order-caption");
         if (caption) caption.textContent = itemLabel(q.items[orig]);
-        if (chosenPos === orig) btn.classList.add("correct");
-        else btn.classList.add("wrong");
+        if (chosenPos === orig) {
+          btn.classList.add("correct");
+        } else {
+          btn.classList.add("wrong");
+          btn.appendChild(el("span", { class: "order-fix", text: `richtig: ${orig + 1}` }));
+        }
       });
       if (resetBtn) resetBtn.disabled = true;
     }
@@ -4934,6 +5042,7 @@ function matchUI(q, { onChange } = {}) {
 
 // js/app.js
 var state2 = loadState();
+state2.round = normalizeRound(state2.round);
 var SESSION_MODES = [
   { id: "endless", label: "Ohne Limit", hint: "bis du beendest" },
   { id: "t5", kind: "time", value: 5, label: "5 Minuten", hint: "Speed-Runde" },
@@ -5077,7 +5186,23 @@ function renderStart() {
         el("span", { class: "cat-bar" }, [el("i", { style: `width:${pct}%` })])
       ])
     ]);
-    list.appendChild(el("li", {}, [row]));
+    const prio = state2.settings.prio?.[cat.id] || 1;
+    const prioBtn = el("button", {
+      type: "button",
+      class: `prio-btn${prio > 1 ? " on" : ""}`,
+      text: `${prio}\xD7`,
+      title: `Gewichtung von ${cat.name}`,
+      "aria-label": `Gewichtung von ${cat.name}: ${prio}-fach, zum \xC4ndern antippen`,
+      onclick: () => {
+        const next = prio >= 3 ? 1 : prio + 1;
+        state2.settings.prio = { ...state2.settings.prio || {} };
+        if (next === 1) delete state2.settings.prio[cat.id];
+        else state2.settings.prio[cat.id] = next;
+        save();
+        renderStart();
+      }
+    });
+    list.appendChild(el("li", { class: "cat-item" }, [row, prioBtn]));
   }
   const levelList = $("#level-list");
   levelList.textContent = "";
@@ -5152,6 +5277,9 @@ function updatePoolInfo() {
   }
   $("#btn-start").disabled = false;
   info.textContent = `${base.length} Fragen ausgew\xE4hlt \xB7 ${prog.mastered} sitzen \xB7 ${prog.hard} zu wiederholen`;
+  const rp = roundProgress(base, state2.round);
+  const rest = Math.max(0, rp.total - rp.seen);
+  $("#round-info").textContent = rest ? `Runde ${rp.pass}: ${rp.seen} von ${rp.total} Fragen gesehen \u2013 ${rest} noch offen.` : `Runde ${rp.pass} ist komplett \u2013 die n\xE4chste Runde startet automatisch.`;
 }
 function startQuiz() {
   session.pool = buildPool();
@@ -5180,20 +5308,30 @@ function nextQuestion() {
     const refreshed = basePool().filter((q2) => isHard(q2.id));
     if (refreshed.length) session.pool = refreshed;
   }
-  const q = pickNext(session.pool, state2.settings.srs, session.lastId);
+  const pick = pickInRound(session.pool, state2.round, {
+    useSrs: state2.settings.srs,
+    lastId: session.lastId,
+    prio: state2.settings.prio || {}
+  });
+  const q = pick.question;
   if (!q) {
     toast("Keine Fragen verf\xFCgbar.");
     showScreen("start");
     return;
   }
+  if (pick.newPass) toast(`Alle Fragen einmal durch \u2013 Runde ${state2.round.pass} beginnt!`);
+  save();
   session.current = q;
   session.answered = false;
+  session.isRetry = pick.retry;
   const cat = CAT_BY_ID[q.cat];
   const lvl = LEVEL_BY_ID[q.level];
   const card = state2.cards[q.id];
   $("#q-cat").textContent = `${cat.emoji} ${cat.name}`;
   $("#q-level").textContent = lvl ? lvl.name : "";
   $("#q-box").textContent = card ? `Fach ${card.box}/${MAX_BOX}` : "neu";
+  const rp = roundProgress(session.pool, state2.round);
+  $("#q-round").textContent = pick.retry ? `Nachholrunde ${state2.round.pass}` : `Runde ${rp.pass} \xB7 ${rp.seen}/${rp.total}`;
   $("#quiz-question").textContent = q.q;
   $("#q-hint").textContent = TYPE_HINTS[q.type] || "";
   const area = $("#answer-area");
@@ -5227,6 +5365,7 @@ function checkAnswer() {
   if (correct) session.right++;
   else session.wrong++;
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
+  if (!correct) queueRetry(state2.round, q.id);
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
   session.ui.reveal(correct);
   const fb = $("#feedback");
@@ -5389,6 +5528,12 @@ $("#btn-home").addEventListener("click", () => {
   showScreen(activeScreen === "stats" ? statsCameFrom : "start");
 });
 $("#btn-res-home").addEventListener("click", () => showScreen("start"));
+$("#btn-round-reset").addEventListener("click", () => {
+  state2.round = newRound(1);
+  save();
+  renderStart();
+  toast("Runde zur\xFCckgesetzt \u2013 alle Fragen kommen wieder dran.");
+});
 $("#btn-res-again").addEventListener("click", startQuiz);
 $("#btn-stats").addEventListener("click", () => {
   statsCameFrom = activeScreen;

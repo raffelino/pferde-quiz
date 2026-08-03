@@ -10,10 +10,13 @@ const DEFAULT_STATE = () => ({
     srs: true,
     hardOnly: false,
     shuffle: true,
-    session: 'endless'   // Sitzungslänge: endless | t5 | t10 | t20 | c20
+    session: 'endless',  // Sitzungslänge: endless | t5 | t10 | t20 | c20
+    prio: {}             // Kategorie-Gewichtung: { katId: 2 } = kommt doppelt so oft
   },
   // cards[fragenId] = { box, right, wrong, streak, seenAt }
   cards: {},
+  // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
+  round: { pass: 1, asked: [], retry: [], counts: {} },
   totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
   seq: 0                 // Zähler der beantworteten Fragen (für "zuletzt gesehen")
 });
@@ -30,6 +33,8 @@ export function loadState() {
       state.settings = { ...DEFAULT_STATE().settings, ...(parsed.settings || {}) };
       state.totals = { ...DEFAULT_STATE().totals, ...(parsed.totals || {}) };
       state.cards = parsed.cards || {};
+      state.settings.prio = parsed.settings?.prio || {};
+      state.round = parsed.round || DEFAULT_STATE().round;
     }
   } catch (err) {
     console.warn('Gespeicherter Fortschritt konnte nicht gelesen werden:', err);

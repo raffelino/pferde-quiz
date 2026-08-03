@@ -21,6 +21,13 @@ ohne Build-Schritt.
 
   Fußfolge-Fragen zeigen statt Text kleine Diagramme des Pferdes von oben, die in
   die richtige Reihenfolge gebracht werden.
+- **Runden**: Innerhalb einer Runde kommt jede Frage genau einmal dran – eine sofort
+  richtig beantwortete Frage taucht erst in der nächsten Runde wieder auf. Falsch
+  beantwortete Fragen werden nach mindestens acht weiteren Fragen bis zu zweimal
+  wiederholt. Die Kopfzeile zeigt „Runde 2 · 37/250", der Startbildschirm den
+  Rundenfortschritt samt „Runde neu starten".
+- **Kategorien priorisieren**: Über die Zahl rechts an jeder Kategorie (1× / 2× / 3×)
+  kommen deren Fragen innerhalb einer Runde deutlich früher dran.
 - **Karteikarten-System (Leitner)**: 5 Fächer. Richtig beantwortet → ein Fach weiter,
   falsch → zurück in Fach 1. Fragen aus niedrigen Fächern kommen deutlich häufiger dran,
   bis sie sitzen. Eine Frage gilt als „gelernt", wenn sie Fach 5 erreicht.
@@ -114,7 +121,9 @@ Neue Kategorien in `js/data/categories.js` eintragen, neue Fragendateien in
 `js/data/index.js` importieren. Danach die Struktur prüfen:
 
 ```bash
-node tools/validate-questions.mjs
+node tools/validate-questions.mjs   # Struktur des Fragenpools
+node tools/srs-sim.mjs              # Karteikasten-Gewichtung
+node tools/round-sim.mjs            # Runden, Wiederholungen, Priorisierung
 ```
 
 Optionaler Browser-Smoketest (benötigt Playwright und einen laufenden Server auf Port 8080):

@@ -351,11 +351,17 @@ function orderUI(q, { onChange } = {}) {
         btn.disabled = true;
         btn.classList.remove('picked');
         const chosenPos = picks.indexOf(orig);
-        btn.querySelector('.marker').textContent = String(orig + 1);
+        // Die eigene Wahl bleibt stehen – sonst sieht die Musterlösung wie die
+        // eigene Antwort aus. Die richtige Position kommt als Hinweis daneben.
+        btn.querySelector('.marker').textContent = chosenPos >= 0 ? String(chosenPos + 1) : '–';
         const caption = btn.querySelector('.order-caption');
         if (caption) caption.textContent = itemLabel(q.items[orig]);
-        if (chosenPos === orig) btn.classList.add('correct');
-        else btn.classList.add('wrong');
+        if (chosenPos === orig) {
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('wrong');
+          btn.appendChild(el('span', { class: 'order-fix', text: `richtig: ${orig + 1}` }));
+        }
       });
       if (resetBtn) resetBtn.disabled = true;
     }
