@@ -53,6 +53,12 @@
   </section>
 
   <section class="card">
+    <h2>Sitzung</h2>
+    <p class="muted small">Wie lange möchtest du üben? Am Ende gibt es eine Auswertung.</p>
+    <ul class="session-list" id="session-list"></ul>
+  </section>
+
+  <section class="card">
     <h2>Modus</h2>
     <ul class="opt-list">
       <li>
@@ -105,8 +111,8 @@
   <div class="statbar" id="statbar">
     <div class="stat ok"><span class="stat-val" id="s-right">0</span><span class="stat-lbl">richtig</span></div>
     <div class="stat bad"><span class="stat-val" id="s-wrong">0</span><span class="stat-lbl">falsch</span></div>
-    <div class="stat"><span class="stat-val" id="s-total">0</span><span class="stat-lbl">gesamt</span></div>
-    <div class="stat"><span class="stat-val" id="s-time">0:00</span><span class="stat-lbl">Zeit</span></div>
+    <div class="stat"><span class="stat-val" id="s-total">0</span><span class="stat-lbl" id="s-total-lbl">gesamt</span></div>
+    <div class="stat"><span class="stat-val" id="s-time">0:00</span><span class="stat-lbl" id="s-time-lbl">Zeit</span></div>
   </div>
   <div class="quota-bar"><div class="quota-fill" id="quota-fill"></div></div>
 
@@ -131,6 +137,39 @@
     <button class="btn ghost" id="btn-skip" type="button">Überspringen</button>
     <button class="btn primary" id="btn-check" type="button">Antwort prüfen</button>
     <button class="btn primary" id="btn-next" type="button" hidden>Weiter</button>
+  </div>
+</main>
+
+<!-- ============ ERGEBNIS DER SITZUNG ============ -->
+<main id="screen-result" class="screen" hidden aria-labelledby="res-title">
+  <section class="card result-head">
+    <h2 id="res-title">Sitzung beendet</h2>
+    <p class="muted" id="res-sub"></p>
+    <div class="big-stats">
+      <div><span class="bs-val ok" id="r-right">0</span><span class="bs-lbl">richtig</span></div>
+      <div><span class="bs-val bad" id="r-wrong">0</span><span class="bs-lbl">falsch</span></div>
+      <div><span class="bs-val" id="r-total">0</span><span class="bs-lbl">gesamt</span></div>
+      <div><span class="bs-val" id="r-quote">–</span><span class="bs-lbl">Quote</span></div>
+      <div><span class="bs-val" id="r-time">0:00</span><span class="bs-lbl">Zeit</span></div>
+      <div><span class="bs-val" id="r-learned">0</span><span class="bs-lbl">neu gelernt</span></div>
+    </div>
+  </section>
+
+  <section class="card" id="res-learned-card" hidden>
+    <h2>Neu gelernt 🎉</h2>
+    <p class="muted small">Diese Fragen haben es in Fach 5 geschafft.</p>
+    <ul class="hard-list" id="res-learned-list"></ul>
+  </section>
+
+  <section class="card" id="res-wrong-card" hidden>
+    <h2>Nochmal ansehen</h2>
+    <p class="muted small">Diese Fragen lagen in dieser Sitzung daneben.</p>
+    <ul class="hard-list" id="res-wrong-list"></ul>
+  </section>
+
+  <div class="quiz-actions">
+    <button class="btn ghost" id="btn-res-home" type="button">Zur Übersicht</button>
+    <button class="btn primary" id="btn-res-again" type="button">Nochmal</button>
   </div>
 </main>
 

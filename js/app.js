@@ -11,6 +11,16 @@ let state = loadState();
 
 /* ------------------------------------------------------------ Sitzung */
 
+/** Auswahl auf dem Startbildschirm: Endlos, Zeitlimit oder feste Fragenzahl. */
+const SESSION_MODES = [
+  { id: 'endless', label: 'Ohne Limit', hint: 'bis du beendest' },
+  { id: 't5',  kind: 'time',  value: 5,  label: '5 Minuten',  hint: 'Speed-Runde' },
+  { id: 't10', kind: 'time',  value: 10, label: '10 Minuten', hint: 'kurze Einheit' },
+  { id: 't20', kind: 'time',  value: 20, label: '20 Minuten', hint: 'volle Einheit' },
+  { id: 'c20', kind: 'count', value: 20, label: '20 Fragen',  hint: 'fester Umfang' }
+];
+const SESSION_BY_ID = Object.fromEntries(SESSION_MODES.map(m => [m.id, m]));
+
 const session = {
   right: 0,
   wrong: 0,
@@ -23,7 +33,10 @@ const session = {
   current: null,
   ui: null,
   answered: false,
-  lastId: null
+  lastId: null,
+  mode: SESSION_MODES[0],
+  wrongIds: [],
+  learnedIds: []
 };
 
 /* --------------------------------------------------------- Bildschirme */
@@ -31,6 +44,7 @@ const session = {
 const screens = {
   start: $('#screen-start'),
   quiz: $('#screen-quiz'),
+  result: $('#screen-result'),
   stats: $('#screen-stats')
 };
 let activeScreen = 'start';
@@ -77,7 +91,19 @@ function flushTimer() {
 
 function tickTimer() {
   flushTimer();
-  $('#s-time').textContent = formatTime(session.ms);
+  paintClock();
+  if (session.mode.kind === 'time' && remainingMs() <= 0) endSession('time');
+}
+
+/** Verbleibende Zeit in ms (nur bei Zeitlimit sinnvoll). */
+function remainingMs() {
+  return Math.max(0, session.mode.value * 60000 - session.ms);
+}
+
+function paintClock() {
+  const limited = session.mode.kind === 'time';
+  $('#s-time').textContent = formatTime(limited ? remainingMs() : session.ms);
+  $('#s-time-lbl').textContent = limited ? 'übrig' : 'Zeit';
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -178,6 +204,23 @@ function renderStart() {
     levelList.appendChild(el('li', {}, [pill]));
   }
 
+  // Sitzungslänge
+  const sessionList = $('#session-list');
+  sessionList.textContent = '';
+  for (const mode of SESSION_MODES) {
+    const active = state.settings.session === mode.id;
+    const btn = el('button', {
+      type: 'button',
+      class: `session-pill${active ? ' on' : ''}`,
+      'aria-pressed': active ? 'true' : 'false',
+      onclick: () => { state.settings.session = mode.id; save(); renderStart(); }
+    }, [
+      el('strong', { text: mode.label }),
+      el('small', { text: mode.hint })
+    ]);
+    sessionList.appendChild(el('li', {}, [btn]));
+  }
+
   // Optionen
   $('#opt-srs').checked = state.settings.srs;
   $('#opt-hard').checked = state.settings.hardOnly;
@@ -216,12 +259,23 @@ function updatePoolInfo() {
 function startQuiz() {
   session.pool = buildPool();
   if (!session.pool.length) { toast('Keine Fragen im Auswahlbereich.'); return; }
+  session.mode = SESSION_BY_ID[state.settings.session] || SESSION_MODES[0];
   session.right = session.wrong = session.total = 0;
   session.ms = 0;
   session.lastId = null;
+  session.wrongIds = [];
+  session.learnedIds = [];
   updateStatbar();
   showScreen('quiz');
   nextQuestion();
+}
+
+/** Sitzung abschließen und Auswertung zeigen. */
+function endSession(reason) {
+  stopTimer();
+  saveNow();
+  renderResult(reason);
+  showScreen('result');
 }
 
 function nextQuestion() {
@@ -275,6 +329,8 @@ function checkAnswer() {
   const move = recordAnswer(q.id, correct);
   session.total++;
   if (correct) session.right++; else session.wrong++;
+  if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
+  if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
 
   session.ui.reveal(correct);
 
@@ -304,10 +360,12 @@ function checkAnswer() {
 
 function updateStatbar() {
   flushTimer();
-  $('#s-time').textContent = formatTime(session.ms);
+  paintClock();
   $('#s-right').textContent = session.right;
   $('#s-wrong').textContent = session.wrong;
-  $('#s-total').textContent = session.total;
+  const counted = session.mode.kind === 'count';
+  $('#s-total').textContent = counted ? `${session.total}/${session.mode.value}` : session.total;
+  $('#s-total-lbl').textContent = counted ? 'Fragen' : 'gesamt';
 }
 
 function updateQuota() {
@@ -316,6 +374,66 @@ function updateQuota() {
   const bar = $('#quota-fill');
   bar.style.width = `${pct}%`;
   bar.parentElement.title = `${prog.mastered} von ${prog.total} Fragen sitzen`;
+}
+
+/* ------------------------------------------------------- Auswertung */
+
+const RESULT_TITLES = {
+  time: 'Zeit ist um! ⏱',
+  count: 'Runde geschafft! 🏁',
+  manual: 'Sitzung beendet'
+};
+
+function renderResult(reason) {
+  const quote = session.total ? Math.round((session.right / session.total) * 100) : 0;
+  $('#res-title').textContent = RESULT_TITLES[reason] || RESULT_TITLES.manual;
+
+  let sub;
+  if (!session.total) {
+    sub = 'Diesmal war keine Frage dabei – probier es gleich nochmal.';
+  } else if (quote >= 90) {
+    sub = 'Stark! Das sitzt schon richtig gut.';
+  } else if (quote >= 70) {
+    sub = 'Guter Lauf – die Wackelkandidaten kommen bald wieder dran.';
+  } else if (quote >= 40) {
+    sub = 'Solide Grundlage. Wiederholen lohnt sich.';
+  } else {
+    sub = 'Kein Problem – falsche Fragen kommen jetzt besonders oft.';
+  }
+  // Tempo nur anzeigen, wenn die Sitzung lang genug für eine sinnvolle Zahl war
+  if (session.total && session.ms > 20000) {
+    const perMin = session.total / (session.ms / 60000);
+    sub += ` (${perMin.toFixed(1).replace('.', ',')} Fragen pro Minute)`;
+  }
+  $('#res-sub').textContent = sub;
+
+  $('#r-right').textContent = session.right;
+  $('#r-wrong').textContent = session.wrong;
+  $('#r-total').textContent = session.total;
+  $('#r-quote').textContent = session.total ? `${quote}%` : '–';
+  $('#r-time').textContent = formatTime(session.ms);
+  $('#r-learned').textContent = session.learnedIds.length;
+
+  fillResultList('#res-learned-card', '#res-learned-list', session.learnedIds, '🎉');
+  fillResultList('#res-wrong-card', '#res-wrong-list', session.wrongIds, '✗');
+}
+
+function fillResultList(cardSel, listSel, ids, mark) {
+  const card = $(cardSel);
+  const list = $(listSel);
+  list.textContent = '';
+  card.hidden = ids.length === 0;
+  for (const id of ids.slice(0, 12)) {
+    const q = QUESTIONS.find(item => item.id === id);
+    if (!q) continue;
+    list.appendChild(el('li', {}, [
+      el('span', { class: 'h-score', text: mark }),
+      el('span', { text: q.q })
+    ]));
+  }
+  if (ids.length > 12) {
+    list.appendChild(el('li', { class: 'muted small', text: `… und ${ids.length - 12} weitere` }));
+  }
 }
 
 /* ----------------------------------------------------------- Statistik */
@@ -396,14 +514,20 @@ function toast(msg) {
 
 $('#btn-start').addEventListener('click', startQuiz);
 $('#btn-check').addEventListener('click', checkAnswer);
-$('#btn-next').addEventListener('click', nextQuestion);
+$('#btn-next').addEventListener('click', () => {
+  if (session.mode.kind === 'count' && session.total >= session.mode.value) endSession('count');
+  else nextQuestion();
+});
 $('#btn-skip').addEventListener('click', () => {
   session.lastId = session.current?.id ?? null;
   nextQuestion();
 });
 $('#btn-home').addEventListener('click', () => {
+  if (activeScreen === 'quiz') { endSession('manual'); return; }
   showScreen(activeScreen === 'stats' ? statsCameFrom : 'start');
 });
+$('#btn-res-home').addEventListener('click', () => showScreen('start'));
+$('#btn-res-again').addEventListener('click', startQuiz);
 $('#btn-stats').addEventListener('click', () => {
   statsCameFrom = activeScreen;
   showScreen('stats');

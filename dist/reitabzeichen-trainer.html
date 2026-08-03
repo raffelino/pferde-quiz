@@ -346,6 +346,42 @@ p:last-child { margin-bottom: 0; }
 .level-pill input { position: absolute; opacity: 0; pointer-events: none; }
 .level-pill.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 
+/* ---------- Sitzungslänge ---------- */
+.session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.session-list li:first-child { grid-column: 1 / -1; }
+.session-pill {
+  width: 100%;
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+}
+.session-pill strong { font-size: .95rem; font-weight: 700; }
+.session-pill small { font-size: .72rem; color: var(--text-dim); }
+.session-pill.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.session-pill.on small { color: var(--brand-ink); opacity: .85; }
+.session-pill:active { transform: scale(.98); }
+
+/* ---------- Ergebnis ---------- */
+.result-head h2 { font-size: 1.3rem; }
+.result-head .big-stats { margin-top: 12px; }
+
 /* ---------- Switch ---------- */
 .switch-row {
   display: flex;
@@ -522,6 +558,122 @@ p:last-child { margin-bottom: 0; }
 .order-solution { font-size: .9rem; }
 .order-solution li { margin-bottom: 2px; }
 
+/* Fußfolge-Diagramme (Reihenfolge mit Bildern) */
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.order-card {
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 4px 8px;
+  text-align: center;
+}
+.order-card .marker {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 22px;
+  height: 22px;
+  font-size: .72rem;
+}
+.hoof-wrap { display: block; width: 100%; max-width: 56px; }
+.hoof-svg { display: block; width: 100%; height: auto; }
+.hd-body { fill: var(--bg-elev); stroke: var(--line); stroke-width: 1.5; }
+.hd-nose { fill: var(--line); }
+.hoof { fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-dasharray: 3 3; }
+.hoof.on { fill: var(--brand); stroke: var(--brand); stroke-dasharray: none; }
+.order-caption { font-size: .66rem; line-height: 1.2; color: var(--text-dim); }
+.order-caption:empty { display: none; }
+
+/* Pyramide (Ausbildungsskala) */
+.pyr-wrap { display: grid; grid-template-columns: 1fr; gap: 5px 6px; }
+.pyr-wrap.with-side { grid-template-columns: 1fr auto; }
+.pyr-caption {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  text-align: center;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pyr-main { display: grid; grid-template-columns: 1fr; gap: 5px; }
+.pyr-main.has-groups { grid-template-columns: 66px 1fr; column-gap: 6px; }
+.pyr-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.pyr-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 6px 26px;
+  border: 1.5px dashed var(--line);
+  border-radius: 9px;
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: .92rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+.pyr-row.filled {
+  border-style: solid;
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, var(--bg-elev-2));
+}
+.pyr-row.given {
+  border-style: solid;
+  border-color: var(--text-dim);
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  cursor: default;
+}
+.pyr-row.correct { border-color: var(--ok); background: var(--ok-bg); }
+.pyr-row.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.pyr-num { position: absolute; left: 7px; font-size: .68rem; font-weight: 700; color: var(--text-dim); }
+.pyr-fix { font-size: .64rem; color: var(--ok); text-align: center; }
+.pyr-fix:empty { display: none; }
+.pyr-group {
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+  border-left: 2px solid var(--brand-dark);
+  font-size: .62rem;
+  line-height: 1.15;
+  color: var(--text-dim);
+}
+.pyr-side { display: flex; flex-direction: column; align-items: center; gap: 3px; padding-top: 2px; }
+.pyr-side::before { content: "▲"; font-size: .55rem; color: var(--brand); }
+.pyr-side-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: .62rem;
+  letter-spacing: .04em;
+  color: var(--text-dim);
+}
+.pyr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pyr-chip {
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pyr-chip:active { transform: scale(.96); }
+.pyr-chip.used { opacity: .3; }
+
 /* Zuordnung */
 .match-grid { display: flex; flex-direction: column; gap: 8px; }
 .match-pair {
@@ -692,6 +844,12 @@ p:last-child { margin-bottom: 0; }
   </section>
 
   <section class="card">
+    <h2>Sitzung</h2>
+    <p class="muted small">Wie lange möchtest du üben? Am Ende gibt es eine Auswertung.</p>
+    <ul class="session-list" id="session-list"></ul>
+  </section>
+
+  <section class="card">
     <h2>Modus</h2>
     <ul class="opt-list">
       <li>
@@ -744,8 +902,8 @@ p:last-child { margin-bottom: 0; }
   <div class="statbar" id="statbar">
     <div class="stat ok"><span class="stat-val" id="s-right">0</span><span class="stat-lbl">richtig</span></div>
     <div class="stat bad"><span class="stat-val" id="s-wrong">0</span><span class="stat-lbl">falsch</span></div>
-    <div class="stat"><span class="stat-val" id="s-total">0</span><span class="stat-lbl">gesamt</span></div>
-    <div class="stat"><span class="stat-val" id="s-time">0:00</span><span class="stat-lbl">Zeit</span></div>
+    <div class="stat"><span class="stat-val" id="s-total">0</span><span class="stat-lbl" id="s-total-lbl">gesamt</span></div>
+    <div class="stat"><span class="stat-val" id="s-time">0:00</span><span class="stat-lbl" id="s-time-lbl">Zeit</span></div>
   </div>
   <div class="quota-bar"><div class="quota-fill" id="quota-fill"></div></div>
 
@@ -770,6 +928,39 @@ p:last-child { margin-bottom: 0; }
     <button class="btn ghost" id="btn-skip" type="button">Überspringen</button>
     <button class="btn primary" id="btn-check" type="button">Antwort prüfen</button>
     <button class="btn primary" id="btn-next" type="button" hidden>Weiter</button>
+  </div>
+</main>
+
+<!-- ============ ERGEBNIS DER SITZUNG ============ -->
+<main id="screen-result" class="screen" hidden aria-labelledby="res-title">
+  <section class="card result-head">
+    <h2 id="res-title">Sitzung beendet</h2>
+    <p class="muted" id="res-sub"></p>
+    <div class="big-stats">
+      <div><span class="bs-val ok" id="r-right">0</span><span class="bs-lbl">richtig</span></div>
+      <div><span class="bs-val bad" id="r-wrong">0</span><span class="bs-lbl">falsch</span></div>
+      <div><span class="bs-val" id="r-total">0</span><span class="bs-lbl">gesamt</span></div>
+      <div><span class="bs-val" id="r-quote">–</span><span class="bs-lbl">Quote</span></div>
+      <div><span class="bs-val" id="r-time">0:00</span><span class="bs-lbl">Zeit</span></div>
+      <div><span class="bs-val" id="r-learned">0</span><span class="bs-lbl">neu gelernt</span></div>
+    </div>
+  </section>
+
+  <section class="card" id="res-learned-card" hidden>
+    <h2>Neu gelernt 🎉</h2>
+    <p class="muted small">Diese Fragen haben es in Fach 5 geschafft.</p>
+    <ul class="hard-list" id="res-learned-list"></ul>
+  </section>
+
+  <section class="card" id="res-wrong-card" hidden>
+    <h2>Nochmal ansehen</h2>
+    <p class="muted small">Diese Fragen lagen in dieser Sitzung daneben.</p>
+    <ul class="hard-list" id="res-wrong-list"></ul>
+  </section>
+
+  <div class="quiz-actions">
+    <button class="btn ghost" id="btn-res-home" type="button">Zur Übersicht</button>
+    <button class="btn primary" id="btn-res-again" type="button">Nochmal</button>
   </div>
 </main>
 
@@ -2150,25 +2341,18 @@ var q_reiten_default = [
   /* ------------------------------------------------------- REITLEHRE */
   {
     id: "rl01",
-    cat: "reitlehre",
+    cat: "ausbildung",
     level: "aufbau",
-    type: "order",
-    q: "Bringe die Punkte der Skala der Ausbildung in die richtige Reihenfolge.",
-    items: ["Takt", "Losgelassenheit", "Anlehnung", "Schwung", "Geraderichtung", "Versammlung"],
-    explain: "Die ersten drei Punkte bilden die Gew\xF6hnungsphase, Schwung und Geraderichtung die Entwicklung der Schubkraft, die Versammlung die Tragkraft."
-  },
-  {
-    id: "rl02",
-    cat: "reitlehre",
-    level: "basis",
-    type: "match",
-    q: "Ordne jeder Gangart den richtigen Takt zu.",
-    pairs: [
-      ["Schritt", "Viertakt"],
-      ["Trab", "Zweitakt"],
-      ["Galopp", "Dreitakt"]
+    type: "single",
+    q: "Welche drei Punkte der Skala der Ausbildung bilden die Gew\xF6hnungsphase?",
+    options: [
+      "Takt, Losgelassenheit, Anlehnung",
+      "Anlehnung, Schwung, Geraderichtung",
+      "Schwung, Geraderichtung, Versammlung",
+      "Takt, Schwung, Versammlung"
     ],
-    explain: "Der Schritt ist die einzige Gangart ohne Schwebephase. Trab und Galopp haben eine Schwebephase; im Galopp folgt nach dem dritten Takt der Schwebemoment."
+    a: 0,
+    explain: "Gew\xF6hnungsphase: Takt, Losgelassenheit, Anlehnung. Es folgen die Entwicklung der Schubkraft (Schwung, Geraderichtung) und der Tragkraft (Versammlung)."
   },
   {
     id: "rl03",
@@ -2991,8 +3175,1018 @@ var q_praxis_default = [
   }
 ];
 
+// js/data/q-hilfen.js
+var q_hilfen_default = [
+  {
+    id: "hi01",
+    cat: "hilfen",
+    level: "basis",
+    type: "multi",
+    q: "Welche Hilfengruppen unterscheidet man bei der Einwirkung des Reiters?",
+    options: [
+      "Treibende Hilfen",
+      "Verhaltende Hilfen",
+      "Gewichtshilfen",
+      "Unterst\xFCtzende Hilfen",
+      "Zwingende Hilfen"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Treibende Hilfen sind die Schenkelhilfen, verhaltende Hilfen die Z\xFCgelhilfen. Die Gewichtshilfen sind das Bindeglied zwischen beiden Gruppen. Dazu kommen die unterst\xFCtzenden Hilfen (Stimme, Gerte, Sporen)."
+  },
+  {
+    id: "hi02",
+    cat: "hilfen",
+    level: "basis",
+    type: "match",
+    q: "Ordne die Hilfen der richtigen Gruppe zu.",
+    pairs: [
+      ["Schenkelhilfen", "Treibende Hilfen"],
+      ["Z\xFCgelhilfen", "Verhaltende Hilfen"],
+      ["Gewichtshilfen", "Bindeglied zwischen beiden Gruppen"],
+      ["Stimme und Gerte", "Unterst\xFCtzende Hilfen"]
+    ],
+    explain: "Die Gewichtshilfen verbinden treibende und verhaltende Einwirkung \u2013 sie wirken bei fast jeder Hilfengebung mit."
+  },
+  {
+    id: "hi03",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Warum gelten die Gewichtshilfen als die wichtigsten Hilfen?",
+    options: [
+      "Weil das Pferd sie immer sp\xFCrt",
+      "Weil sie am leichtesten zu erlernen sind",
+      "Weil sie ohne Sitz funktionieren",
+      "Weil sie nur im Galopp wirken"
+    ],
+    a: 0,
+    explain: "Der Reiter sitzt permanent auf dem Pferder\xFCcken \u2013 jede Ver\xE4nderung seines Gewichts wird wahrgenommen. Deshalb wirkt der Sitz immer mit, ob gewollt oder nicht."
+  },
+  {
+    id: "hi04",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Arten von Gewichtshilfen gibt es?",
+    options: [
+      "Beidseitig belastende Gewichtshilfe",
+      "Einseitig belastende Gewichtshilfe",
+      "Entlastende Gewichtshilfe",
+      "Seitw\xE4rts weisende Gewichtshilfe"
+    ],
+    a: [0, 1, 2],
+    explain: "Beidseitig belastend (z. B. bei \xDCberg\xE4ngen und ganzen Paraden), einseitig belastend (in Biegungen) und entlastend (im Entlastungssitz, zum L\xF6sen des Pferdes)."
+  },
+  {
+    id: "hi05",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Wie gibt der Reiter eine beidseitig belastende Gewichtshilfe?",
+    options: [
+      "Er kippt sein Becken durch kurzzeitige, elastische Anspannung von Bauch- und R\xFCckenmuskulatur etwas nach hinten",
+      "Er lehnt den Oberk\xF6rper weit zur\xFCck und stemmt sich in die B\xFCgel",
+      "Er verlagert das Gewicht auf den inneren Ges\xE4\xDFknochen",
+      "Er geht in den leichten Sitz"
+    ],
+    a: 0,
+    explain: "Sie wird z. B. bei \xDCberg\xE4ngen und ganzen Paraden eingesetzt. Wichtig: kurzzeitig und elastisch \u2013 kein dauerhaftes Zur\xFCcklehnen."
+  },
+  {
+    id: "hi06",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Wann setzt der Reiter die einseitig belastende Gewichtshilfe ein?",
+    options: [
+      "In allen Biegungen \u2013 das Gewicht kommt vermehrt auf den inneren Ges\xE4\xDFknochen",
+      "Nur beim Halten",
+      "Beim R\xFCckw\xE4rtsrichten",
+      "Nur im starken Trab"
+    ],
+    a: 0,
+    explain: "Zum Beispiel auf Zirkellinien, in Wendungen oder im Slalom. Der Reiter belastet den inneren Ges\xE4\xDFknochen etwas mehr, ohne sich seitlich zu verwerfen."
+  },
+  {
+    id: "hi07",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Wozu dient die entlastende Gewichtshilfe?",
+    options: [
+      "Der Reiter nimmt Druck vom Pferder\xFCcken \u2013 zum L\xF6sen und zur Entspannung",
+      "Sie erh\xF6ht den Druck auf den R\xFCcken, um mehr Schwung zu erzeugen",
+      "Sie ersetzt die Z\xFCgelhilfen",
+      "Sie wird nur beim Halten eingesetzt"
+    ],
+    a: 0,
+    explain: "Typisch im Entlastungssitz bzw. leichten Sitz \u2013 etwa in der L\xF6sungsphase, bei jungen Pferden oder im Gel\xE4nde."
+  },
+  {
+    id: "hi08",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne jede Schenkelhilfe ihrer Lage und Aufgabe zu.",
+    pairs: [
+      ["Vorw\xE4rts treibender Schenkel", "Liegt am Gurt und treibt im Rhythmus der Bewegung"],
+      ["Vorw\xE4rts-seitw\xE4rts treibender Schenkel", "Knapp eine Handbreit hinter dem Gurt, immer innen"],
+      ["Verwahrender Schenkel", "Eine Handbreit hinter dem Gurt, immer au\xDFen"]
+    ],
+    explain: "Der vorw\xE4rts-seitw\xE4rts treibende Schenkel veranlasst das Pferd zum seitw\xE4rts Treten (z. B. Schenkelweichen), der verwahrende Schenkel verhindert das Ausfallen der Hinterhand nach au\xDFen."
+  },
+  {
+    id: "hi09",
+    cat: "hilfen",
+    level: "basis",
+    type: "single",
+    q: "Wo liegt der vorw\xE4rts treibende Schenkel?",
+    options: ["Am Gurt", "Eine Handbreit hinter dem Gurt", "Vor dem Gurt an der Schulter", "Am Bauch unter dem Sattel"],
+    a: 0,
+    explain: "Er treibt im Rhythmus der Bewegung \u2013 z. B. zur Erh\xF6hung des Tempos, beim Reiten von \xDCberg\xE4ngen und bei ganzen Paraden."
+  },
+  {
+    id: "hi10",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Welche Aufgabe hat der verwahrende Schenkel?",
+    options: [
+      "Er verhindert das Ausfallen bzw. Wegdr\xE4ngen des Pferdes nach au\xDFen",
+      "Er treibt das Pferd vorw\xE4rts-seitw\xE4rts",
+      "Er erh\xF6ht das Tempo",
+      "Er bewirkt die Stellung im Genick"
+    ],
+    a: 0,
+    explain: "Er liegt immer au\xDFen, eine Handbreit hinter dem Gurt \u2013 n\xF6tig in jeder Biegung, kombiniert mit einer entsprechenden Beckenposition."
+  },
+  {
+    id: "hi11",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Arten von Z\xFCgelhilfen gibt es?",
+    options: [
+      "Annehmende Z\xFCgelhilfe",
+      "Nachgebende Z\xFCgelhilfe",
+      "Verwahrende Z\xFCgelhilfe",
+      "Aushaltende Z\xFCgelhilfe",
+      "Seitw\xE4rts weisende Z\xFCgelhilfe",
+      "Treibende Z\xFCgelhilfe"
+    ],
+    a: [0, 1, 2, 3, 4],
+    explain: "Z\xFCgelhilfen geh\xF6ren zu den verhaltenden Hilfen \u2013 treibend wirken sie nie. Die treibenden Hilfen sollen stets \xFCber die verhaltenden dominieren."
+  },
+  {
+    id: "hi12",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Wie gibt der Reiter eine annehmende Z\xFCgelhilfe?",
+    options: [
+      "Kurzes Schlie\xDFen der Hand bis zum lockeren Eindrehen des Handgelenks",
+      "Kr\xE4ftiges Ziehen am inneren Z\xFCgel",
+      "Vorschieben beider H\xE4nde zum Pferdemaul",
+      "Anheben beider F\xE4uste \xFCber den Widerrist"
+    ],
+    a: 0,
+    explain: "Reagiert das Pferd, folgt sofort eine nachgebende Z\xFCgelhilfe. Reagiert es nicht, folgt nach dem Nachgeben erneut eine annehmende Z\xFCgelhilfe."
+  },
+  {
+    id: "hi13",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Was muss auf eine annehmende Z\xFCgelhilfe folgen, sobald das Pferd reagiert?",
+    options: [
+      "Eine nachgebende Z\xFCgelhilfe",
+      "Eine zweite annehmende Z\xFCgelhilfe",
+      "Eine aushaltende Z\xFCgelhilfe",
+      "Ein Gertenimpuls"
+    ],
+    a: 0,
+    explain: "Annehmen und Nachgeben geh\xF6ren untrennbar zusammen. Beim Nachgeben sind die Handgelenke wieder gerade und die Hand locker \u2013 so bleibt die Anlehnung weich."
+  },
+  {
+    id: "hi14",
+    cat: "hilfen",
+    level: "profi",
+    type: "single",
+    q: "Wo und wozu wirkt die verwahrende Z\xFCgelhilfe?",
+    options: [
+      "Immer au\xDFen \u2013 sie erg\xE4nzt den stellunggebenden inneren Z\xFCgel und begrenzt eine zu starke Stellung",
+      "Immer innen \u2013 sie erzeugt die Stellung",
+      "An beiden Z\xFCgeln gleichzeitig zum Anhalten",
+      "Nur beim R\xFCckw\xE4rtsrichten"
+    ],
+    a: 0,
+    explain: "Ohne den verwahrenden \xE4u\xDFeren Z\xFCgel entst\xFCnde in der Biegung eine Stellung, die der Biegung nicht angemessen ist \u2013 das Pferd f\xE4llt \xFCber die \xE4u\xDFere Schulter aus."
+  },
+  {
+    id: "hi15",
+    cat: "hilfen",
+    level: "profi",
+    type: "single",
+    q: "F\xFCr welche Pferde ist die aushaltende Z\xFCgelhilfe gedacht?",
+    options: [
+      "F\xFCr gut ausgebildete, durchl\xE4ssige Pferde",
+      "F\xFCr Fohlen und Jungpferde",
+      "F\xFCr Pferde in der L\xF6sungsphase",
+      "F\xFCr Pferde, die am Z\xFCgel ziehen"
+    ],
+    a: 0,
+    explain: "Die H\xE4nde bleiben f\xFCr einen Moment vermehrt geschlossen, w\xE4hrend die Schenkel vorw\xE4rts treiben \u2013 das Pferd wird dadurch vermehrt geschlossen. Bei unge\xFCbten Pferden f\xFChrt das nur zu Widerstand."
+  },
+  {
+    id: "hi16",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "single",
+    q: "Bei wem wird die seitw\xE4rts weisende Z\xFCgelhilfe vor allem eingesetzt?",
+    options: [
+      "Bei jungen Pferden und unerfahrenen Reitern",
+      "Nur in Pr\xFCfungen ab Klasse S",
+      "Bei Pferden im starken Galopp",
+      "Beim Longieren"
+    ],
+    a: 0,
+    explain: "Die innere Z\xFCgelhand bewegt sich in Richtung der Wendung zur Seite und weist so den Weg. Mit zunehmender Ausbildung wird sie \xFCberfl\xFCssig."
+  },
+  {
+    id: "hi17",
+    cat: "hilfen",
+    level: "basis",
+    type: "multi",
+    q: "Was geh\xF6rt zu den unterst\xFCtzenden Hilfen?",
+    options: ["Stimme", "Gerte", "Sporen", "Z\xFCgel", "Gewicht"],
+    a: [0, 1, 2],
+    explain: "Z\xFCgel-, Schenkel- und Gewichtshilfen sind die eigentlichen Hilfen. Stimme, Gerte und Sporen unterst\xFCtzen sie nur."
+  },
+  {
+    id: "hi18",
+    cat: "hilfen",
+    level: "basis",
+    type: "truefalse",
+    q: "Stimmhilfen sollten sparsam eingesetzt werden und nur f\xFCr das eigene Pferd wahrnehmbar sein.",
+    a: true,
+    explain: "Die Stimme kann lobend, beruhigend, aufmunternd oder tadelnd wirken. St\xE4ndiges Reden stumpft ab \u2013 und laute Kommandos st\xF6ren alle anderen in der Bahn."
+  },
+  {
+    id: "hi19",
+    cat: "hilfen",
+    level: "basis",
+    type: "single",
+    q: "Wann muss ein Lob erfolgen, damit das Pferd es versteht?",
+    options: [
+      "Unmittelbar nach dem gew\xFCnschten Verhalten und begr\xFCndet",
+      "Am Ende der Reitstunde",
+      "Erst nach dem Absitzen",
+      "Immer beim Betreten der Bahn"
+    ],
+    a: 0,
+    explain: "Zum Loben kann der Reiter die Z\xFCgel in eine Hand nehmen und mit der anderen sanft \xFCber den Hals streichen. Lob gibt dem Pferd die positive R\xFCckmeldung, auf der jede Ausbildung aufbaut."
+  },
+  {
+    id: "hi20",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Was gilt f\xFCr den Einsatz der Gerte?",
+    options: [
+      "Sie wirkt treibend als Unterst\xFCtzung des Schenkels",
+      "Sie kann an der \xE4u\xDFeren Schulter begrenzen",
+      "Sie soll pr\xE4zise und dosiert eingesetzt werden",
+      "St\xE4ndiger Einsatz f\xFChrt zur Abstumpfung",
+      "Sie ersetzt die Schenkelhilfe dauerhaft"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Der Reiter sollte die Gerte mit beiden H\xE4nden f\xFChren k\xF6nnen. Sie unterst\xFCtzt die Schenkelhilfe, ersetzt sie aber nie."
+  },
+  {
+    id: "hi21",
+    cat: "hilfen",
+    level: "profi",
+    type: "order",
+    q: "Bringe die Schritte des Gertenwechsels in die richtige Reihenfolge.",
+    items: [
+      "Beide Z\xFCgel in die Gertenhand nehmen",
+      "Mit der freien Hand die Gerte nach oben herausziehen",
+      "Gerte auf die neue Seite f\xFChren",
+      "Den Z\xFCgel wieder in die frei gewordene Hand aufnehmen"
+    ],
+    explain: "Bei langen Gerten zieht man sie zun\xE4chst nur bis zur H\xE4lfte heraus. Der Wechsel sollte ruhig und ohne St\xF6rung der Anlehnung erfolgen."
+  },
+  {
+    id: "hi22",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Die treibenden Hilfen sollen stets \xFCber die verhaltenden Hilfen dominieren.",
+    a: true,
+    explain: "Reiten geht von hinten nach vorne. Voraussetzung f\xFCr das feine Zusammenwirken aller Hilfen ist ein unabh\xE4ngiger, losgelassener Sitz."
+  },
+  {
+    id: "hi23",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Wozu dienen halbe Paraden?",
+    options: [
+      "Zur Vorbereitung von \xDCberg\xE4ngen",
+      "Um das Pferd aufmerksam zu machen",
+      "Zur Temporeduzierung",
+      "Um Takt, Form und Gleichgewicht zu erhalten oder zu verbessern",
+      "Zum geschlossenen Stehen"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Halbe Paraden sind das wichtigste Verst\xE4ndigungsmittel zwischen Reiter und Pferd und k\xF6nnen auch auf gebogenen Linien gegeben werden. Zum Halten f\xFChrt die ganze Parade."
+  },
+  {
+    id: "hi24",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Was gilt f\xFCr ganze Paraden?",
+    options: [
+      "Sie bringen das Pferd zum Halten und geschlossenen Stehen",
+      "Sie k\xF6nnen aus jeder Gangart erfolgen",
+      "Sie werden nur auf geraden Linien geritten",
+      "Sie bestehen aus mehreren halben Paraden",
+      "Sie werden bevorzugt in der Wendung geritten"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Weil die ganze Parade aus mehreren halben Paraden entsteht, h\xE4lt das Pferd ohne Widerstand an."
+  },
+  {
+    id: "hi25",
+    cat: "hilfen",
+    level: "profi",
+    type: "multi",
+    q: "Welche Hilfen geh\xF6ren zu jeder Parade?",
+    options: [
+      "Belastende Gewichtshilfe",
+      "Vorw\xE4rtstreibende Schenkelhilfen",
+      "Annehmende bis aushaltende und wieder nachgebende Z\xFCgelhilfen",
+      "Nachlassen der Schenkelhilfen"
+    ],
+    a: [0, 1, 2],
+    explain: "Auch beim Anhalten wird weiter getrieben \u2013 sonst f\xE4llt das Pferd auseinander und tritt nicht geschlossen unter."
+  },
+  {
+    id: "hi26",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "order",
+    q: "Bringe die Hilfen zum Anreiten im Schritt in die richtige Reihenfolge.",
+    items: [
+      "Vorbereitende halbe Parade",
+      "Belastende bis entlastende Gewichtshilfe",
+      "Vorw\xE4rtstreibende Schenkelhilfen",
+      "Nachgebende Z\xFCgelhilfen"
+    ],
+    explain: "Unterst\xFCtzend k\xF6nnen Stimme oder Gerte eingesetzt werden. Wichtig ist das Nachgeben der Z\xFCgelhand \u2013 sonst treibt der Reiter gegen die eigene Hand."
+  },
+  {
+    id: "hi27",
+    cat: "hilfen",
+    level: "profi",
+    type: "single",
+    q: "Was versteht man unter diagonaler Hilfengebung?",
+    options: [
+      "Innere Gewichts- und Schenkelhilfe korrespondieren mit dem \xE4u\xDFeren Z\xFCgel und umgekehrt",
+      "Der Reiter wechselt die Hilfen im Rhythmus der Diagonalen",
+      "Alle Hilfen werden gleichzeitig auf einer Seite gegeben",
+      "Die Hilfen werden nur beim Durchreiten der Diagonale gegeben"
+    ],
+    a: 0,
+    explain: 'Die diagonale Hilfengebung rahmt das Pferd ein und h\xE4lt die zwei bis drei Meter Pferd \u201Ein Spur". Beispiel Stellen: Wird der innere Z\xFCgel angenommen, muss der \xE4u\xDFere Schenkel verwahrend begrenzen.'
+  },
+  {
+    id: "hi28",
+    cat: "hilfen",
+    level: "profi",
+    type: "truefalse",
+    q: "Voraussetzung f\xFCr das feine Zusammenwirken aller Hilfen ist ein unabh\xE4ngiger, losgelassener Sitz.",
+    a: true,
+    explain: "Nur wer nicht am Z\xFCgel balanciert, kann Gewicht, Schenkel und Z\xFCgel getrennt voneinander einsetzen \u2013 deshalb steht der Sitz am Anfang des Ausbildungswegs des Reiters."
+  },
+  /* --- Wie viele? Zahlen und Abgrenzungen --------------------------- */
+  {
+    id: "hi29",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "number",
+    q: "Wie viele Arten von Gewichtshilfen unterscheidet man?",
+    a: 3,
+    tol: 0,
+    unit: "Arten",
+    explain: "Drei: beidseitig belastend, einseitig belastend und entlastend."
+  },
+  {
+    id: "hi30",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "number",
+    q: "Wie viele Arten von Schenkelhilfen unterscheidet man?",
+    a: 3,
+    tol: 0,
+    unit: "Arten",
+    explain: "Drei: vorw\xE4rts treibend (am Gurt), vorw\xE4rts-seitw\xE4rts treibend (knapp eine Handbreit hinter dem Gurt, innen) und verwahrend (eine Handbreit hinter dem Gurt, au\xDFen)."
+  },
+  {
+    id: "hi31",
+    cat: "hilfen",
+    level: "profi",
+    type: "number",
+    q: "Wie viele Arten von Z\xFCgelhilfen unterscheidet man?",
+    a: 5,
+    tol: 0,
+    unit: "Arten",
+    explain: "F\xFCnf: annehmend, nachgebend, verwahrend, aushaltend (auch durchhaltend genannt) und seitw\xE4rts weisend."
+  },
+  {
+    id: "hi32",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "text",
+    q: "Wie hei\xDFt die Z\xFCgelhilfe, die immer au\xDFen gegeben wird und den stellunggebenden inneren Z\xFCgel erg\xE4nzt?",
+    a: ["verwahrende Z\xFCgelhilfe", "verwahrend"],
+    explain: "Die verwahrende Z\xFCgelhilfe begrenzt au\xDFen. Ohne sie entsteht zu viel Stellung und das Pferd f\xE4llt \xFCber die \xE4u\xDFere Schulter aus."
+  },
+  {
+    id: "hi33",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche der genannten Hilfen gibt es so NICHT?",
+    options: [
+      "Treibende Z\xFCgelhilfe",
+      "Entlastende Z\xFCgelhilfe",
+      "Verwahrender Schenkel",
+      "Aushaltende Z\xFCgelhilfe",
+      "Seitw\xE4rts weisende Gewichtshilfe"
+    ],
+    a: [0, 1, 4],
+    explain: 'Z\xFCgelhilfen wirken nie treibend \u2013 treiben ist Aufgabe der Schenkel. \u201EEntlastend" geh\xF6rt zu den Gewichtshilfen, \u201Eseitw\xE4rts weisend" zu den Z\xFCgelhilfen.'
+  },
+  {
+    id: "hi34",
+    cat: "hilfen",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche dieser Schenkelhilfen liegen hinter dem Gurt?",
+    options: [
+      "Vorw\xE4rts-seitw\xE4rts treibender Schenkel",
+      "Verwahrender Schenkel",
+      "Vorw\xE4rts treibender Schenkel"
+    ],
+    a: [0, 1],
+    explain: "Der vorw\xE4rts treibende Schenkel liegt am Gurt. Vorw\xE4rts-seitw\xE4rts treibend (innen) und verwahrend (au\xDFen) liegen etwa eine Handbreit dahinter."
+  },
+  {
+    id: "hi35",
+    cat: "hilfen",
+    level: "basis",
+    type: "text",
+    q: "Welche Hilfengruppe bildet das Bindeglied zwischen treibenden und verhaltenden Hilfen?",
+    a: ["Gewichtshilfen", "Gewichtshilfe", "Gewicht"],
+    explain: "Die Gewichtshilfen. Sie sind zugleich die wichtigsten Hilfen, weil das Pferd sie immer sp\xFCrt."
+  }
+];
+
+// js/data/q-gangarten.js
+var LEGEND_STAND = "Ausgef\xFCllte Hufe = Bein mit Bodenkontakt, leere Hufe = Bein in der Luft. Blick von oben, das Pferd l\xE4uft nach vorne (oben).";
+var LEGEND_STEP = "Ausgef\xFCllter Huf = Bein, das gerade auffu\xDFt. Blick von oben, das Pferd l\xE4uft nach vorne (oben).";
+var q_gangarten_default = [
+  {
+    id: "gg01",
+    cat: "gangarten",
+    level: "basis",
+    type: "multi",
+    q: "Welche Gangarten sind die Grundgangarten des Pferdes?",
+    options: ["Schritt", "Trab", "Galopp", "T\xF6lt", "Pass"],
+    a: [0, 1, 2],
+    explain: "T\xF6lt und Pass sind Spezialgangarten, die nur Gangpferderassen (z. B. Isl\xE4nder) zeigen. Ziel der Arbeit in den Grundgangarten ist der Erhalt und die F\xF6rderung der nat\xFCrlichen Bewegung \u2013 deshalb liegt das Augenmerk auf Takt und Gleichma\xDF."
+  },
+  {
+    id: "gg02",
+    cat: "gangarten",
+    level: "basis",
+    type: "match",
+    q: "Ordne jeder Gangart Takt und Phasenzahl zu.",
+    pairs: [
+      ["Schritt", "Viertakt in 8 Phasen"],
+      ["Trab", "Zweitakt in 4 Phasen"],
+      ["Galopp", "Dreitakt in 6 Phasen"]
+    ],
+    explain: "Nur der Schritt hat keine Schwebephase. Trab und Galopp haben jeweils einen Moment der freien Schwebe."
+  },
+  {
+    id: "gg03",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "number",
+    q: "Aus wie vielen Phasen besteht der Schritt?",
+    a: 8,
+    tol: 0,
+    unit: "Phasen",
+    explain: "Acht Phasen: Es wechseln sich immer eine Dreibeinst\xFCtze und eine Zweibeinst\xFCtze ab."
+  },
+  {
+    id: "gg04",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "number",
+    q: "Aus wie vielen Phasen besteht der Galopp?",
+    a: 6,
+    tol: 0,
+    unit: "Phasen",
+    explain: "Sechs Phasen \u2013 von der Fu\xDFung des \xE4u\xDFeren Hinterbeins \xFCber Dreibein-, Zweibein- und Einbeinst\xFCtze bis zur Schwebephase."
+  },
+  {
+    id: "gg05",
+    cat: "gangarten",
+    level: "basis",
+    type: "truefalse",
+    q: "Der Schritt hat keine Schwebephase.",
+    a: true,
+    explain: "Im Schritt hat das Pferd immer zwei oder drei Beine am Boden. Deshalb ist der Schritt die Gangart, in der Taktfehler am deutlichsten sichtbar werden."
+  },
+  {
+    id: "gg06",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: "Welche St\xFCtzen wechseln sich im Schritt ab?",
+    options: [
+      "Dreibeinst\xFCtze und Zweibeinst\xFCtze",
+      "Zweibeinst\xFCtze und Schwebephase",
+      "Einbeinst\xFCtze und Dreibeinst\xFCtze",
+      "Vierbeinst\xFCtze und Zweibeinst\xFCtze"
+    ],
+    a: 0,
+    explain: "Die Fu\xDFfolge ist dabei nacheinander diagonal und lateral: Auf ein Vorderbein folgt das diagonale Hinterbein, danach das laterale (gleichseitige) Vorderbein."
+  },
+  {
+    id: "gg07",
+    cat: "gangarten",
+    level: "profi",
+    type: "order",
+    q: "Bringe die Fu\xDFfolge im Schritt in die richtige Reihenfolge. Beginne mit dem Auffu\xDFen vorne rechts.",
+    legend: LEGEND_STEP,
+    items: [
+      { label: "Vorne rechts", hooves: ["VR"] },
+      { label: "Hinten links (diagonal)", hooves: ["HL"] },
+      { label: "Vorne links (lateral)", hooves: ["VL"] },
+      { label: "Hinten rechts (diagonal)", hooves: ["HR"] }
+    ],
+    explain: "Der Schritt geht nacheinander diagonal und lateral: Nach vorne rechts kommt das diagonale linke Hinterbein, danach das laterale linke Vorderbein und dann wieder diagonal das rechte Hinterbein."
+  },
+  {
+    id: "gg08",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: "Woran erkennt man einen korrekten Mittelschritt?",
+    options: [
+      "Die Hinterhufe greifen \xFCber die Spur der Vorderhufe hinaus",
+      "Die Hinterhufe bleiben deutlich hinter der Spur der Vorderhufe",
+      "Die Hinterhufe treten genau in die Spur der Vorderhufe",
+      "Das Pferd geht passartig"
+    ],
+    a: 0,
+    explain: "Der starke Schritt ist noch weiter und raumgreifender als der Mittelschritt. Beim Schritt am langen Z\xFCgel darf sich das Pferd zus\xE4tzlich dehnen."
+  },
+  {
+    id: "gg09",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: 'Der Schritt wird \u201Epassartig" \u2013 welche Art von St\xF6rung ist das?',
+    options: [
+      "Eine St\xF6rung im zeitlichen Gleichma\xDF",
+      "Eine St\xF6rung im r\xE4umlichen Gleichma\xDF",
+      "Eine St\xF6rung der Anlehnung",
+      "Gar keine St\xF6rung, sondern eine Spezialgangart"
+    ],
+    a: 0,
+    explain: "Passartiger Schritt st\xF6rt das zeitliche Gleichma\xDF, Kurz-Lang-Schreiten das r\xE4umliche Gleichma\xDF. Ursachen sind meist M\xE4ngel in Losgelassenheit, Geraderichtung, Koordination, Durchl\xE4ssigkeit \u2013 oder Reiterfehler."
+  },
+  {
+    id: "gg10",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Ursachen k\xF6nnen St\xF6rungen in den Grundgangarten haben?",
+    options: [
+      "Mangelnde Losgelassenheit",
+      "Fehlende Geraderichtung",
+      "Mangelnde Durchl\xE4ssigkeit",
+      "Reiterfehler",
+      "Zu gro\xDFer Auslauf auf der Weide"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Dazu kommen Koordinationsprobleme sowie \xDCberforderung in Balance und Tempo. Bewegung auf der Weide ist dagegen die Grundlage gesunder Grundgangarten."
+  },
+  {
+    id: "gg11",
+    cat: "gangarten",
+    level: "basis",
+    type: "single",
+    q: "Wie bewegt sich das Pferd im Trab?",
+    options: [
+      "Schwunghaft im Zweitakt \u2013 die diagonalen Beinpaare fu\xDFen gleichzeitig",
+      "Schreitend im Viertakt ohne Schwebephase",
+      "Im Dreitakt mit deutlicher Schwebephase",
+      "Lateral im Zweitakt"
+    ],
+    a: 0,
+    explain: "Zwischen den beiden Zweibeinst\xFCtzen liegt jeweils ein Augenblick der freien Schwebe \u2013 daraus ergeben sich die vier Phasen des Trabes."
+  },
+  {
+    id: "gg12",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "order",
+    q: "Bringe die Phasen des Trabes in die richtige Reihenfolge. Beginne mit der Zweibeinst\xFCtze vorne links / hinten rechts.",
+    legend: LEGEND_STAND,
+    items: [
+      { label: "Zweibeinst\xFCtze: vorne links und hinten rechts", hooves: ["VL", "HR"] },
+      { label: "Augenblick der freien Schwebe", hooves: [] },
+      { label: "Zweibeinst\xFCtze: vorne rechts und hinten links", hooves: ["VR", "HL"] }
+    ],
+    explain: "Danach folgt erneut ein Augenblick der freien Schwebe \u2013 zusammen ergeben sich die vier Phasen des Trabes. Das diagonale Beinpaar fu\xDFt dabei gleichzeitig auf und ab."
+  },
+  {
+    id: "gg13",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: "Woran erkennt man einen korrekten Arbeitstrab?",
+    options: [
+      "Die Hinterhufe fu\xDFen mindestens in die Spur der Vorderhufe",
+      "Die Hinterhufe bleiben eine Hufbreite dahinter",
+      "Das Pferd tritt deutlich \xFCber die Spur hinaus und wird schneller",
+      "Die Stirn-Nasenlinie liegt hinter der Senkrechten"
+    ],
+    a: 0,
+    explain: "Beim Tritteverl\xE4ngern greifen die Hinterbeine weiter durch, der Raumgriff wird gr\xF6\xDFer und die Stirn-Nasenlinie kommt vor die Senkrechte \u2013 das Tempo bleibt dabei kontrolliert."
+  },
+  {
+    id: "gg14",
+    cat: "gangarten",
+    level: "profi",
+    type: "multi",
+    q: "Welche Fehler zeigen sich typischerweise im Trab?",
+    options: [
+      "Aufl\xF6sung des diagonalen Fu\xDFens",
+      "Ungleiches Vorschwingen der Gliedma\xDFen",
+      "Mangelnde Koordination von Vor- und Hinterhand",
+      "Z\xFCgellahmheit",
+      "Kreuzgalopp"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Kreuzgalopp ist ein Fehler im Galopp. Ursachen f\xFCr Trabfehler sind Reiterfehler, \xDCberforderung in Balance oder Tempo sowie mangelnde Losgelassenheit, Durchl\xE4ssigkeit und Geraderichtung."
+  },
+  {
+    id: "gg15",
+    cat: "gangarten",
+    level: "basis",
+    type: "single",
+    q: "In welchem Takt geht das Pferd im Galopp?",
+    options: ["Dreitakt", "Zweitakt", "Viertakt", "F\xFCnftakt"],
+    a: 0,
+    explain: "Der Galopp ist ein Dreitakt mit klarer Schwebephase, insgesamt sechs Phasen. Wird daraus ein Viertakt (Vierschlag), ist der Takt verloren gegangen."
+  },
+  {
+    id: "gg16",
+    cat: "gangarten",
+    level: "profi",
+    type: "order",
+    q: "Bringe die Phasen des Linksgalopps in die richtige Reihenfolge. Beginne mit der Fu\xDFung nach der Schwebephase.",
+    legend: LEGEND_STAND,
+    items: [
+      { label: "Einbeinst\xFCtze: \xE4u\xDFeres Hinterbein (hinten rechts) fu\xDFt", hooves: ["HR"] },
+      { label: "Dreibeinst\xFCtze: diagonales Paar hinten links / vorne rechts kommt dazu", hooves: ["HR", "HL", "VR"] },
+      { label: "Zweibeinst\xFCtze: hinten rechts fu\xDFt ab", hooves: ["HL", "VR"] },
+      { label: "Dreibeinst\xFCtze: inneres Vorderbein (vorne links) fu\xDFt auf", hooves: ["HL", "VR", "VL"] },
+      { label: "Einbeinst\xFCtze: diagonales Paar fu\xDFt ab, nur vorne links tr\xE4gt", hooves: ["VL"] },
+      { label: "Schwebephase: vorne links dr\xFCckt ab", hooves: [] }
+    ],
+    explain: 'Im Linksgalopp beginnt die Fu\xDFfolge mit dem \xE4u\xDFeren Hinterbein, dann folgt das diagonale Beinpaar und zuletzt das innere Vorderbein (\u201Ef\xFChrendes Bein"), bevor die Schwebephase kommt. Im Rechtsgalopp ist alles spiegelverkehrt.'
+  },
+  {
+    id: "gg17",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: "Welches Bein greift im Linksgalopp am weitesten nach vorne?",
+    options: ["Das linke Vorderbein", "Das rechte Vorderbein", "Das linke Hinterbein", "Das rechte Hinterbein"],
+    a: 0,
+    explain: 'Das innere Vorderbein ist das \u201Ef\xFChrende" Bein und greift am weitesten vor. Daran erkennt man vom Boden und vom Sattel aus, auf welcher Hand galoppiert wird.'
+  },
+  {
+    id: "gg18",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: "Was versteht man unter Handgalopp?",
+    options: [
+      "Das Pferd galoppiert auf der Hand, auf der es geritten wird \u2013 auf der rechten Hand also im Rechtsgalopp",
+      "Das Pferd galoppiert mit der Vorhand voran",
+      "Der Reiter galoppiert mit einer Hand am Z\xFCgel",
+      "Ein Galopp mit vier Schl\xE4gen"
+    ],
+    a: 0,
+    explain: "Das Gegenst\xFCck ist der Au\xDFen- bzw. Kontergalopp: Auf der rechten Hand wird bewusst im Linksgalopp geritten \u2013 eine \xDCbung f\xFCr Geraderichtung und Durchl\xE4ssigkeit."
+  },
+  {
+    id: "gg19",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Fehler sind typische St\xF6rungen im Galopp?",
+    options: ["Kreuzgalopp", "Vierschlag", "Passartiges Gehen", "Z\xFCgellahmheit"],
+    a: [0, 1],
+    explain: "Beim Kreuzgalopp springt das Pferd vorne und hinten auf unterschiedlicher Hand, beim Vierschlag zerf\xE4llt der Dreitakt. Ursachen: Spannung, M\xE4ngel in der R\xFCckent\xE4tigkeit, Koordinations- und Balanceverlust sowie fehlender Flei\xDF."
+  },
+  {
+    id: "gg20",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "single",
+    q: "Wie soll ein korrekter Arbeitsgalopp aussehen?",
+    options: [
+      "Schwungvoll, bergauf und taktm\xE4\xDFig mit klarer Schwebephase",
+      "Flach und eilig mit kurzen Spr\xFCngen",
+      "M\xF6glichst schnell mit langem Rahmen",
+      "Ohne Schwebephase, daf\xFCr sehr ruhig"
+    ],
+    a: 0,
+    explain: "Beim Spr\xFCngeverl\xE4ngern wird der Raumgriff erweitert, der Takt und die Bergauftendenz bleiben erhalten \u2013 das Tempo allein macht keinen besseren Galopp."
+  },
+  {
+    id: "gg21",
+    cat: "gangarten",
+    level: "basis",
+    type: "text",
+    q: "Wie hei\xDFt der Moment, in dem sich kein Huf am Boden befindet?",
+    a: ["Schwebephase", "Schwebe", "freie Schwebe"],
+    explain: 'Trab und Galopp haben eine Schwebephase, der Schritt nicht. Sie ist das, was diese Gangarten \u201Eschwungvoll" macht.'
+  },
+  {
+    id: "gg22",
+    cat: "gangarten",
+    level: "profi",
+    type: "multi",
+    q: "Welche Tempi gibt es innerhalb einer Gangart?",
+    options: [
+      "Arbeitstempo",
+      "Mitteltempo",
+      "Starkes Tempo",
+      "Versammeltes Tempo",
+      "Wettkampftempo"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Ein Tempowechsel innerhalb einer Gangart bedeutet: Der Raumgriff ver\xE4ndert sich, Takt und Gleichma\xDF bleiben erhalten. Verk\xFCrzen hei\xDFt nicht langsamer trippeln, verl\xE4ngern nicht schneller rennen."
+  },
+  {
+    id: "gg23",
+    cat: "gangarten",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Beim Verl\xE4ngern der Tritte soll die Stirn-Nasenlinie vor die Senkrechte kommen.",
+    a: true,
+    explain: "Das Pferd darf sich dabei etwas mehr dehnen und den Rahmen erweitern, w\xE4hrend die Hinterbeine weiter durchschwingen."
+  },
+  {
+    id: "gg24",
+    cat: "gangarten",
+    level: "basis",
+    type: "single",
+    q: "Was ist das Ziel der Arbeit in den Grundgangarten?",
+    options: [
+      "Erhalt und F\xF6rderung der nat\xFCrlichen Bewegung mit Takt und Gleichma\xDF",
+      "M\xF6glichst hohe Geschwindigkeit",
+      "M\xF6glichst spektakul\xE4re Knieaktion",
+      "M\xF6glichst fr\xFChe Versammlung"
+    ],
+    a: 0,
+    explain: "Alles Weitere baut darauf auf: Ohne Takt und Gleichma\xDF gibt es keine Losgelassenheit \u2013 und damit keine Ausbildung nach der Skala."
+  },
+  {
+    id: "gg25",
+    cat: "gangarten",
+    level: "profi",
+    type: "single",
+    q: "Welche St\xFCtze zeigt das Pferd im Galopp unmittelbar nach der Schwebephase?",
+    options: [
+      "Einbeinst\xFCtze auf dem \xE4u\xDFeren Hinterbein",
+      "Zweibeinst\xFCtze auf dem diagonalen Beinpaar",
+      "Dreibeinst\xFCtze",
+      "Einbeinst\xFCtze auf dem inneren Vorderbein"
+    ],
+    a: 0,
+    explain: "Das \xE4u\xDFere Hinterbein f\xE4ngt den ganzen Galoppsprung allein ab \u2013 deshalb ist die Galopparbeit f\xFCr die Hinterhand so anstrengend und braucht gute Vorbereitung."
+  }
+];
+
+// js/data/q-ausbildung.js
+var REITER = [
+  "Gleichgewicht",
+  "Losgelassenheit",
+  "Eingehen in die Bewegung",
+  "Hilfengebung",
+  "Zusammenwirken der Hilfen"
+];
+var PFERD = [
+  "Takt",
+  "Losgelassenheit",
+  "Anlehnung",
+  "Schwung",
+  "Geraderichtung",
+  "Versammlung"
+];
+var q_ausbildung_default = [
+  {
+    id: "aus01",
+    cat: "ausbildung",
+    level: "basis",
+    type: "pyramid",
+    q: "Baue den Ausbildungsweg des Reiters auf \u2013 von der untersten Stufe bis zur Spitze.",
+    caption: "Ausbildungsweg des Reiters",
+    levels: REITER,
+    groups: [
+      { from: 0, to: 2, label: "1. Entwicklung des Sitzes" },
+      { from: 3, to: 4, label: "2. Entwicklung der Einwirkung" }
+    ],
+    side: "Entwicklung des Gef\xFChls",
+    explain: "Die ersten drei Stufen bilden die Entwicklung des Sitzes, die beiden oberen die Entwicklung der Einwirkung. Parallel dazu entwickelt sich \xFCber den gesamten Weg hinweg das Gef\xFChl."
+  },
+  {
+    id: "aus02",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "pyramid",
+    q: "Baue die Skala der Ausbildung des Pferdes auf \u2013 von der untersten Stufe bis zur Spitze.",
+    caption: "Skala der Ausbildung",
+    levels: PFERD,
+    explain: "Takt, Losgelassenheit und Anlehnung bilden die Gew\xF6hnungsphase, Schwung und Geraderichtung die Entwicklung der Schubkraft, die Versammlung steht f\xFCr die Tragkraft. Die Punkte greifen ineinander \u2013 ohne Takt keine Losgelassenheit, ohne Losgelassenheit keine echte Anlehnung."
+  },
+  {
+    id: "aus03",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "pyramid",
+    q: "Erg\xE4nze die fehlenden Stufen im Ausbildungsweg des Reiters.",
+    caption: "Ausbildungsweg des Reiters",
+    levels: REITER,
+    given: [0, 3],
+    explain: "Auf dem Gleichgewicht baut die Losgelassenheit des Reiters auf, danach das Eingehen in die Bewegung. Erst dann folgen Hilfengebung und das Zusammenwirken der Hilfen."
+  },
+  {
+    id: "aus04",
+    cat: "ausbildung",
+    level: "profi",
+    type: "pyramid",
+    q: "Erg\xE4nze die fehlenden Punkte der Skala der Ausbildung.",
+    caption: "Skala der Ausbildung",
+    levels: PFERD,
+    given: [0, 3],
+    explain: "Zwischen Takt und Schwung liegen Losgelassenheit und Anlehnung, dar\xFCber folgen Geraderichtung und Versammlung."
+  },
+  {
+    id: "aus05",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "single",
+    q: "Mit welcher Stufe beginnt der Ausbildungsweg des Reiters?",
+    options: ["Gleichgewicht", "Losgelassenheit", "Hilfengebung", "Zusammenwirken der Hilfen"],
+    a: 0,
+    explain: "Ohne Gleichgewicht klammert sich der Reiter am Z\xFCgel oder mit den Schenkeln fest \u2013 eine unabh\xE4ngige Hilfengebung ist dann unm\xF6glich."
+  },
+  {
+    id: "aus06",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "single",
+    q: "Welche Stufe steht im Ausbildungsweg des Reiters direkt \xFCber der Losgelassenheit?",
+    options: ["Eingehen in die Bewegung", "Gleichgewicht", "Hilfengebung", "Zusammenwirken der Hilfen"],
+    a: 0,
+    explain: "Reihenfolge von unten nach oben: Gleichgewicht \u2013 Losgelassenheit \u2013 Eingehen in die Bewegung \u2013 Hilfengebung \u2013 Zusammenwirken der Hilfen."
+  },
+  {
+    id: "aus07",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne jede Stufe des Reiters dem richtigen Ausbildungsabschnitt zu.",
+    pairs: [
+      ["Gleichgewicht", "Entwicklung des Sitzes"],
+      ["Eingehen in die Bewegung", "Entwicklung des Sitzes"],
+      ["Hilfengebung", "Entwicklung der Einwirkung"],
+      ["Zusammenwirken der Hilfen", "Entwicklung der Einwirkung"]
+    ],
+    explain: "Gleichgewicht, Losgelassenheit und Eingehen in die Bewegung geh\xF6ren zur Entwicklung des Sitzes. Hilfengebung und Zusammenwirken der Hilfen bilden die Entwicklung der Einwirkung."
+  },
+  {
+    id: "aus08",
+    cat: "ausbildung",
+    level: "basis",
+    type: "truefalse",
+    q: "Der Reiter lernt zuerst die Hilfengebung und arbeitet danach an seinem Sitz.",
+    a: false,
+    explain: "Genau umgekehrt: Erst der Sitz (Gleichgewicht, Losgelassenheit, Eingehen in die Bewegung), dann die Einwirkung (Hilfengebung, Zusammenwirken der Hilfen)."
+  },
+  {
+    id: "aus09",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "single",
+    q: "Was entwickelt sich beim Reiter \xFCber den gesamten Ausbildungsweg hinweg parallel mit?",
+    options: ["Das Gef\xFChl", "Die Kraft", "Die Ausdauer", "Die Beweglichkeit der H\xE4nde"],
+    a: 0,
+    explain: 'Im Schaubild l\xE4uft der Pfeil \u201EEntwicklung des Gef\xFChls" neben der gesamten Pyramide nach oben \u2013 Reitgef\xFChl entsteht auf jeder Stufe mit.'
+  },
+  {
+    id: "aus10",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "single",
+    q: "Warum werden Ausbildungsweg und Ausbildungsskala als Pyramide dargestellt?",
+    options: [
+      "Weil jede Stufe auf der darunterliegenden aufbaut und ohne sie keinen Bestand hat",
+      "Weil die oberen Stufen am wichtigsten sind",
+      "Weil die Ausbildung immer schneller wird",
+      "Weil es genau f\xFCnf Stufen sind"
+    ],
+    a: 0,
+    explain: "Fehlt eine untere Stufe, wackelt alles dar\xFCber. Deshalb geht man in der Ausbildung bei Problemen immer eine Stufe zur\xFCck, statt an der Spitze weiterzuarbeiten."
+  },
+  {
+    id: "aus11",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Punkte der Ausbildungsskala bilden die Gew\xF6hnungsphase?",
+    options: ["Takt", "Losgelassenheit", "Anlehnung", "Schwung", "Versammlung"],
+    a: [0, 1, 2],
+    explain: "Gew\xF6hnungsphase: Takt, Losgelassenheit, Anlehnung. Danach folgen die Entwicklung der Schubkraft (Schwung, Geraderichtung) und der Tragkraft (Versammlung)."
+  },
+  {
+    id: "aus12",
+    cat: "ausbildung",
+    level: "aufbau",
+    type: "text",
+    q: "Wie hei\xDFt der oberste Punkt der Skala der Ausbildung?",
+    a: ["Versammlung"],
+    explain: "Die Versammlung setzt alle vorherigen Punkte voraus: Das Pferd nimmt vermehrt Last auf die Hinterhand auf, die Hanken beugen sich, der Rahmen wird k\xFCrzer und h\xF6her."
+  },
+  {
+    id: "aus13",
+    cat: "ausbildung",
+    level: "profi",
+    type: "order",
+    q: "Bringe die Punkte der Skala der Ausbildung in die richtige Reihenfolge.",
+    items: PFERD,
+    explain: "Takt \u2013 Losgelassenheit \u2013 Anlehnung \u2013 Schwung \u2013 Geraderichtung \u2013 Versammlung. Die Skala gilt f\xFCr die t\xE4gliche Arbeit genauso wie f\xFCr die gesamte Ausbildung eines Pferdes."
+  },
+  {
+    id: "aus14",
+    cat: "ausbildung",
+    level: "profi",
+    type: "single",
+    q: 'Was bedeutet die Stufe \u201EEingehen in die Bewegung" beim Reiter?',
+    options: [
+      "Der Reiter l\xE4sst die Bewegung des Pferdes zu und schwingt geschmeidig mit",
+      "Der Reiter treibt bei jedem Tritt aktiv mit dem Oberk\xF6rper",
+      "Der Reiter geht in den leichten Sitz",
+      "Der Reiter beginnt mit Seiteng\xE4ngen"
+    ],
+    a: 0,
+    explain: "Erst wenn der Reiter die Bewegung zul\xE4sst statt sie zu blockieren, kann er gezielt einwirken \u2013 deshalb steht diese Stufe direkt vor der Hilfengebung."
+  },
+  {
+    id: "aus15",
+    cat: "ausbildung",
+    level: "profi",
+    type: "truefalse",
+    q: '\u201ELosgelassenheit" kommt sowohl im Ausbildungsweg des Reiters als auch in der Skala der Ausbildung des Pferdes vor.',
+    a: true,
+    explain: "Beim Reiter ist sie die zweite Stufe nach dem Gleichgewicht, beim Pferd der zweite Punkt nach dem Takt. Verspannt sich einer von beiden, \xFCbertr\xE4gt sich das sofort auf den anderen."
+  }
+];
+
 // js/data/index.js
-var QUESTIONS = [...q_pferdekunde_default, ...q_gesundheit_default, ...q_reiten_default, ...q_praxis_default];
+var QUESTIONS = [
+  ...q_pferdekunde_default,
+  ...q_gesundheit_default,
+  ...q_reiten_default,
+  ...q_praxis_default,
+  ...q_hilfen_default,
+  ...q_gangarten_default,
+  ...q_ausbildung_default
+];
 var seen = /* @__PURE__ */ new Set();
 for (const q of QUESTIONS) {
   if (seen.has(q.id)) console.warn("Doppelte Frage-ID:", q.id);
@@ -3010,7 +4204,10 @@ var CATEGORIES = [
   { id: "hufe", name: "Hufe & Beschlag", emoji: "\u{1F9F2}" },
   { id: "verhalten", name: "Verhalten & Umgang", emoji: "\u{1F9E0}" },
   { id: "ausruestung", name: "Ausr\xFCstung & Sattelkunde", emoji: "\u{1FAA2}" },
-  { id: "reitlehre", name: "Reitlehre & Hilfen", emoji: "\u{1F3C7}" },
+  { id: "reitlehre", name: "Reitlehre & Sitz", emoji: "\u{1F3C7}" },
+  { id: "hilfen", name: "Hilfengebung & Paraden", emoji: "\u{1F932}" },
+  { id: "gangarten", name: "Grundgangarten & Fu\xDFfolge", emoji: "\u{1F40E}" },
+  { id: "ausbildung", name: "Ausbildungsskala & -weg", emoji: "\u{1F53A}" },
   { id: "bahn", name: "Bahnregeln & Hufschlagfiguren", emoji: "\u{1F4D0}" },
   { id: "longieren", name: "Longieren & Bodenarbeit", emoji: "\u{1F504}" },
   { id: "sicherheit", name: "Sicherheit, Ausreiten & Recht", emoji: "\u{1F9BA}" },
@@ -3110,7 +4307,9 @@ var DEFAULT_STATE = () => ({
     // null = alle Stufen aktiv
     srs: true,
     hardOnly: false,
-    shuffle: true
+    shuffle: true,
+    session: "endless"
+    // Sitzungslänge: endless | t5 | t10 | t20 | c20
   },
   // cards[fragenId] = { box, right, wrong, streak, seenAt }
   cards: {},
@@ -3258,7 +4457,8 @@ var TYPE_HINTS = {
   text: "Antwort eintippen (Tippfehler werden verziehen).",
   number: "Zahl eingeben.",
   order: "In der richtigen Reihenfolge antippen.",
-  match: "Jeder Zeile die passende Antwort zuordnen."
+  match: "Jeder Zeile die passende Antwort zuordnen.",
+  pyramid: "Stufen antippen \u2013 sie werden von unten nach oben eingesetzt."
 };
 function createAnswerUI(q, opts = {}) {
   const factory = {
@@ -3268,10 +4468,30 @@ function createAnswerUI(q, opts = {}) {
     text: textUI,
     number: numberUI,
     order: orderUI,
-    match: matchUI
+    match: matchUI,
+    pyramid: pyramidUI
   }[q.type];
   if (!factory) throw new Error(`Unbekannter Fragetyp: ${q.type}`);
   return factory(q, opts);
+}
+var HOOF_POS = { VL: [17, 22], VR: [43, 22], HL: [17, 60], HR: [43, 60] };
+function hoofDiagram(hooves) {
+  const grounded = new Set(hooves || []);
+  const feet = Object.entries(HOOF_POS).map(([key, [x, y]]) => `<circle cx="${x}" cy="${y}" r="7.5" class="hoof${grounded.has(key) ? " on" : ""}"/>`).join("");
+  const svg = `<svg viewBox="0 0 60 82" class="hoof-svg" role="img" aria-hidden="true">
+      <path d="M30 3 L37 15 L23 15 Z" class="hd-nose"/>
+      <rect x="22" y="14" width="16" height="54" rx="8" class="hd-body"/>
+      ${feet}
+    </svg>`;
+  const wrap = el("span", { class: "hoof-wrap" });
+  wrap.innerHTML = svg;
+  return wrap;
+}
+function itemLabel(item) {
+  return typeof item === "string" ? item : item.label;
+}
+function hasDiagrams(q) {
+  return Array.isArray(q.items) && q.items.some((i) => typeof i === "object" && Array.isArray(i.hooves));
 }
 function optionButton(label, marker, extraClass, onClick) {
   return el("button", {
@@ -3482,6 +4702,7 @@ function orderUI(q, { onChange } = {}) {
   const order = shuffled(q.items.map((_, i) => i));
   const picks = [];
   const buttons = /* @__PURE__ */ new Map();
+  const withDiagrams = hasDiagrams(q);
   let resetBtn = null;
   function repaint() {
     buttons.forEach((btn, orig) => {
@@ -3493,18 +4714,38 @@ function orderUI(q, { onChange } = {}) {
     if (resetBtn) resetBtn.disabled = picks.length === 0;
     onChange?.();
   }
+  function buildButton(orig) {
+    const item = q.items[orig];
+    const toggle = () => {
+      const at = picks.indexOf(orig);
+      if (at >= 0) picks.splice(at, 1);
+      else picks.push(orig);
+      repaint();
+    };
+    if (!withDiagrams) return optionButton(itemLabel(item), "", "order-item", toggle);
+    const btn = el("button", {
+      type: "button",
+      class: "opt order-item order-card",
+      "aria-pressed": "false",
+      "aria-label": `Phase ${orig + 1}`,
+      onclick: toggle
+    }, [
+      el("span", { class: "marker", text: "" }),
+      hoofDiagram(item.hooves),
+      el("span", { class: "order-caption" })
+    ]);
+    return btn;
+  }
   return {
     render(container) {
+      if (q.legend) container.appendChild(el("p", { class: "order-hint", text: q.legend }));
+      const grid = withDiagrams ? el("div", { class: "order-grid" }) : container;
       order.forEach((orig) => {
-        const btn = optionButton(q.items[orig], "", "order-item", () => {
-          const at = picks.indexOf(orig);
-          if (at >= 0) picks.splice(at, 1);
-          else picks.push(orig);
-          repaint();
-        });
+        const btn = buildButton(orig);
         buttons.set(orig, btn);
-        container.appendChild(btn);
+        grid.appendChild(btn);
       });
+      if (withDiagrams) container.appendChild(grid);
       resetBtn = el("button", {
         type: "button",
         class: "chip",
@@ -3520,7 +4761,7 @@ function orderUI(q, { onChange } = {}) {
     hasAnswer: () => picks.length === q.items.length,
     evaluate: () => ({
       correct: picks.every((orig, i) => orig === i) && picks.length === q.items.length,
-      solution: q.items.map((t, i) => `${i + 1}. ${t}`).join("  \u2192  ")
+      solution: q.items.map((t, i) => `${i + 1}. ${itemLabel(t)}`).join("  \u2192  ")
     }),
     reveal() {
       buttons.forEach((btn, orig) => {
@@ -3528,6 +4769,8 @@ function orderUI(q, { onChange } = {}) {
         btn.classList.remove("picked");
         const chosenPos = picks.indexOf(orig);
         btn.querySelector(".marker").textContent = String(orig + 1);
+        const caption = btn.querySelector(".order-caption");
+        if (caption) caption.textContent = itemLabel(q.items[orig]);
         if (chosenPos === orig) btn.classList.add("correct");
         else btn.classList.add("wrong");
       });
@@ -3535,8 +4778,125 @@ function orderUI(q, { onChange } = {}) {
     }
   };
 }
+function pyramidUI(q, { onChange } = {}) {
+  const n = q.levels.length;
+  const given = new Set(q.given || []);
+  const slots = new Array(n).fill(null);
+  given.forEach((i) => {
+    slots[i] = i;
+  });
+  const openLevels = q.levels.map((_, i) => i).filter((i) => !given.has(i));
+  const chipOrder = shuffled(openLevels);
+  const rows = /* @__PURE__ */ new Map();
+  const fixes = /* @__PURE__ */ new Map();
+  const chips = /* @__PURE__ */ new Map();
+  let locked = false;
+  const freeSlot = () => slots.findIndex((v, i) => v === null && !given.has(i));
+  function repaint() {
+    rows.forEach((row, pos) => {
+      const value = slots[pos];
+      const text = row.querySelector(".pyr-text");
+      text.textContent = value === null ? "" : q.levels[value];
+      row.classList.toggle("filled", value !== null);
+      row.classList.toggle("given", given.has(pos));
+    });
+    chips.forEach((chip, level) => {
+      const used = slots.includes(level);
+      chip.classList.toggle("used", used);
+      chip.disabled = used || locked;
+    });
+    onChange?.();
+  }
+  return {
+    render(container) {
+      const wrap = el("div", { class: "pyr-wrap" });
+      if (q.caption) wrap.appendChild(el("p", { class: "pyr-caption", text: q.caption }));
+      const main = el("div", { class: `pyr-main${q.groups ? " has-groups" : ""}` });
+      for (const g of q.groups || []) {
+        const startRow = n - g.to;
+        const span = g.to - g.from + 1;
+        main.appendChild(el("div", {
+          class: "pyr-group",
+          style: `grid-row: ${startRow} / span ${span}; grid-column: 1;`,
+          text: g.label
+        }));
+      }
+      const step = 46 / Math.max(1, n - 1);
+      for (let fromTop = 0; fromTop < n; fromTop++) {
+        const pos = n - 1 - fromTop;
+        const width = 100 - pos * step;
+        const row = el("button", {
+          type: "button",
+          class: "pyr-row",
+          style: `width:${width}%`,
+          "aria-label": `Stufe ${pos + 1}`,
+          onclick: () => {
+            if (locked || given.has(pos) || slots[pos] === null) return;
+            slots[pos] = null;
+            repaint();
+          }
+        }, [
+          el("span", { class: "pyr-num", text: String(pos + 1) }),
+          el("span", { class: "pyr-text" })
+        ]);
+        const fix = el("span", { class: "pyr-fix" });
+        rows.set(pos, row);
+        fixes.set(pos, fix);
+        main.appendChild(el("div", {
+          class: "pyr-cell",
+          style: q.groups ? "grid-column: 2;" : ""
+        }, [row, fix]));
+      }
+      wrap.appendChild(main);
+      if (q.side) {
+        wrap.classList.add("with-side");
+        wrap.appendChild(el("div", { class: "pyr-side" }, [
+          el("span", { class: "pyr-side-text", text: q.side })
+        ]));
+      }
+      container.appendChild(wrap);
+      const chipBox = el("div", { class: "pyr-chips" });
+      chipOrder.forEach((level) => {
+        const chip = el("button", {
+          type: "button",
+          class: "pyr-chip",
+          text: q.levels[level],
+          onclick: () => {
+            if (locked) return;
+            const slot = freeSlot();
+            if (slot < 0) return;
+            slots[slot] = level;
+            repaint();
+          }
+        });
+        chips.set(level, chip);
+        chipBox.appendChild(chip);
+      });
+      container.appendChild(chipBox);
+      repaint();
+    },
+    hasAnswer: () => slots.every((v) => v !== null),
+    evaluate: () => ({
+      correct: slots.every((v, i) => v === i),
+      solution: q.levels.map((l, i) => `${i + 1}. ${l}`).join("  \u2192  ")
+    }),
+    reveal() {
+      locked = true;
+      rows.forEach((row, pos) => {
+        row.disabled = true;
+        if (given.has(pos)) return;
+        const ok = slots[pos] === pos;
+        row.classList.add(ok ? "correct" : "wrong");
+        if (!ok) fixes.get(pos).textContent = `richtig: ${q.levels[pos]}`;
+      });
+      chips.forEach((chip) => {
+        chip.disabled = true;
+      });
+    }
+  };
+}
 function matchUI(q, { onChange } = {}) {
-  const rights = shuffled(q.pairs.map((p) => p[1]));
+  const rights = shuffled([...new Set(q.pairs.map((p) => p[1]))]);
   const rows = [];
   return {
     render(container) {
@@ -3574,6 +4934,14 @@ function matchUI(q, { onChange } = {}) {
 
 // js/app.js
 var state2 = loadState();
+var SESSION_MODES = [
+  { id: "endless", label: "Ohne Limit", hint: "bis du beendest" },
+  { id: "t5", kind: "time", value: 5, label: "5 Minuten", hint: "Speed-Runde" },
+  { id: "t10", kind: "time", value: 10, label: "10 Minuten", hint: "kurze Einheit" },
+  { id: "t20", kind: "time", value: 20, label: "20 Minuten", hint: "volle Einheit" },
+  { id: "c20", kind: "count", value: 20, label: "20 Fragen", hint: "fester Umfang" }
+];
+var SESSION_BY_ID = Object.fromEntries(SESSION_MODES.map((m) => [m.id, m]));
 var session = {
   right: 0,
   wrong: 0,
@@ -3586,11 +4954,15 @@ var session = {
   current: null,
   ui: null,
   answered: false,
-  lastId: null
+  lastId: null,
+  mode: SESSION_MODES[0],
+  wrongIds: [],
+  learnedIds: []
 };
 var screens = {
   start: $("#screen-start"),
   quiz: $("#screen-quiz"),
+  result: $("#screen-result"),
   stats: $("#screen-stats")
 };
 var activeScreen = "start";
@@ -3631,7 +5003,16 @@ function flushTimer() {
 }
 function tickTimer() {
   flushTimer();
-  $("#s-time").textContent = formatTime(session.ms);
+  paintClock();
+  if (session.mode.kind === "time" && remainingMs() <= 0) endSession("time");
+}
+function remainingMs() {
+  return Math.max(0, session.mode.value * 6e4 - session.ms);
+}
+function paintClock() {
+  const limited = session.mode.kind === "time";
+  $("#s-time").textContent = formatTime(limited ? remainingMs() : session.ms);
+  $("#s-time-lbl").textContent = limited ? "\xFCbrig" : "Zeit";
 }
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
@@ -3727,6 +5108,25 @@ function renderStart() {
     });
     levelList.appendChild(el("li", {}, [pill]));
   }
+  const sessionList = $("#session-list");
+  sessionList.textContent = "";
+  for (const mode of SESSION_MODES) {
+    const active = state2.settings.session === mode.id;
+    const btn = el("button", {
+      type: "button",
+      class: `session-pill${active ? " on" : ""}`,
+      "aria-pressed": active ? "true" : "false",
+      onclick: () => {
+        state2.settings.session = mode.id;
+        save();
+        renderStart();
+      }
+    }, [
+      el("strong", { text: mode.label }),
+      el("small", { text: mode.hint })
+    ]);
+    sessionList.appendChild(el("li", {}, [btn]));
+  }
   $("#opt-srs").checked = state2.settings.srs;
   $("#opt-hard").checked = state2.settings.hardOnly;
   $("#opt-shuffle").checked = state2.settings.shuffle;
@@ -3759,12 +5159,21 @@ function startQuiz() {
     toast("Keine Fragen im Auswahlbereich.");
     return;
   }
+  session.mode = SESSION_BY_ID[state2.settings.session] || SESSION_MODES[0];
   session.right = session.wrong = session.total = 0;
   session.ms = 0;
   session.lastId = null;
+  session.wrongIds = [];
+  session.learnedIds = [];
   updateStatbar();
   showScreen("quiz");
   nextQuestion();
+}
+function endSession(reason) {
+  stopTimer();
+  saveNow();
+  renderResult(reason);
+  showScreen("result");
 }
 function nextQuestion() {
   if (state2.settings.hardOnly) {
@@ -3817,6 +5226,8 @@ function checkAnswer() {
   session.total++;
   if (correct) session.right++;
   else session.wrong++;
+  if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
+  if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
   session.ui.reveal(correct);
   const fb = $("#feedback");
   fb.hidden = false;
@@ -3837,10 +5248,12 @@ function checkAnswer() {
 }
 function updateStatbar() {
   flushTimer();
-  $("#s-time").textContent = formatTime(session.ms);
+  paintClock();
   $("#s-right").textContent = session.right;
   $("#s-wrong").textContent = session.wrong;
-  $("#s-total").textContent = session.total;
+  const counted = session.mode.kind === "count";
+  $("#s-total").textContent = counted ? `${session.total}/${session.mode.value}` : session.total;
+  $("#s-total-lbl").textContent = counted ? "Fragen" : "gesamt";
 }
 function updateQuota() {
   const prog = poolProgress(session.pool.length ? session.pool : basePool());
@@ -3848,6 +5261,57 @@ function updateQuota() {
   const bar = $("#quota-fill");
   bar.style.width = `${pct}%`;
   bar.parentElement.title = `${prog.mastered} von ${prog.total} Fragen sitzen`;
+}
+var RESULT_TITLES = {
+  time: "Zeit ist um! \u23F1",
+  count: "Runde geschafft! \u{1F3C1}",
+  manual: "Sitzung beendet"
+};
+function renderResult(reason) {
+  const quote = session.total ? Math.round(session.right / session.total * 100) : 0;
+  $("#res-title").textContent = RESULT_TITLES[reason] || RESULT_TITLES.manual;
+  let sub;
+  if (!session.total) {
+    sub = "Diesmal war keine Frage dabei \u2013 probier es gleich nochmal.";
+  } else if (quote >= 90) {
+    sub = "Stark! Das sitzt schon richtig gut.";
+  } else if (quote >= 70) {
+    sub = "Guter Lauf \u2013 die Wackelkandidaten kommen bald wieder dran.";
+  } else if (quote >= 40) {
+    sub = "Solide Grundlage. Wiederholen lohnt sich.";
+  } else {
+    sub = "Kein Problem \u2013 falsche Fragen kommen jetzt besonders oft.";
+  }
+  if (session.total && session.ms > 2e4) {
+    const perMin = session.total / (session.ms / 6e4);
+    sub += ` (${perMin.toFixed(1).replace(".", ",")} Fragen pro Minute)`;
+  }
+  $("#res-sub").textContent = sub;
+  $("#r-right").textContent = session.right;
+  $("#r-wrong").textContent = session.wrong;
+  $("#r-total").textContent = session.total;
+  $("#r-quote").textContent = session.total ? `${quote}%` : "\u2013";
+  $("#r-time").textContent = formatTime(session.ms);
+  $("#r-learned").textContent = session.learnedIds.length;
+  fillResultList("#res-learned-card", "#res-learned-list", session.learnedIds, "\u{1F389}");
+  fillResultList("#res-wrong-card", "#res-wrong-list", session.wrongIds, "\u2717");
+}
+function fillResultList(cardSel, listSel, ids, mark) {
+  const card = $(cardSel);
+  const list = $(listSel);
+  list.textContent = "";
+  card.hidden = ids.length === 0;
+  for (const id of ids.slice(0, 12)) {
+    const q = QUESTIONS.find((item) => item.id === id);
+    if (!q) continue;
+    list.appendChild(el("li", {}, [
+      el("span", { class: "h-score", text: mark }),
+      el("span", { text: q.q })
+    ]));
+  }
+  if (ids.length > 12) {
+    list.appendChild(el("li", { class: "muted small", text: `\u2026 und ${ids.length - 12} weitere` }));
+  }
 }
 function renderStats() {
   const t = state2.totals;
@@ -3909,14 +5373,23 @@ function toast(msg) {
 }
 $("#btn-start").addEventListener("click", startQuiz);
 $("#btn-check").addEventListener("click", checkAnswer);
-$("#btn-next").addEventListener("click", nextQuestion);
+$("#btn-next").addEventListener("click", () => {
+  if (session.mode.kind === "count" && session.total >= session.mode.value) endSession("count");
+  else nextQuestion();
+});
 $("#btn-skip").addEventListener("click", () => {
   session.lastId = session.current?.id ?? null;
   nextQuestion();
 });
 $("#btn-home").addEventListener("click", () => {
+  if (activeScreen === "quiz") {
+    endSession("manual");
+    return;
+  }
   showScreen(activeScreen === "stats" ? statsCameFrom : "start");
 });
+$("#btn-res-home").addEventListener("click", () => showScreen("start"));
+$("#btn-res-again").addEventListener("click", startQuiz);
 $("#btn-stats").addEventListener("click", () => {
   statsCameFrom = activeScreen;
   showScreen("stats");

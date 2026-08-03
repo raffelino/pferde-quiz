@@ -47,16 +47,45 @@ for (const q of QUESTIONS) {
       if (typeof q.a !== 'number') fail(q, 'Antwort muss eine Zahl sein');
       if (q.tol !== undefined && (typeof q.tol !== 'number' || q.tol < 0)) fail(q, 'Toleranz ungültig');
       break;
-    case 'order':
-      if (!Array.isArray(q.items) || q.items.length < 3) fail(q, 'braucht mindestens 3 Elemente');
-      else if (new Set(q.items).size !== q.items.length) fail(q, 'doppelte Elemente in der Reihenfolge');
+    case 'order': {
+      if (!Array.isArray(q.items) || q.items.length < 3) { fail(q, 'braucht mindestens 3 Elemente'); break; }
+      const labels = q.items.map(i => (typeof i === 'string' ? i : i?.label));
+      if (labels.some(l => typeof l !== 'string' || !l)) fail(q, 'jedes Element braucht einen Text bzw. label');
+      if (new Set(labels).size !== labels.length) fail(q, 'doppelte Elemente in der Reihenfolge');
+      // Diagramm-Elemente: gleiche Hufkombination waere nicht unterscheidbar
+      const shapes = q.items.filter(i => typeof i === 'object' && Array.isArray(i.hooves))
+        .map(i => [...i.hooves].sort().join('+'));
+      if (shapes.length && shapes.length !== q.items.length) fail(q, 'entweder alle oder kein Element mit Diagramm');
+      if (new Set(shapes).size !== shapes.length) fail(q, 'zwei Diagramme sind identisch – die Reihenfolge waere nicht eindeutig');
+      const legal = new Set(['VL', 'VR', 'HL', 'HR']);
+      for (const i of q.items) {
+        if (typeof i === 'object' && Array.isArray(i.hooves) && i.hooves.some(h => !legal.has(h))) {
+          fail(q, `unbekanntes Huf-Kuerzel in ${JSON.stringify(i.hooves)}`);
+        }
+      }
       break;
+    }
+    case 'pyramid': {
+      if (!Array.isArray(q.levels) || q.levels.length < 3) { fail(q, 'braucht mindestens 3 Stufen'); break; }
+      if (new Set(q.levels).size !== q.levels.length) fail(q, 'doppelte Stufen');
+      const n = q.levels.length;
+      for (const g of q.given || []) {
+        if (!Number.isInteger(g) || g < 0 || g >= n) fail(q, `vorgegebene Stufe ${g} liegt ausserhalb`);
+      }
+      if ((q.given || []).length >= n) fail(q, 'es muss mindestens eine Stufe zu fuellen bleiben');
+      for (const grp of q.groups || []) {
+        if (!Number.isInteger(grp.from) || !Number.isInteger(grp.to) || grp.from > grp.to
+          || grp.from < 0 || grp.to >= n) fail(q, 'Gruppenbereich ungueltig');
+        if (!grp.label) fail(q, 'Gruppe ohne Beschriftung');
+      }
+      break;
+    }
     case 'match':
       if (!Array.isArray(q.pairs) || q.pairs.length < 2) fail(q, 'braucht mindestens 2 Paare');
       else {
         if (q.pairs.some(p => !Array.isArray(p) || p.length !== 2)) fail(q, 'Paare müssen [links, rechts] sein');
         const rights = q.pairs.map(p => p[1]);
-        if (new Set(rights).size !== rights.length) fail(q, 'rechte Spalte enthält Dubletten (Zuordnung wäre mehrdeutig)');
+        if (new Set(rights).size < 2) fail(q, 'braucht mindestens zwei verschiedene Antworten');
         const lefts = q.pairs.map(p => p[0]);
         if (new Set(lefts).size !== lefts.length) fail(q, 'linke Spalte enthält Dubletten');
       }

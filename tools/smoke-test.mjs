@@ -28,6 +28,8 @@ for (let i = 0; i < ROUNDS; i++) {
   await page.waitForSelector('#answer-area');
   const kind = await page.evaluate(() => {
     const area = document.querySelector('#answer-area');
+    if (area.querySelector('.pyr-chip')) return 'pyramid';
+    if (area.querySelector('.order-card')) return 'order-bild';
     if (area.querySelector('.order-item')) return 'order';
     if (area.querySelector('select')) return 'match';
     if (area.querySelector('input.text-input')) return 'input';
@@ -39,7 +41,10 @@ for (let i = 0; i < ROUNDS; i++) {
   typesSeen.add(kind);
   if (kind === 'unknown') problems.push(`Runde ${i}: unbekannte Antwortoberfläche`);
 
-  if (kind === 'order') {
+  if (kind === 'pyramid') {
+    const n = await page.locator('#answer-area .pyr-chip').count();
+    for (let k = 0; k < n; k++) await page.locator('#answer-area .pyr-chip:not(.used)').first().click();
+  } else if (kind === 'order' || kind === 'order-bild') {
     const n = await page.locator('#answer-area .order-item').count();
     for (let k = 0; k < n; k++) await page.locator('#answer-area .order-item').nth(k).click();
   } else if (kind === 'match') {

@@ -1,7 +1,7 @@
 // Service Worker: App offline verfügbar machen.
 // Bei jeder inhaltlichen Änderung CACHE_VERSION erhöhen.
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `reitabzeichen-trainer-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -20,7 +20,10 @@ const ASSETS = [
   'js/data/q-pferdekunde.js',
   'js/data/q-gesundheit.js',
   'js/data/q-reiten.js',
-  'js/data/q-praxis.js'
+  'js/data/q-praxis.js',
+  'js/data/q-hilfen.js',
+  'js/data/q-gangarten.js',
+  'js/data/q-ausbildung.js'
 ];
 
 self.addEventListener('install', event => {

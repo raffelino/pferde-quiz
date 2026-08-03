@@ -9,7 +9,8 @@ const DEFAULT_STATE = () => ({
     levels: null,        // null = alle Stufen aktiv
     srs: true,
     hardOnly: false,
-    shuffle: true
+    shuffle: true,
+    session: 'endless'   // Sitzungslänge: endless | t5 | t10 | t20 | c20
   },
   // cards[fragenId] = { box, right, wrong, streak, seenAt }
   cards: {},

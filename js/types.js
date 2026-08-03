@@ -17,7 +17,8 @@ export const TYPE_HINTS = {
   text: 'Antwort eintippen (Tippfehler werden verziehen).',
   number: 'Zahl eingeben.',
   order: 'In der richtigen Reihenfolge antippen.',
-  match: 'Jeder Zeile die passende Antwort zuordnen.'
+  match: 'Jeder Zeile die passende Antwort zuordnen.',
+  pyramid: 'Stufen antippen – sie werden von unten nach oben eingesetzt.'
 };
 
 export function createAnswerUI(q, opts = {}) {
@@ -28,10 +29,41 @@ export function createAnswerUI(q, opts = {}) {
     text: textUI,
     number: numberUI,
     order: orderUI,
-    match: matchUI
+    match: matchUI,
+    pyramid: pyramidUI
   }[q.type];
   if (!factory) throw new Error(`Unbekannter Fragetyp: ${q.type}`);
   return factory(q, opts);
+}
+
+/* ------------------------------------------------- Fußfolge-Diagramm */
+
+// Blick von oben auf das Pferd, Kopf oben.
+const HOOF_POS = { VL: [17, 22], VR: [43, 22], HL: [17, 60], HR: [43, 60] };
+
+function hoofDiagram(hooves) {
+  const grounded = new Set(hooves || []);
+  const feet = Object.entries(HOOF_POS)
+    .map(([key, [x, y]]) =>
+      `<circle cx="${x}" cy="${y}" r="7.5" class="hoof${grounded.has(key) ? ' on' : ''}"/>`)
+    .join('');
+  const svg = `<svg viewBox="0 0 60 82" class="hoof-svg" role="img" aria-hidden="true">
+      <path d="M30 3 L37 15 L23 15 Z" class="hd-nose"/>
+      <rect x="22" y="14" width="16" height="54" rx="8" class="hd-body"/>
+      ${feet}
+    </svg>`;
+  const wrap = el('span', { class: 'hoof-wrap' });
+  wrap.innerHTML = svg;
+  return wrap;
+}
+
+/** Text eines order-Elements (Elemente können Strings oder Objekte sein). */
+function itemLabel(item) {
+  return typeof item === 'string' ? item : item.label;
+}
+
+function hasDiagrams(q) {
+  return Array.isArray(q.items) && q.items.some(i => typeof i === 'object' && Array.isArray(i.hooves));
 }
 
 /* ---------------------------------------------------------- Auswahl */
@@ -254,6 +286,7 @@ function orderUI(q, { onChange } = {}) {
   const order = shuffled(q.items.map((_, i) => i));
   const picks = [];           // Original-Indizes in gewählter Reihenfolge
   const buttons = new Map();  // origIndex -> button
+  const withDiagrams = hasDiagrams(q);
   let resetBtn = null;
 
   function repaint() {
@@ -267,17 +300,41 @@ function orderUI(q, { onChange } = {}) {
     onChange?.();
   }
 
+  function buildButton(orig) {
+    const item = q.items[orig];
+    const toggle = () => {
+      const at = picks.indexOf(orig);
+      if (at >= 0) picks.splice(at, 1); else picks.push(orig);
+      repaint();
+    };
+
+    if (!withDiagrams) return optionButton(itemLabel(item), '', 'order-item', toggle);
+
+    // Bild-Variante: nur das Diagramm, der Text erscheint erst bei der Auflösung.
+    const btn = el('button', {
+      type: 'button',
+      class: 'opt order-item order-card',
+      'aria-pressed': 'false',
+      'aria-label': `Phase ${orig + 1}`,
+      onclick: toggle
+    }, [
+      el('span', { class: 'marker', text: '' }),
+      hoofDiagram(item.hooves),
+      el('span', { class: 'order-caption' })
+    ]);
+    return btn;
+  }
+
   return {
     render(container) {
+      if (q.legend) container.appendChild(el('p', { class: 'order-hint', text: q.legend }));
+      const grid = withDiagrams ? el('div', { class: 'order-grid' }) : container;
       order.forEach(orig => {
-        const btn = optionButton(q.items[orig], '', 'order-item', () => {
-          const at = picks.indexOf(orig);
-          if (at >= 0) picks.splice(at, 1); else picks.push(orig);
-          repaint();
-        });
+        const btn = buildButton(orig);
         buttons.set(orig, btn);
-        container.appendChild(btn);
+        grid.appendChild(btn);
       });
+      if (withDiagrams) container.appendChild(grid);
       resetBtn = el('button', {
         type: 'button', class: 'chip', text: 'Auswahl zurücksetzen', disabled: true,
         onclick: () => { picks.length = 0; repaint(); }
@@ -287,7 +344,7 @@ function orderUI(q, { onChange } = {}) {
     hasAnswer: () => picks.length === q.items.length,
     evaluate: () => ({
       correct: picks.every((orig, i) => orig === i) && picks.length === q.items.length,
-      solution: q.items.map((t, i) => `${i + 1}. ${t}`).join('  →  ')
+      solution: q.items.map((t, i) => `${i + 1}. ${itemLabel(t)}`).join('  →  ')
     }),
     reveal() {
       buttons.forEach((btn, orig) => {
@@ -295,6 +352,8 @@ function orderUI(q, { onChange } = {}) {
         btn.classList.remove('picked');
         const chosenPos = picks.indexOf(orig);
         btn.querySelector('.marker').textContent = String(orig + 1);
+        const caption = btn.querySelector('.order-caption');
+        if (caption) caption.textContent = itemLabel(q.items[orig]);
         if (chosenPos === orig) btn.classList.add('correct');
         else btn.classList.add('wrong');
       });
@@ -303,10 +362,137 @@ function orderUI(q, { onChange } = {}) {
   };
 }
 
+/* -------------------------------------------------------- Pyramide */
+
+function pyramidUI(q, { onChange } = {}) {
+  const n = q.levels.length;
+  const given = new Set(q.given || []);
+  const slots = new Array(n).fill(null);        // Position (0 = unten) -> Stufen-Index
+  given.forEach(i => { slots[i] = i; });
+
+  const openLevels = q.levels.map((_, i) => i).filter(i => !given.has(i));
+  const chipOrder = shuffled(openLevels);
+  const rows = new Map();   // Position -> Zeilen-Element
+  const fixes = new Map();  // Position -> Hinweis auf die richtige Stufe
+  const chips = new Map();  // Stufen-Index -> Chip-Element
+  let locked = false;
+
+  const freeSlot = () => slots.findIndex((v, i) => v === null && !given.has(i));
+
+  function repaint() {
+    rows.forEach((row, pos) => {
+      const value = slots[pos];
+      const text = row.querySelector('.pyr-text');
+      text.textContent = value === null ? '' : q.levels[value];
+      row.classList.toggle('filled', value !== null);
+      row.classList.toggle('given', given.has(pos));
+    });
+    chips.forEach((chip, level) => {
+      const used = slots.includes(level);
+      chip.classList.toggle('used', used);
+      chip.disabled = used || locked;
+    });
+    onChange?.();
+  }
+
+  return {
+    render(container) {
+      const wrap = el('div', { class: 'pyr-wrap' });
+      if (q.caption) wrap.appendChild(el('p', { class: 'pyr-caption', text: q.caption }));
+
+      const main = el('div', { class: `pyr-main${q.groups ? ' has-groups' : ''}` });
+
+      // Gruppenklammern links (Angaben von unten gezählt -> Grid-Zeilen von oben)
+      for (const g of q.groups || []) {
+        const startRow = n - g.to;               // 1-basiert von oben
+        const span = g.to - g.from + 1;
+        main.appendChild(el('div', {
+          class: 'pyr-group',
+          style: `grid-row: ${startRow} / span ${span}; grid-column: 1;`,
+          text: g.label
+        }));
+      }
+
+      // Zeilen von oben nach unten; unten am breitesten
+      const step = 46 / Math.max(1, n - 1);
+      for (let fromTop = 0; fromTop < n; fromTop++) {
+        const pos = n - 1 - fromTop;             // Position von unten gezählt
+        const width = 100 - pos * step;   // pos 0 = unterste, breiteste Stufe
+        const row = el('button', {
+          type: 'button',
+          class: 'pyr-row',
+          style: `width:${width}%`,
+          'aria-label': `Stufe ${pos + 1}`,
+          onclick: () => {
+            if (locked || given.has(pos) || slots[pos] === null) return;
+            slots[pos] = null;
+            repaint();
+          }
+        }, [
+          el('span', { class: 'pyr-num', text: String(pos + 1) }),
+          el('span', { class: 'pyr-text' })
+        ]);
+        const fix = el('span', { class: 'pyr-fix' });
+        rows.set(pos, row);
+        fixes.set(pos, fix);
+        main.appendChild(el('div', {
+          class: 'pyr-cell',
+          style: q.groups ? 'grid-column: 2;' : ''
+        }, [row, fix]));
+      }
+      wrap.appendChild(main);
+
+      if (q.side) {
+        wrap.classList.add('with-side');
+        wrap.appendChild(el('div', { class: 'pyr-side' }, [
+          el('span', { class: 'pyr-side-text', text: q.side })
+        ]));
+      }
+      container.appendChild(wrap);
+
+      const chipBox = el('div', { class: 'pyr-chips' });
+      chipOrder.forEach(level => {
+        const chip = el('button', {
+          type: 'button', class: 'pyr-chip', text: q.levels[level],
+          onclick: () => {
+            if (locked) return;
+            const slot = freeSlot();
+            if (slot < 0) return;
+            slots[slot] = level;
+            repaint();
+          }
+        });
+        chips.set(level, chip);
+        chipBox.appendChild(chip);
+      });
+      container.appendChild(chipBox);
+      repaint();
+    },
+    hasAnswer: () => slots.every(v => v !== null),
+    evaluate: () => ({
+      correct: slots.every((v, i) => v === i),
+      solution: q.levels.map((l, i) => `${i + 1}. ${l}`).join('  →  ')
+    }),
+    reveal() {
+      locked = true;
+      rows.forEach((row, pos) => {
+        row.disabled = true;
+        if (given.has(pos)) return;
+        const ok = slots[pos] === pos;
+        row.classList.add(ok ? 'correct' : 'wrong');
+        if (!ok) fixes.get(pos).textContent = `richtig: ${q.levels[pos]}`;
+      });
+      chips.forEach(chip => { chip.disabled = true; });
+    }
+  };
+}
+
 /* ------------------------------------------------------ Zuordnung */
 
 function matchUI(q, { onChange } = {}) {
-  const rights = shuffled(q.pairs.map(p => p[1]));
+  // Mehrfach vorkommende Antworten nur einmal zur Auswahl stellen
+  // (dann ist es eine Zuordnung in Gruppen).
+  const rights = shuffled([...new Set(q.pairs.map(p => p[1]))]);
   const rows = [];
 
   return {

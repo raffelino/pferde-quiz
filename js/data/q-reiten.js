@@ -110,20 +110,16 @@ export default [
 
   /* ------------------------------------------------------- REITLEHRE */
   {
-    id: 'rl01', cat: 'reitlehre', level: 'aufbau', type: 'order',
-    q: 'Bringe die Punkte der Skala der Ausbildung in die richtige Reihenfolge.',
-    items: ['Takt', 'Losgelassenheit', 'Anlehnung', 'Schwung', 'Geraderichtung', 'Versammlung'],
-    explain: 'Die ersten drei Punkte bilden die Gewöhnungsphase, Schwung und Geraderichtung die Entwicklung der Schubkraft, die Versammlung die Tragkraft.'
-  },
-  {
-    id: 'rl02', cat: 'reitlehre', level: 'basis', type: 'match',
-    q: 'Ordne jeder Gangart den richtigen Takt zu.',
-    pairs: [
-      ['Schritt', 'Viertakt'],
-      ['Trab', 'Zweitakt'],
-      ['Galopp', 'Dreitakt']
+    id: 'rl01', cat: 'ausbildung', level: 'aufbau', type: 'single',
+    q: 'Welche drei Punkte der Skala der Ausbildung bilden die Gewöhnungsphase?',
+    options: [
+      'Takt, Losgelassenheit, Anlehnung',
+      'Anlehnung, Schwung, Geraderichtung',
+      'Schwung, Geraderichtung, Versammlung',
+      'Takt, Schwung, Versammlung'
     ],
-    explain: 'Der Schritt ist die einzige Gangart ohne Schwebephase. Trab und Galopp haben eine Schwebephase; im Galopp folgt nach dem dritten Takt der Schwebemoment.'
+    a: 0,
+    explain: 'Gewöhnungsphase: Takt, Losgelassenheit, Anlehnung. Es folgen die Entwicklung der Schubkraft (Schwung, Geraderichtung) und der Tragkraft (Versammlung).'
   },
   {
     id: 'rl03', cat: 'reitlehre', level: 'basis', type: 'multi',
