@@ -4501,6 +4501,7 @@ function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = 
   const dueIndex = round.retry.findIndex((e) => free(e.id) && e.dueAt <= round.asked.length);
   if (dueIndex >= 0) {
     const [entry] = round.retry.splice(dueIndex, 1);
+    if (!round.asked.includes(entry.id)) round.asked.push(entry.id);
     return serve(byId.get(entry.id), { retry: true });
   }
   const asked = new Set(round.asked);
@@ -4526,6 +4527,11 @@ function queueRetry(round, id, poolSize = Infinity) {
   round.counts[id] = attempt;
   round.retry.push({ id, dueAt: round.asked.length + retryDelay(attempt, poolSize) });
   return true;
+}
+function clearRetry(round, id) {
+  const before = round.retry.length;
+  round.retry = round.retry.filter((e) => e.id !== id);
+  return round.retry.length !== before;
 }
 function roundProgress(pool, round) {
   const ids = new Set(pool.map((q) => q.id));
@@ -5380,7 +5386,8 @@ function checkAnswer() {
   if (correct) session.right++;
   else session.wrong++;
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
-  if (!correct) queueRetry(state2.round, q.id, session.pool.length);
+  if (correct) clearRetry(state2.round, q.id);
+  else queueRetry(state2.round, q.id, session.pool.length);
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
   session.ui.reveal(correct);
   const fb = $("#feedback");

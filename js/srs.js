@@ -136,10 +136,13 @@ export function pickInRound(pool, round, { useSrs = true, lastId = null, prio = 
     return { question, newPass: _newPass, retry: false, ...opts };
   };
 
-  // 1. fällige Wiederholung
+  // 1. fällige Wiederholung. Stammt sie aus der Vorrunde, gilt die Frage
+  //    damit auch für diese Runde als gestellt – sonst käme sie später
+  //    nochmal als reguläre Frage.
   const dueIndex = round.retry.findIndex(e => free(e.id) && e.dueAt <= round.asked.length);
   if (dueIndex >= 0) {
     const [entry] = round.retry.splice(dueIndex, 1);
+    if (!round.asked.includes(entry.id)) round.asked.push(entry.id);
     return serve(byId.get(entry.id), { retry: true });
   }
 
@@ -174,6 +177,17 @@ export function queueRetry(round, id, poolSize = Infinity) {
   round.counts[id] = attempt;
   round.retry.push({ id, dueAt: round.asked.length + retryDelay(attempt, poolSize) });
   return true;
+}
+
+/**
+ * Vorgemerkte Wiederholung streichen – wird nach einer richtigen Antwort
+ * aufgerufen. Ohne das käme eine Frage, die aus der Vorrunde noch eine
+ * Wiederholung offen hat, trotz richtiger Antwort ein zweites Mal.
+ */
+export function clearRetry(round, id) {
+  const before = round.retry.length;
+  round.retry = round.retry.filter(e => e.id !== id);
+  return round.retry.length !== before;
 }
 
 /** Fortschritt innerhalb der laufenden Runde. */

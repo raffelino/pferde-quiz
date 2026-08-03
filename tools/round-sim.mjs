@@ -14,7 +14,7 @@ globalThis.localStorage = {
 };
 
 const { loadState } = await import('../js/store.js');
-const { pickInRound, queueRetry, recordAnswer, newRound, RETRY_MIN_GAP } = await import('../js/srs.js');
+const { pickInRound, queueRetry, clearRetry, recordAnswer, newRound, RETRY_MIN_GAP } = await import('../js/srs.js');
 
 loadState();
 
@@ -50,7 +50,8 @@ const errors = [];
     }
     const correct = !HARD.has(question.id);
     recordAnswer(question.id, correct);
-    if (!correct) queueRetry(round, question.id);
+    if (correct) clearRetry(round, question.id);
+    else queueRetry(round, question.id);
     rounds[rounds.length - 1].push(question.id);
     lastSeen[question.id] = all.length;
     all.push(question.id);
@@ -71,15 +72,81 @@ const errors = [];
     }
   });
 
+  // Dauerhaft falsche Fragen kommen deutlich öfter als richtige (die genau 2×
+  // in zwei Runden vorkommen). Eine aus der Vorrunde übernommene Wiederholung
+  // belegt dabei den regulären Platz der neuen Runde.
   for (const id of HARD) {
     const count = all.filter(x => x === id).length;
-    if (count < 4) errors.push(`${id} wurde immer falsch beantwortet, kam aber nur ${count}× dran`);
+    if (count < 3) errors.push(`${id} wurde immer falsch beantwortet, kam aber nur ${count}× dran`);
   }
 
   console.log(`Zwei Runden: ${rounds.map(r => r.length).join(' + ')} Fragen gestellt.`);
   console.log(`Dauerhaft falsche Fragen: ${[...HARD].map(id => `${id}×${all.filter(x => x === id).length}`).join(', ')}`);
   console.log(`Abstände bis zur Wiederholung: ${gaps.sort((a, b) => a - b).join(', ')}`);
   if (new Set(gaps).size < 2) errors.push('Die Abstände sind immer gleich – der Zufall fehlt');
+}
+
+/* ---- 1b) Richtig beantwortet = in dieser Runde nicht mehr ---------------- */
+//
+// Drei Verhaltensmuster im selben Durchlauf:
+//   IMMER_FALSCH  -> darf mehrfach kommen (1 + bis zu 2 Wiederholungen)
+//   ERST_FALSCH   -> beim ersten Mal falsch, in der Wiederholung richtig
+//                    -> danach ist Schluss für diese Runde (genau 2×)
+//   Rest          -> sofort richtig -> genau 1× pro Runde
+{
+  const IMMER_FALSCH = new Set(['q5']);
+  const ERST_FALSCH = new Set(['q11', 'q29']);
+  const round = newRound();
+  const rounds = [[]];
+  const antworten = {};        // id -> Liste der gegebenen Antworten (true/false)
+  let last = null;
+  let guard = 0;
+
+  while (rounds.length <= 3) {
+    const { question, newPass } = pickInRound(POOL, round, { useSrs: true, lastId: last });
+    if (newPass) {
+      if (rounds.length === 3) break;
+      rounds.push([]);
+    }
+    const id = question.id;
+    const versuch = (antworten[id] || []).length;
+    let correct;
+    if (IMMER_FALSCH.has(id)) correct = false;
+    else if (ERST_FALSCH.has(id)) correct = versuch > 0;   // nur der erste Versuch ist falsch
+    else correct = true;
+
+    recordAnswer(id, correct);
+    if (correct) clearRetry(round, id);
+    else queueRetry(round, id, POOL.length);
+    (antworten[id] ||= []).push(correct);
+    rounds[rounds.length - 1].push(id);
+    last = id;
+    if (++guard > 600) { errors.push('Endlosschleife (1b)'); break; }
+  }
+
+  // Die eigentliche Regel: Sobald eine Frage in einer Runde richtig beantwortet
+  // wurde, darf sie in derselben Runde nicht noch einmal gestellt werden.
+  rounds.forEach((order, idx) => {
+    const schonRichtig = new Set();
+    order.forEach((id, k) => {
+      if (schonRichtig.has(id)) {
+        errors.push(`${id} kam in Runde ${idx + 1} an Position ${k + 1} erneut, obwohl vorher richtig beantwortet`);
+      }
+      const versuche = antworten[id] || [];
+      // Antworten in Reihenfolge: die k-te Nennung dieser Frage
+      const nennung = order.slice(0, k + 1).filter(x => x === id).length - 1;
+      const offsetVorherigeRunden = rounds.slice(0, idx).flat().filter(x => x === id).length;
+      if (versuche[offsetVorherigeRunden + nennung] === true) schonRichtig.add(id);
+    });
+  });
+
+  const proRunde = rounds.map((order, i) => {
+    const wieder = order.filter((id, k) => order.indexOf(id) !== k).length;
+    return `R${i + 1}: ${order.length} Fragen, ${wieder} Wiederholung(en)`;
+  });
+  console.log(`Richtig = einmal pro Runde – ${proRunde.join(' | ')}`);
+  console.log(`  q11 (erst falsch, dann richtig): ${rounds.map(r => r.filter(x => x === 'q11').length).join(', ')} pro Runde`);
+  console.log(`  q5 (immer falsch): ${rounds.map(r => r.filter(x => x === 'q5').length).join(', ')} pro Runde`);
 }
 
 /* ---------------- 2) Priorisierung: wichtige Kategorie kommt früher -------- */
@@ -127,8 +194,10 @@ const errors = [];
   for (let i = 0; i < 18; i++) {
     const { question } = pickInRound(SMALL, round, { useSrs: true, lastId: last });
     if (!question) { errors.push('Kleiner Pool liefert keine Frage mehr'); break; }
-    recordAnswer(question.id, i % 4 !== 0);           // jede vierte Antwort falsch
-    if (i % 4 === 0) queueRetry(round, question.id, SMALL.length);
+    const ok = i % 4 !== 0;                          // jede vierte Antwort falsch
+    recordAnswer(question.id, ok);
+    if (ok) clearRetry(round, question.id);
+    else queueRetry(round, question.id, SMALL.length);
     seen.push(question.id);
     last = question.id;
   }

@@ -6,7 +6,7 @@ import { $, el, formatTime } from './util.js';
 import { loadState, save, saveNow, resetProgress } from './store.js';
 import {
   recordAnswer, poolProgress, isHard, isMastered, MAX_BOX,
-  pickInRound, queueRetry, roundProgress, newRound, normalizeRound
+  pickInRound, queueRetry, clearRetry, roundProgress, newRound, normalizeRound
 } from './srs.js';
 import { createAnswerUI, TYPE_HINTS } from './types.js';
 
@@ -371,7 +371,8 @@ function checkAnswer() {
   session.total++;
   if (correct) session.right++; else session.wrong++;
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
-  if (!correct) queueRetry(state.round, q.id, session.pool.length);
+  if (correct) clearRetry(state.round, q.id);
+  else queueRetry(state.round, q.id, session.pool.length);
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
 
   session.ui.reveal(correct);
