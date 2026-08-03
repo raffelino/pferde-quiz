@@ -450,7 +450,10 @@ document.addEventListener('keydown', ev => {
 
 showScreen('start');
 
-if ('serviceWorker' in navigator) {
+// In der Einzeldatei-Version (tools/build-single-file.mjs) gibt es keine sw.js.
+const isSingleFile = !!document.querySelector('meta[name="build"][content="single-file"]');
+
+if ('serviceWorker' in navigator && !isSingleFile) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register(new URL('../sw.js', import.meta.url))

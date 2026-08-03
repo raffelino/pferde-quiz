@@ -2,48 +2,140 @@
    Reitabzeichen Trainer – Mobile-first Stylesheet
    ============================================================ */
 
+/* Farbwelt: Sattelleder als Akzent, warme Stall-Neutraltöne als Grund.
+   Grün und Rot bleiben ausschließlich für "richtig" und "falsch" reserviert –
+   deshalb ist der Akzent bewusst kein Grün. */
 :root {
-  --bg: #10140f;
-  --bg-elev: #1a2018;
-  --bg-elev-2: #232b20;
-  --line: #33402f;
-  --text: #eef2ea;
-  --text-dim: #a6b3a0;
-  --brand: #7fb069;
-  --brand-dark: #3f6b4f;
-  --brand-ink: #0e1a10;
-  --ok: #5fd08a;
-  --ok-bg: #13351f;
-  --bad: #ff7a7a;
-  --bad-bg: #3a1919;
-  --warn: #f0b95b;
+  /* Dunkle Palette */
+  --d-bg: #14110e;
+  --d-bg-elev: #1d1915;
+  --d-bg-elev-2: #272119;
+  --d-line: #3b3228;
+  --d-text: #f3ede5;
+  --d-text-dim: #ada093;
+  --d-brand: #d3873f;
+  --d-brand-dark: #8a5522;
+  --d-brand-ink: #1a1109;
+  --d-ok: #58c98a;
+  --d-ok-bg: #14301f;
+  --d-bad: #ff8080;
+  --d-bad-bg: #3a1a17;
+  --d-warn: #d8a63c;
+  --d-shadow: 0 6px 20px rgba(0, 0, 0, .4);
+
+  /* Helle Palette */
+  --l-bg: #f6f2ea;
+  --l-bg-elev: #fffdf8;
+  --l-bg-elev-2: #efe8db;
+  --l-line: #ddd2c0;
+  --l-text: #211a12;
+  --l-text-dim: #6a5f52;
+  --l-brand: #9c5a1c;
+  --l-brand-dark: #7a4514;
+  --l-brand-ink: #fffaf3;
+  --l-ok: #1c7a45;
+  --l-ok-bg: #dcf0e2;
+  --l-bad: #b3251c;
+  --l-bad-bg: #fbe4e1;
+  --l-warn: #8a6a12;
+  --l-shadow: 0 4px 14px rgba(60, 40, 20, .1);
+
   --radius: 16px;
   --radius-sm: 11px;
-  --shadow: 0 6px 20px rgba(0, 0, 0, .35);
   --tap: 48px;
+}
+
+/* Aktive Tokens – Standard ist die dunkle Palette. */
+:root {
+  color-scheme: dark;
+  --bg: var(--d-bg);
+  --bg-elev: var(--d-bg-elev);
+  --bg-elev-2: var(--d-bg-elev-2);
+  --line: var(--d-line);
+  --text: var(--d-text);
+  --text-dim: var(--d-text-dim);
+  --brand: var(--d-brand);
+  --brand-dark: var(--d-brand-dark);
+  --brand-ink: var(--d-brand-ink);
+  --ok: var(--d-ok);
+  --ok-bg: var(--d-ok-bg);
+  --bad: var(--d-bad);
+  --bad-bg: var(--d-bad-bg);
+  --warn: var(--d-warn);
+  --shadow: var(--d-shadow);
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f4f6f1;
-    --bg-elev: #ffffff;
-    --bg-elev-2: #eef2e9;
-    --line: #d8e0d2;
-    --text: #16200f;
-    --text-dim: #5c6b55;
-    --brand: #4a7c3f;
-    --brand-dark: #3f6b4f;
-    --brand-ink: #ffffff;
-    --ok: #1f7a45;
-    --ok-bg: #dff3e5;
-    --bad: #b3261e;
-    --bad-bg: #fbe3e1;
-    --warn: #9a6b0f;
-    --shadow: 0 4px 14px rgba(20, 40, 20, .10);
+    color-scheme: light;
+    --bg: var(--l-bg);
+    --bg-elev: var(--l-bg-elev);
+    --bg-elev-2: var(--l-bg-elev-2);
+    --line: var(--l-line);
+    --text: var(--l-text);
+    --text-dim: var(--l-text-dim);
+    --brand: var(--l-brand);
+    --brand-dark: var(--l-brand-dark);
+    --brand-ink: var(--l-brand-ink);
+    --ok: var(--l-ok);
+    --ok-bg: var(--l-ok-bg);
+    --bad: var(--l-bad);
+    --bad-bg: var(--l-bad-bg);
+    --warn: var(--l-warn);
+    --shadow: var(--l-shadow);
   }
 }
 
+/* Manuelle Umschaltung schlägt die Systemeinstellung – in beide Richtungen. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--l-bg);
+  --bg-elev: var(--l-bg-elev);
+  --bg-elev-2: var(--l-bg-elev-2);
+  --line: var(--l-line);
+  --text: var(--l-text);
+  --text-dim: var(--l-text-dim);
+  --brand: var(--l-brand);
+  --brand-dark: var(--l-brand-dark);
+  --brand-ink: var(--l-brand-ink);
+  --ok: var(--l-ok);
+  --ok-bg: var(--l-ok-bg);
+  --bad: var(--l-bad);
+  --bad-bg: var(--l-bad-bg);
+  --warn: var(--l-warn);
+  --shadow: var(--l-shadow);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: var(--d-bg);
+  --bg-elev: var(--d-bg-elev);
+  --bg-elev-2: var(--d-bg-elev-2);
+  --line: var(--d-line);
+  --text: var(--d-text);
+  --text-dim: var(--d-text-dim);
+  --brand: var(--d-brand);
+  --brand-dark: var(--d-brand-dark);
+  --brand-ink: var(--d-brand-ink);
+  --ok: var(--d-ok);
+  --ok-bg: var(--d-ok-bg);
+  --bad: var(--d-bad);
+  --bad-bg: var(--d-bad-bg);
+  --warn: var(--d-warn);
+  --shadow: var(--d-shadow);
+}
+
 * { box-sizing: border-box; }
+
+/* Tastaturbedienung muss immer sichtbar sein – auch bei Elementen,
+   deren eigentliches Eingabefeld optisch versteckt ist. */
+:where(button, input, select, textarea, a):focus-visible,
+.cat-row:has(input:focus-visible),
+.level-pill:has(input:focus-visible),
+.switch-row:has(input:focus-visible) {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
 
 /* Muss die display-Regeln der Komponenten überschreiben. */
 [hidden] { display: none !important; }

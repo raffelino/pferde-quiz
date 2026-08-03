@@ -53,6 +53,18 @@ Solange Schritt 1–2 fehlen, bricht der Workflow im Schritt „Setup Pages" mit
 Danach veröffentlicht `.github/workflows/deploy-pages.yml` die Seite bei jedem Push
 auf `main`, `master` oder einen `claude/**`-Branch.
 
+## Einzeldatei-Version (ohne Server, offline)
+
+`dist/reitabzeichen-trainer.html` enthält die komplette App in einer einzigen Datei –
+CSS und JavaScript sind eingebettet. Die Datei lässt sich per Doppelklick öffnen,
+auf einen USB-Stick kopieren oder verschicken; der Lernfortschritt wird trotzdem
+im Browser gespeichert. Neu bauen:
+
+```bash
+node tools/build-single-file.mjs            # dist/reitabzeichen-trainer.html
+node tools/build-single-file.mjs --fragment # ohne <html>/<head>/<body>-Gerüst
+```
+
 ## Lokal starten
 
 Die App braucht einen kleinen Webserver (ES-Module funktionieren nicht über `file://`):

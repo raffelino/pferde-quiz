@@ -1,0 +1,3979 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3f6b4f">
+<title>Reitabzeichen Trainer</title>
+<meta name="build" content="single-file">
+<meta name="description" content="Lern-App zum Training für die Reitabzeichen und den Basispass Pferdekunde – mit Karteikarten-System, Kategorien und Statistik.">
+<style>
+/* ============================================================
+   Reitabzeichen Trainer – Mobile-first Stylesheet
+   ============================================================ */
+
+/* Farbwelt: Sattelleder als Akzent, warme Stall-Neutraltöne als Grund.
+   Grün und Rot bleiben ausschließlich für "richtig" und "falsch" reserviert –
+   deshalb ist der Akzent bewusst kein Grün. */
+:root {
+  /* Dunkle Palette */
+  --d-bg: #14110e;
+  --d-bg-elev: #1d1915;
+  --d-bg-elev-2: #272119;
+  --d-line: #3b3228;
+  --d-text: #f3ede5;
+  --d-text-dim: #ada093;
+  --d-brand: #d3873f;
+  --d-brand-dark: #8a5522;
+  --d-brand-ink: #1a1109;
+  --d-ok: #58c98a;
+  --d-ok-bg: #14301f;
+  --d-bad: #ff8080;
+  --d-bad-bg: #3a1a17;
+  --d-warn: #d8a63c;
+  --d-shadow: 0 6px 20px rgba(0, 0, 0, .4);
+
+  /* Helle Palette */
+  --l-bg: #f6f2ea;
+  --l-bg-elev: #fffdf8;
+  --l-bg-elev-2: #efe8db;
+  --l-line: #ddd2c0;
+  --l-text: #211a12;
+  --l-text-dim: #6a5f52;
+  --l-brand: #9c5a1c;
+  --l-brand-dark: #7a4514;
+  --l-brand-ink: #fffaf3;
+  --l-ok: #1c7a45;
+  --l-ok-bg: #dcf0e2;
+  --l-bad: #b3251c;
+  --l-bad-bg: #fbe4e1;
+  --l-warn: #8a6a12;
+  --l-shadow: 0 4px 14px rgba(60, 40, 20, .1);
+
+  --radius: 16px;
+  --radius-sm: 11px;
+  --tap: 48px;
+}
+
+/* Aktive Tokens – Standard ist die dunkle Palette. */
+:root {
+  color-scheme: dark;
+  --bg: var(--d-bg);
+  --bg-elev: var(--d-bg-elev);
+  --bg-elev-2: var(--d-bg-elev-2);
+  --line: var(--d-line);
+  --text: var(--d-text);
+  --text-dim: var(--d-text-dim);
+  --brand: var(--d-brand);
+  --brand-dark: var(--d-brand-dark);
+  --brand-ink: var(--d-brand-ink);
+  --ok: var(--d-ok);
+  --ok-bg: var(--d-ok-bg);
+  --bad: var(--d-bad);
+  --bad-bg: var(--d-bad-bg);
+  --warn: var(--d-warn);
+  --shadow: var(--d-shadow);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: var(--l-bg);
+    --bg-elev: var(--l-bg-elev);
+    --bg-elev-2: var(--l-bg-elev-2);
+    --line: var(--l-line);
+    --text: var(--l-text);
+    --text-dim: var(--l-text-dim);
+    --brand: var(--l-brand);
+    --brand-dark: var(--l-brand-dark);
+    --brand-ink: var(--l-brand-ink);
+    --ok: var(--l-ok);
+    --ok-bg: var(--l-ok-bg);
+    --bad: var(--l-bad);
+    --bad-bg: var(--l-bad-bg);
+    --warn: var(--l-warn);
+    --shadow: var(--l-shadow);
+  }
+}
+
+/* Manuelle Umschaltung schlägt die Systemeinstellung – in beide Richtungen. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--l-bg);
+  --bg-elev: var(--l-bg-elev);
+  --bg-elev-2: var(--l-bg-elev-2);
+  --line: var(--l-line);
+  --text: var(--l-text);
+  --text-dim: var(--l-text-dim);
+  --brand: var(--l-brand);
+  --brand-dark: var(--l-brand-dark);
+  --brand-ink: var(--l-brand-ink);
+  --ok: var(--l-ok);
+  --ok-bg: var(--l-ok-bg);
+  --bad: var(--l-bad);
+  --bad-bg: var(--l-bad-bg);
+  --warn: var(--l-warn);
+  --shadow: var(--l-shadow);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: var(--d-bg);
+  --bg-elev: var(--d-bg-elev);
+  --bg-elev-2: var(--d-bg-elev-2);
+  --line: var(--d-line);
+  --text: var(--d-text);
+  --text-dim: var(--d-text-dim);
+  --brand: var(--d-brand);
+  --brand-dark: var(--d-brand-dark);
+  --brand-ink: var(--d-brand-ink);
+  --ok: var(--d-ok);
+  --ok-bg: var(--d-ok-bg);
+  --bad: var(--d-bad);
+  --bad-bg: var(--d-bad-bg);
+  --warn: var(--d-warn);
+  --shadow: var(--d-shadow);
+}
+
+* { box-sizing: border-box; }
+
+/* Tastaturbedienung muss immer sichtbar sein – auch bei Elementen,
+   deren eigentliches Eingabefeld optisch versteckt ist. */
+:where(button, input, select, textarea, a):focus-visible,
+.cat-row:has(input:focus-visible),
+.level-pill:has(input:focus-visible),
+.switch-row:has(input:focus-visible) {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Muss die display-Regeln der Komponenten überschreiben. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 .4em; }
+h2 { font-size: 1.12rem; }
+h3 { font-size: 1rem; }
+p { margin: 0 0 .7em; }
+p:last-child { margin-bottom: 0; }
+
+.muted { color: var(--text-dim); }
+.small { font-size: .85rem; }
+
+/* ---------- Topbar ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 10px) 12px 10px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  flex: 1;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.brand span { color: var(--brand); font-weight: 600; }
+.brand::before { content: "🐴 "; }
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-elev);
+  color: var(--text);
+  cursor: pointer;
+}
+.icon-btn:active { transform: scale(.94); }
+
+/* ---------- Layout ---------- */
+.screen {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 14px 12px calc(env(safe-area-inset-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.card-head h2 { margin: 0; }
+
+.intro h2 { font-size: 1.3rem; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  min-height: var(--tap);
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .06s ease, filter .15s ease;
+}
+.btn:active { transform: scale(.98); }
+.btn.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+.btn.ghost { background: transparent; color: var(--text-dim); }
+.btn.danger { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+.btn.big { width: 100%; font-size: 1.08rem; padding: 16px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.chip-row { display: flex; gap: 6px; }
+.chip {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev-2);
+  color: var(--text-dim);
+  font-size: .82rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.chip:active { transform: scale(.95); }
+
+/* ---------- Kategorien / Level ---------- */
+.cat-list, .level-list, .opt-list, .statcat-list, .hard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  cursor: pointer;
+}
+.cat-row input { position: absolute; opacity: 0; pointer-events: none; }
+.cat-row .tick {
+  width: 24px; height: 24px; flex: none;
+  border: 2px solid var(--line);
+  border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: .85rem; color: transparent;
+}
+.cat-row input:checked ~ .tick {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+.cat-row .cat-emoji { font-size: 1.15rem; }
+.cat-row .cat-name { flex: 1; font-weight: 600; font-size: .95rem; }
+.cat-row .cat-count { font-size: .78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.cat-row .cat-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.cat-row .cat-bar i { display: block; height: 100%; background: var(--brand); }
+.cat-row .cat-main { flex: 1; min-width: 0; }
+.cat-row .cat-top { display: flex; align-items: center; gap: 8px; }
+
+.level-list { flex-direction: row; flex-wrap: wrap; }
+.level-pill {
+  flex: 1 1 30%;
+  text-align: center;
+  padding: 10px 8px;
+  min-height: var(--tap);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.level-pill input { position: absolute; opacity: 0; pointer-events: none; }
+.level-pill.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+
+/* ---------- Switch ---------- */
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  cursor: pointer;
+}
+.switch-row > span:first-child { flex: 1; display: flex; flex-direction: column; }
+.switch-row strong { font-size: .95rem; font-weight: 600; }
+.switch-row small { color: var(--text-dim); font-size: .8rem; }
+.switch-row input { position: absolute; opacity: 0; pointer-events: none; }
+.switch {
+  flex: none;
+  width: 46px; height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  position: relative;
+  transition: background .2s;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .2s;
+}
+.switch-row input:checked ~ .switch { background: var(--brand); }
+.switch-row input:checked ~ .switch::after { transform: translateX(18px); }
+
+/* ---------- Start-Aktionen ---------- */
+.start-actions { display: flex; flex-direction: column; gap: 8px; }
+.pool-info { text-align: center; color: var(--text-dim); font-size: .88rem; margin: 0; }
+.disclaimer { font-size: .74rem; color: var(--text-dim); text-align: center; margin: 6px 0 0; }
+
+.progress-summary {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.progress-summary .pill {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Statbar ---------- */
+.statbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 6px;
+}
+.stat { text-align: center; }
+.stat-val {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.stat.ok .stat-val { color: var(--ok); }
+.stat.bad .stat-val { color: var(--bad); }
+.stat-lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); }
+
+.quota-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.quota-fill { height: 100%; width: 0; background: var(--ok); transition: width .3s ease; }
+
+/* ---------- Frage ---------- */
+.question-card { display: flex; flex-direction: column; gap: 10px; }
+.q-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--brand-dark);
+  color: #fff;
+}
+.badge.ghost { background: transparent; border: 1px solid var(--line); color: var(--text-dim); }
+.badge.box { background: var(--bg-elev-2); color: var(--text-dim); }
+
+.q-text { font-size: 1.18rem; margin: 0; }
+.q-hint { font-size: .82rem; color: var(--text-dim); margin: 0; }
+
+.answer-area { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+
+/* Optionen */
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.opt .marker {
+  width: 26px; height: 26px; flex: none;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: .8rem; font-weight: 700;
+  color: transparent;
+}
+.opt.radio .marker { border-radius: 50%; }
+.opt.selected { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, var(--bg-elev-2)); }
+.opt.selected .marker { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.opt.correct { border-color: var(--ok); background: var(--ok-bg); }
+.opt.correct .marker { background: var(--ok); border-color: var(--ok); color: #06210f; }
+.opt.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.opt.wrong .marker { background: var(--bad); border-color: var(--bad); color: #2a0b0b; }
+.opt.missed { border-color: var(--ok); border-style: dashed; }
+.opt:disabled { cursor: default; }
+.opt .opt-text { flex: 1; }
+
+/* Wahr/Falsch */
+.tf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tf-row .opt { justify-content: center; font-weight: 700; font-size: 1.05rem; }
+
+/* Texteingabe */
+.text-input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 13px 14px;
+  font-size: 1.05rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-elev-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.text-input:focus { outline: 2px solid var(--brand); border-color: var(--brand); }
+.text-input.correct { border-color: var(--ok); background: var(--ok-bg); }
+.text-input.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.unit-row { display: flex; align-items: center; gap: 10px; }
+.unit-row .text-input { flex: 1; }
+.unit-row .unit { font-weight: 600; color: var(--text-dim); }
+
+/* Reihenfolge */
+.order-hint { font-size: .82rem; color: var(--text-dim); }
+.order-item { position: relative; }
+.order-item .marker { border-radius: 50%; }
+.order-item.picked { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 12%, var(--bg-elev-2)); }
+.order-item.picked .marker { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.order-solution { font-size: .9rem; }
+.order-solution li { margin-bottom: 2px; }
+
+/* Zuordnung */
+.match-grid { display: flex; flex-direction: column; gap: 8px; }
+.match-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  min-width: 0;
+}
+.match-pair .m-left { font-weight: 600; font-size: .95rem; }
+.match-pair select {
+  min-height: 44px;
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 10px;
+  font-size: .95rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+}
+.match-pair.correct { border-color: var(--ok); background: var(--ok-bg); }
+.match-pair.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.match-pair .m-fix { font-size: .8rem; color: var(--ok); }
+
+/* ---------- Feedback ---------- */
+.feedback { border-left: 5px solid var(--line); }
+.feedback.good { border-left-color: var(--ok); }
+.feedback.bad { border-left-color: var(--bad); }
+.feedback.good h3 { color: var(--ok); }
+.feedback.bad h3 { color: var(--bad); }
+.fb-solution { font-weight: 600; }
+
+.quiz-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 calc(env(safe-area-inset-bottom) + 6px);
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+}
+.quiz-actions .btn { flex: 1; }
+.quiz-actions .btn.ghost { flex: 0 0 38%; }
+
+/* ---------- Statistik ---------- */
+.big-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+.bs-val { display: block; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bs-val.ok { color: var(--ok); }
+.bs-val.bad { color: var(--bad); }
+.bs-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); }
+
+.statcat-row { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.statcat-row:last-child { border-bottom: 0; }
+.statcat-top { display: flex; justify-content: space-between; gap: 8px; font-size: .9rem; }
+.statcat-top b { font-weight: 600; }
+.statcat-top span { color: var(--text-dim); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.statcat-bar { height: 7px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.statcat-bar i { display: block; height: 100%; background: var(--brand); }
+
+.boxes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; align-items: end; height: 130px; }
+.box-col { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 4px; text-align: center; }
+.box-col i { display: block; background: var(--brand); border-radius: 6px 6px 0 0; min-height: 3px; }
+.box-col .b-n { font-size: .78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.box-col .b-l { font-size: .68rem; color: var(--text-dim); }
+.box-col:nth-child(1) i { background: var(--bad); }
+.box-col:nth-child(2) i { background: var(--warn); }
+.box-col:nth-child(5) i { background: var(--ok); }
+
+.hard-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: .9rem;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.hard-list li:last-child { border-bottom: 0; }
+.hard-list .h-score {
+  flex: none;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--bad);
+  background: var(--bad-bg);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.danger-zone { border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 88px);
+  transform: translateX(-50%);
+  background: var(--bg-elev-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: .9rem;
+  box-shadow: var(--shadow);
+  z-index: 50;
+  animation: pop .2s ease;
+}
+@keyframes pop { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Tablet / Desktop ---------- */
+@media (min-width: 620px) {
+  .q-text { font-size: 1.3rem; }
+  .big-stats { grid-template-columns: repeat(6, 1fr); }
+  .level-list { flex-wrap: nowrap; }
+}
+
+</style>
+</head>
+<body>
+<header class="topbar" id="topbar">
+  <button class="icon-btn" id="btn-home" aria-label="Zurück zum Start" hidden>
+    <span aria-hidden="true">‹</span>
+  </button>
+  <h1 class="brand">Reitabzeichen<span>Trainer</span></h1>
+  <button class="icon-btn" id="btn-stats" aria-label="Statistik anzeigen">
+    <span aria-hidden="true">▣</span>
+  </button>
+</header>
+
+<!-- ============ START / EINSTELLUNGEN ============ -->
+<main id="screen-start" class="screen" aria-labelledby="start-title">
+  <section class="card intro">
+    <h2 id="start-title">Bereit fürs Abzeichen?</h2>
+    <p class="muted">
+      Übe die Theorie für Basispass und Reitabzeichen. Fragen, die du oft falsch
+      beantwortest, kommen automatisch häufiger dran – bis sie sitzen.
+    </p>
+    <div class="progress-summary" id="global-progress"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Kategorien</h2>
+      <div class="chip-row">
+        <button class="chip" id="cat-all" type="button">Alle</button>
+        <button class="chip" id="cat-none" type="button">Keine</button>
+      </div>
+    </div>
+    <ul class="cat-list" id="cat-list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Schwierigkeit</h2>
+    <p class="muted small">Nach Abzeichen-Stufe filtern.</p>
+    <ul class="level-list" id="level-list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Modus</h2>
+    <ul class="opt-list">
+      <li>
+        <label class="switch-row">
+          <span>
+            <strong>Karteikarten-Wiederholung</strong>
+            <small>Falsch beantwortete Fragen häufiger abfragen (empfohlen)</small>
+          </span>
+          <input type="checkbox" id="opt-srs" checked>
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+      </li>
+      <li>
+        <label class="switch-row">
+          <span>
+            <strong>Nur schwierige Fragen</strong>
+            <small>Nur Fragen, die noch nicht sitzen</small>
+          </span>
+          <input type="checkbox" id="opt-hard">
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+      </li>
+      <li>
+        <label class="switch-row">
+          <span>
+            <strong>Antworten mischen</strong>
+            <small>Reihenfolge der Auswahlmöglichkeiten zufällig</small>
+          </span>
+          <input type="checkbox" id="opt-shuffle" checked>
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+      </li>
+    </ul>
+  </section>
+
+  <div class="start-actions">
+    <p class="pool-info" id="pool-info"></p>
+    <button class="btn primary big" id="btn-start" type="button">Training starten</button>
+  </div>
+
+  <p class="disclaimer">
+    Inoffizielle Lernhilfe zur Prüfungsvorbereitung. Inhalte orientieren sich an den
+    Lernzielen der FN-Ausbildungsliteratur (Basispass Pferdekunde, Reitabzeichen).
+    Keine Verbindung zur Deutschen Reiterlichen Vereinigung (FN).
+  </p>
+</main>
+
+<!-- ============ QUIZ ============ -->
+<main id="screen-quiz" class="screen" hidden aria-labelledby="quiz-question">
+  <div class="statbar" id="statbar">
+    <div class="stat ok"><span class="stat-val" id="s-right">0</span><span class="stat-lbl">richtig</span></div>
+    <div class="stat bad"><span class="stat-val" id="s-wrong">0</span><span class="stat-lbl">falsch</span></div>
+    <div class="stat"><span class="stat-val" id="s-total">0</span><span class="stat-lbl">gesamt</span></div>
+    <div class="stat"><span class="stat-val" id="s-time">0:00</span><span class="stat-lbl">Zeit</span></div>
+  </div>
+  <div class="quota-bar"><div class="quota-fill" id="quota-fill"></div></div>
+
+  <section class="card question-card">
+    <div class="q-meta">
+      <span class="badge" id="q-cat">Kategorie</span>
+      <span class="badge ghost" id="q-level">Stufe</span>
+      <span class="badge box" id="q-box" title="Karteikasten-Fach">Fach 1</span>
+    </div>
+    <h2 class="q-text" id="quiz-question">Frage</h2>
+    <p class="q-hint" id="q-hint"></p>
+    <div id="answer-area" class="answer-area"></div>
+  </section>
+
+  <section class="card feedback" id="feedback" hidden>
+    <h3 id="fb-title">Richtig!</h3>
+    <p id="fb-solution" class="fb-solution"></p>
+    <p id="fb-explain" class="muted"></p>
+  </section>
+
+  <div class="quiz-actions" id="quiz-actions">
+    <button class="btn ghost" id="btn-skip" type="button">Überspringen</button>
+    <button class="btn primary" id="btn-check" type="button">Antwort prüfen</button>
+    <button class="btn primary" id="btn-next" type="button" hidden>Weiter</button>
+  </div>
+</main>
+
+<!-- ============ STATISTIK ============ -->
+<main id="screen-stats" class="screen" hidden aria-labelledby="stats-title">
+  <section class="card">
+    <h2 id="stats-title">Deine Statistik</h2>
+    <div class="big-stats">
+      <div><span class="bs-val ok" id="t-right">0</span><span class="bs-lbl">richtig</span></div>
+      <div><span class="bs-val bad" id="t-wrong">0</span><span class="bs-lbl">falsch</span></div>
+      <div><span class="bs-val" id="t-total">0</span><span class="bs-lbl">gesamt</span></div>
+      <div><span class="bs-val" id="t-quote">–</span><span class="bs-lbl">Quote</span></div>
+      <div><span class="bs-val" id="t-time">0:00</span><span class="bs-lbl">Lernzeit</span></div>
+      <div><span class="bs-val" id="t-mastered">0</span><span class="bs-lbl">gelernt</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Fortschritt nach Kategorie</h2>
+    <ul class="statcat-list" id="statcat-list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Karteikasten</h2>
+    <p class="muted small">Fach 1 = kommt oft dran, Fach 5 = sitzt.</p>
+    <div class="boxes" id="box-chart"></div>
+  </section>
+
+  <section class="card">
+    <h2>Hartnäckige Fragen</h2>
+    <ul class="hard-list" id="hard-list"></ul>
+  </section>
+
+  <section class="card danger-zone">
+    <h2>Zurücksetzen</h2>
+    <p class="muted small">Löscht Lernfortschritt und Statistik auf diesem Gerät.</p>
+    <button class="btn danger" id="btn-reset" type="button">Fortschritt löschen</button>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script type="module">
+// js/data/q-pferdekunde.js
+var q_pferdekunde_default = [
+  /* ---------------------------------------------------------- ANATOMIE */
+  {
+    id: "an01",
+    cat: "anatomie",
+    level: "basis",
+    type: "text",
+    q: "Wie hei\xDFt der h\xF6chste Punkt des R\xFCckens am \xDCbergang von Hals zu R\xFCcken, an dem das Stockma\xDF gemessen wird?",
+    a: ["Widerrist"],
+    explain: "Der Widerrist wird von den langen Dornforts\xE4tzen der vorderen Brustwirbel gebildet. Das Stockma\xDF wird senkrecht vom Boden bis zum h\xF6chsten Punkt des Widerristes gemessen."
+  },
+  {
+    id: "an02",
+    cat: "anatomie",
+    level: "basis",
+    type: "single",
+    q: "Welches Gelenk befindet sich direkt \xFCber dem Huf?",
+    options: ["Hufgelenk", "Fesselgelenk", "Sprunggelenk", "Karpalgelenk"],
+    a: 0,
+    explain: "Das Hufgelenk liegt im Inneren des Hufes zwischen Kronbein und Hufbein. Dar\xFCber folgen Krongelenk und Fesselgelenk (K\xF6tengelenk)."
+  },
+  {
+    id: "an03",
+    cat: "anatomie",
+    level: "aufbau",
+    type: "number",
+    q: "Aus wie vielen Halswirbeln besteht die Halswirbels\xE4ule des Pferdes?",
+    a: 7,
+    tol: 0,
+    unit: "Wirbel",
+    explain: "Wie fast alle S\xE4ugetiere hat das Pferd 7 Halswirbel \u2013 vom kurzen Ponyhals bis zum langen Hals eines Warmbluts."
+  },
+  {
+    id: "an04",
+    cat: "anatomie",
+    level: "basis",
+    type: "single",
+    q: "Wie nennt man die Region zwischen Kopf und Hals, an der das Genickst\xFCck der Trense aufliegt?",
+    options: ["Genick", "Ganasche", "M\xE4hnenkamm", "N\xFCster"],
+    a: 0,
+    explain: "Das Genick ist der h\xF6chste Punkt des Halses beim korrekt aufgerichteten Pferd. Die Ganaschen sind die hinteren Unterkiefer\xE4ste."
+  },
+  {
+    id: "an05",
+    cat: "anatomie",
+    level: "basis",
+    type: "multi",
+    q: "Welche K\xF6rperteile geh\xF6ren zur Hinterhand?",
+    options: ["Kruppe", "Sprunggelenk", "Buggelenk", "Hinterbacke", "Widerrist"],
+    a: [0, 1, 3],
+    explain: "Die Hinterhand umfasst Kruppe, Hinterbacken, H\xFCfte, Oberschenkel, Sprunggelenk und Hinterbein. Bug und Widerrist geh\xF6ren zur Vorhand."
+  },
+  {
+    id: "an06",
+    cat: "anatomie",
+    level: "aufbau",
+    type: "single",
+    q: "Das Pferd ist von der Verdauung her ein \u2026",
+    options: ["Dickdarmverdauer und Dauerfresser", "Wiederk\xE4uer", "Allesfresser mit gro\xDFem Magen", "Vormagenverdauer"],
+    a: 0,
+    explain: "Der Magen des Pferdes ist mit ca. 8\u201315 Litern klein. Die eigentliche Verdauung der Rohfaser erfolgt mikrobiell im Dickdarm (v. a. Blind- und Grimmdarm). Deshalb: viele kleine Mahlzeiten, viel Raufutter."
+  },
+  {
+    id: "an07",
+    cat: "anatomie",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Ein Pferd kann sich bei \xDCbelkeit durch Erbrechen entlasten.",
+    a: false,
+    explain: "Pferde k\xF6nnen nicht erbrechen \u2013 der Mageneingang wirkt wie ein Ventil. Deshalb sind Futterfehler und Gasbildung so gef\xE4hrlich (Kolikgefahr, Magen\xFCberladung)."
+  },
+  {
+    id: "an08",
+    cat: "anatomie",
+    level: "aufbau",
+    type: "number",
+    q: "Wie viele Z\xE4hne hat ein ausgewachsener Hengst (mit Hengstz\xE4hnen, ohne Wolfsz\xE4hne)?",
+    a: 40,
+    tol: 0,
+    unit: "Z\xE4hne",
+    explain: "Hengste und Wallache haben in der Regel 40 Z\xE4hne, Stuten meist 36, da ihnen die Hengstz\xE4hne (Hakenz\xE4hne) fehlen."
+  },
+  {
+    id: "an09",
+    cat: "anatomie",
+    level: "profi",
+    type: "order",
+    q: "Bringe die Knochen des Vorderbeins von oben nach unten in die richtige Reihenfolge.",
+    items: ["Unterarmbein (Radius)", "Vorderfu\xDFwurzelgelenk (Karpus)", "R\xF6hrbein", "Fesselbein", "Kronbein", "Hufbein"],
+    explain: "Von oben nach unten: Radius \u2013 Karpalgelenk \u2013 R\xF6hrbein \u2013 Fesselbein \u2013 Kronbein \u2013 Hufbein. Hinter dem Hufgelenk liegt zus\xE4tzlich das Strahlbein."
+  },
+  {
+    id: "an10",
+    cat: "anatomie",
+    level: "basis",
+    type: "single",
+    q: "Wo liegt die Flanke des Pferdes?",
+    options: [
+      "Zwischen letzter Rippe und H\xFCfte",
+      "Zwischen Vorderbein und Hals",
+      "Unter dem Sattel auf H\xF6he des Widerristes",
+      "Am \xDCbergang von Kruppe zum Schweif"
+    ],
+    a: 0,
+    explain: "Die Flanke ist der weiche Bereich zwischen letzter Rippe und H\xFCfth\xF6cker. Blicke zur Flanke sind ein typisches Kolikanzeichen."
+  },
+  {
+    id: "an11",
+    cat: "anatomie",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne die K\xF6rperteile der richtigen Region zu.",
+    pairs: [
+      ["Ganasche", "Kopf"],
+      ["Buggelenk", "Vorhand"],
+      ["Sprunggelenk", "Hinterhand"],
+      ["Nierenpartie", "Mittelhand"]
+    ],
+    explain: "Vorhand: Kopf, Hals, Schulter, Bug, Widerrist, Vorderbeine. Mittelhand: R\xFCcken, Nierenpartie, Brustkorb, Bauch. Hinterhand: Kruppe, H\xFCfte, Hinterbeine."
+  },
+  {
+    id: "an12",
+    cat: "anatomie",
+    level: "profi",
+    type: "single",
+    q: "Welche Sehne verl\xE4uft an der R\xFCckseite des R\xF6hrbeins und ist bei \xDCberlastung besonders verletzungsgef\xE4hrdet?",
+    options: ["Oberfl\xE4chliche Beugesehne", "Strecksehne", "Nackenband", "Kniescheibenband"],
+    a: 0,
+    explain: 'Die oberfl\xE4chliche (und tiefe) Beugesehne verl\xE4uft hinten am R\xF6hrbein. Eine Sehnenverletzung zeigt sich durch W\xE4rme, Schwellung und Druckempfindlichkeit (\u201Ewarmer Strang").'
+  },
+  {
+    id: "an13",
+    cat: "anatomie",
+    level: "basis",
+    type: "text",
+    q: "Wie hei\xDFt der Bereich unterhalb des Fesselgelenks bis zum Huf?",
+    a: ["Fessel", "Fesselkopf"],
+    explain: "Die Fessel liegt zwischen Fesselgelenk und Krone. Der \xDCbergang zum Huf hei\xDFt Krone bzw. Kronrand."
+  },
+  {
+    id: "an14",
+    cat: "anatomie",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Das Pferd hat ein fast rundum reichendes Blickfeld, aber direkt vor der Stirn und direkt hinter sich einen blinden Fleck.",
+    a: true,
+    explain: "Durch die seitlich am Kopf sitzenden Augen sieht das Pferd fast 350\xB0 \u2013 jedoch nicht direkt vor der Stirn und nicht direkt hinter der Kruppe. Deshalb nie unangek\xFCndigt von hinten herantreten."
+  },
+  {
+    id: "an15",
+    cat: "anatomie",
+    level: "profi",
+    type: "multi",
+    q: "Welche Aussagen zum Skelett des Pferdes sind richtig?",
+    options: [
+      "Die Schulter ist nicht kn\xF6chern mit dem Rumpf verbunden, sondern \xFCber Muskeln und B\xE4nder",
+      "Das Pferd fu\xDFt auf dem letzten Zehenglied",
+      "Das Pferd besitzt ein Schl\xFCsselbein",
+      "Der Widerrist wird von Dornforts\xE4tzen der Brustwirbel gebildet"
+    ],
+    a: [0, 1, 3],
+    explain: "Pferde haben kein Schl\xFCsselbein \u2013 der Rumpf h\xE4ngt in einer Muskelschlinge zwischen den Vorderbeinen. Das Pferd ist ein Zehenspitzeng\xE4nger und fu\xDFt auf dem Hufbein (letztes Zehenglied)."
+  },
+  /* ------------------------------------------------- RASSEN & FARBEN */
+  {
+    id: "ra01",
+    cat: "rassen",
+    level: "basis",
+    type: "single",
+    q: "Ein Pferd mit braunem Deckhaar sowie schwarzer M\xE4hne, schwarzem Schweif und schwarzen Beinen ist ein \u2026",
+    options: ["Brauner", "Fuchs", "Rappe", "Falbe"],
+    a: 0,
+    explain: "Beim Braunen ist das Langhaar und das untere Bein schwarz. Beim Fuchs sind Deckhaar und Langhaar rotbraun bis hell, beim Rappen alles schwarz."
+  },
+  {
+    id: "ra02",
+    cat: "rassen",
+    level: "basis",
+    type: "truefalse",
+    q: "Ein Schimmel wird wei\xDF geboren.",
+    a: false,
+    explain: 'Schimmel werden dunkel geboren und hellen mit den Jahren auf. Die Haut bleibt dunkel pigmentiert. Ein tats\xE4chlich wei\xDF geborenes Pferd ist ein \u201EWei\xDFgeborener" (White).'
+  },
+  {
+    id: "ra03",
+    cat: "rassen",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne die Kopfabzeichen der richtigen Beschreibung zu.",
+    pairs: [
+      ["Stern", "Fleck auf der Stirn"],
+      ["Blesse", "Breiter Streifen von der Stirn bis zur Nase"],
+      ["Schnippe", "Wei\xDFe Stelle zwischen den N\xFCstern"],
+      ["Laterne", "Wei\xDF \xFCber Augen und N\xFCstern hinaus ausgedehnt"]
+    ],
+    explain: "Weitere Abzeichen: Flocke (kleiner Stern), Strich bzw. schmale Blesse, geteilte oder unterbrochene Blesse."
+  },
+  {
+    id: "ra04",
+    cat: "rassen",
+    level: "aufbau",
+    type: "number",
+    q: "Bis zu welchem Stockma\xDF (in cm, ohne Hufeisen) gilt ein Pferd als Pony?",
+    a: 148,
+    tol: 0,
+    unit: "cm",
+    explain: "Bis einschlie\xDFlich 148 cm Stockma\xDF (ohne Beschlag) gilt ein Pferd als Pony; dar\xFCber als Gro\xDFpferd. Mit Beschlag liegt die Grenze bei 149 cm."
+  },
+  {
+    id: "ra05",
+    cat: "rassen",
+    level: "basis",
+    type: "multi",
+    q: "Welche der genannten Rassen sind deutsche Warmblutrassen?",
+    options: ["Hannoveraner", "Holsteiner", "Shetlandpony", "Oldenburger", "Shire Horse"],
+    a: [0, 1, 3],
+    explain: "Deutsche Reitpferderassen sind u. a. Hannoveraner, Holsteiner, Oldenburger, Westfale, Trakehner, Bayerisches Warmblut. Shire Horse ist ein Kaltblut, Shetlandpony ein Pony."
+  },
+  {
+    id: "ra06",
+    cat: "rassen",
+    level: "aufbau",
+    type: "single",
+    q: "Welche Rasse z\xE4hlt zu den Vollblutrassen?",
+    options: ["Englisches Vollblut", "Haflinger", "Noriker", "Fjordpferd"],
+    a: 0,
+    explain: "Zu den Vollbl\xFCtern z\xE4hlen das Englische Vollblut und der Araber (Vollblutaraber). Sie pr\xE4gen als Veredler viele Warmblutzuchten."
+  },
+  {
+    id: "ra07",
+    cat: "rassen",
+    level: "basis",
+    type: "text",
+    q: "Wie nennt man ein Pferd, dessen Fell komplett schwarz ist \u2013 inklusive M\xE4hne, Schweif und Beinen?",
+    a: ["Rappe"],
+    explain: "Beim Rappen sind Deckhaar und Langhaar schwarz. Sonnengebleichte Rappen nennt man Sommerrappen."
+  },
+  {
+    id: "ra08",
+    cat: "rassen",
+    level: "profi",
+    type: "single",
+    q: "Was kennzeichnet einen Falben?",
+    options: [
+      "Fahlfarbenes Deckhaar mit dunklem Langhaar und h\xE4ufig Aalstrich",
+      "Rotbraunes Deckhaar mit hellem Langhaar",
+      "Wei\xDFe Grundfarbe mit farbigen Platten",
+      "Dunkles Deckhaar mit eingesprenkelten wei\xDFen Haaren"
+    ],
+    a: 0,
+    explain: "Falben tragen Wildfarbabzeichen: Aalstrich \xFCber den R\xFCcken, oft Zebrastreifen an den Beinen und dunkles Langhaar. Typisch z. B. beim Fjordpferd."
+  },
+  {
+    id: "ra09",
+    cat: "rassen",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Merkmale werden im Pferdepass zur Identifikation eingetragen?",
+    options: ["Abzeichen an Kopf und Beinen", "Haarwirbel", "Farbe", "Lieblingsfutter", "Lebensnummer / Transponder"],
+    a: [0, 1, 2, 4],
+    explain: "Der Equidenpass enth\xE4lt das Signalement (Farbe, Abzeichen, Wirbel), die Lebensnummer, den Transpondercode sowie den Eintrag zur Schlachttier-Eigenschaft und die Impfungen."
+  },
+  {
+    id: "ra10",
+    cat: "rassen",
+    level: "aufbau",
+    type: "single",
+    q: "Wie nennt man ein wei\xDFes Abzeichen, das vom Huf bis \xFCber das Fesselgelenk reicht?",
+    options: ["Wei\xDFe Fessel", "Krone", "Halbe R\xF6hre", "Stern"],
+    a: 0,
+    explain: 'Von unten nach oben: Krone (nur Kronrand), Halbfessel, Fessel, halbe R\xF6hre, ganze R\xF6hre / \u201Ehoch wei\xDF".'
+  },
+  {
+    id: "ra11",
+    cat: "rassen",
+    level: "profi",
+    type: "truefalse",
+    q: "Das Stockma\xDF wird am aufrecht stehenden Pferd senkrecht vom Boden bis zum h\xF6chsten Punkt des Widerristes gemessen.",
+    a: true,
+    explain: "Gemessen wird auf ebenem, festem Boden mit dem Messstab, das Pferd steht geschlossen und mit nat\xFCrlicher Kopfhaltung."
+  },
+  {
+    id: "ra12",
+    cat: "rassen",
+    level: "profi",
+    type: "single",
+    q: "Welche Rasse ist ein typisches Kaltblut?",
+    options: ["Rheinisch-Deutsches Kaltblut", "Trakehner", "Vollblutaraber", "Welsh Pony"],
+    a: 0,
+    explain: "Kaltbl\xFCter (z. B. Rheinisch-Deutsches Kaltblut, S\xFCddeutsches Kaltblut, Noriker, Shire) sind schwere, ruhige Zugpferde mit kr\xE4ftigem Fundament."
+  },
+  {
+    id: "ra13",
+    cat: "rassen",
+    level: "basis",
+    type: "single",
+    q: "Wie wird ein kastrierter m\xE4nnlicher Hengst bezeichnet?",
+    options: ["Wallach", "Fohlen", "J\xE4hrling", "Remonte"],
+    a: 0,
+    explain: "Wallach = kastrierter Hengst. J\xE4hrling = einj\xE4hriges Pferd, Absetzer = abgesetztes Fohlen, Remonte = junges Pferd in der Grundausbildung."
+  },
+  {
+    id: "ra14",
+    cat: "rassen",
+    level: "aufbau",
+    type: "text",
+    q: "Wie hei\xDFt ein Pferd mit gro\xDFfl\xE4chig wei\xDF-farbig geteiltem Fell (z. B. Tobiano)?",
+    a: ["Schecke", "Scheck"],
+    explain: "Schecken tragen gro\xDFe wei\xDFe Platten. Bekannte Zeichnungsmuster sind Tobiano, Overo und Tovero."
+  },
+  {
+    id: "ra15",
+    cat: "rassen",
+    level: "profi",
+    type: "match",
+    q: "Ordne jeder Rasse ihren Typ zu.",
+    pairs: [
+      ["Haflinger", "Kleinpferd"],
+      ["Hannoveraner", "Warmblut"],
+      ["Noriker", "Kaltblut"],
+      ["Englisches Vollblut", "Vollblut"]
+    ],
+    explain: "Der Haflinger gilt mit einem Stockma\xDF um 145\u2013155 cm als Kleinpferd bzw. Pony-/Kleinpferderasse und stammt aus S\xFCdtirol."
+  },
+  /* --------------------------------------------------------- HALTUNG */
+  {
+    id: "ha01",
+    cat: "haltung",
+    level: "basis",
+    type: "multi",
+    q: "Welche Grundbed\xFCrfnisse muss eine pferdegerechte Haltung erf\xFCllen?",
+    options: [
+      "T\xE4glicher Sozialkontakt zu Artgenossen",
+      "Ausreichend freie Bewegung",
+      "St\xE4ndiger Zugang zu Raufutter bzw. mehrere Raufuttergaben",
+      "Ganzj\xE4hrige Einzelhaltung in der Box",
+      "Frisches Wasser jederzeit"
+    ],
+    a: [0, 1, 2, 4],
+    explain: "Pferde sind Herden-, Lauf- und Dauerfresstiere. Licht, Luft, Bewegung, Sozialkontakt, Raufutter und Wasser sind die Basis jeder tiergerechten Haltung."
+  },
+  {
+    id: "ha02",
+    cat: "haltung",
+    level: "aufbau",
+    type: "single",
+    q: "Wie berechnet man die empfohlene Mindestgr\xF6\xDFe einer Einzelbox?",
+    options: [
+      "(2 \xD7 Stockma\xDF)\xB2",
+      "2 \xD7 Stockma\xDF",
+      "Stockma\xDF \xD7 3",
+      "(Stockma\xDF + 1 m)\xB2"
+    ],
+    a: 0,
+    explain: "Faustregel: (2 \xD7 Stockma\xDF)\xB2. Bei 1,70 m Stockma\xDF also (3,40 m)\xB2 \u2248 11,6 m\xB2. Die Box muss dem Pferd ungehindertes Abliegen und Aufstehen erlauben."
+  },
+  {
+    id: "ha03",
+    cat: "haltung",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Zugluft im Stall ist unproblematisch, solange der Stall gut gel\xFCftet ist.",
+    a: false,
+    explain: "Frischluft ja \u2013 Zugluft nein. Zugluft beg\xFCnstigt Erk\xE4ltungen und Muskelverspannungen. Ziel ist ein gleichm\xE4\xDFiger Luftaustausch ohne direkten Luftzug auf das Pferd."
+  },
+  {
+    id: "ha04",
+    cat: "haltung",
+    level: "basis",
+    type: "single",
+    q: "Woran erkennt man ein schlechtes Stallklima am deutlichsten?",
+    options: [
+      "Stechender Ammoniakgeruch",
+      "K\xFChle Temperatur",
+      "Heller Lichteinfall",
+      "Trockene Einstreu"
+    ],
+    a: 0,
+    explain: "Ammoniak entsteht aus Harn und feuchter Einstreu. Er reizt die Atemwege stark. Abhilfe: regelm\xE4\xDFiges Misten, saugf\xE4hige Einstreu, gute L\xFCftung."
+  },
+  {
+    id: "ha05",
+    cat: "haltung",
+    level: "basis",
+    type: "multi",
+    q: "Welche Einstreuarten sind in der Pferdehaltung gebr\xE4uchlich?",
+    options: ["Stroh", "S\xE4gesp\xE4ne", "Strohpellets", "Rindenmulch aus dem Garten", "Leinstroh"],
+    a: [0, 1, 2, 4],
+    explain: "Stroh, Sp\xE4ne, Strohpellets, Leinstroh und Miscanthus sind \xFCbliche Einstreu. Rindenmulch ist ungeeignet (Schimmel- und Giftpflanzenrisiko)."
+  },
+  {
+    id: "ha06",
+    cat: "haltung",
+    level: "aufbau",
+    type: "single",
+    q: "Was ist beim Anweiden im Fr\xFChjahr zu beachten?",
+    options: [
+      "Langsam steigern, in den ersten Tagen nur wenige Minuten Weidegang",
+      "Sofort ganzt\xE4gig, damit sich das Pferd schnell gew\xF6hnt",
+      "Nur nachts weiden, tags\xFCber gar nicht",
+      "Vorher komplett auf Heu verzichten"
+    ],
+    a: 0,
+    explain: "Die Darmflora braucht 2\u20133 Wochen zur Umstellung. Man beginnt mit 10\u201315 Minuten und steigert t\xE4glich. Vorher Heu f\xFCttern, damit das Pferd nicht gierig frisst \u2013 sonst drohen Kolik und Hufrehe."
+  },
+  {
+    id: "ha07",
+    cat: "haltung",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Pflanzen sind f\xFCr Pferde giftig?",
+    options: ["Eibe", "Jakobskreuzkraut", "Herbstzeitlose", "L\xF6wenzahn", "Robinie"],
+    a: [0, 1, 2, 4],
+    explain: "Hochgiftig sind u. a. Eibe, Jakobskreuzkraut, Herbstzeitlose, Robinie, Fingerhut, Goldregen, Bergahorn-Samen (atypische Weidemyopathie). L\xF6wenzahn ist unbedenklich."
+  },
+  {
+    id: "ha08",
+    cat: "haltung",
+    level: "basis",
+    type: "truefalse",
+    q: "Auch bei Offenstallhaltung muss ein trockener, windgesch\xFCtzter Unterstand vorhanden sein.",
+    a: true,
+    explain: "Ein Witterungsschutz ist Pflicht. Er muss so gro\xDF sein, dass alle Pferde gleichzeitig Schutz finden und rangniedere Tiere ausweichen k\xF6nnen (mehrere Ein-/Ausg\xE4nge)."
+  },
+  {
+    id: "ha09",
+    cat: "haltung",
+    level: "profi",
+    type: "single",
+    q: "Warum sollten Weidez\xE4une keine Stacheldrahtz\xE4une sein?",
+    options: [
+      "Hohe Verletzungsgefahr \u2013 Pferde erkennen den Draht schlecht und verletzen sich schwer",
+      "Stacheldraht rostet zu schnell",
+      "Stacheldraht leitet keinen Strom",
+      "Stacheldraht ist zu teuer"
+    ],
+    a: 0,
+    explain: "Empfohlen sind gut sichtbare Elektrob\xE4nder, Holz- oder Kunststoffz\xE4une, mindestens ca. 1,20\u20131,50 m hoch und ohne verletzungstr\xE4chtige Kanten."
+  },
+  {
+    id: "ha10",
+    cat: "haltung",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Aufgaben geh\xF6ren zur t\xE4glichen Stallroutine?",
+    options: [
+      "Boxen misten und einstreuen",
+      "Tr\xE4nken auf Funktion pr\xFCfen und reinigen",
+      "Futter- und Wasserqualit\xE4t kontrollieren",
+      "Pferde auf Verletzungen und Allgemeinbefinden kontrollieren",
+      "Sattel jeden Tag neu anpassen lassen"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Der Sattel wird regelm\xE4\xDFig, aber nicht t\xE4glich vom Fachmann kontrolliert \u2013 etwa 1\u20132 mal j\xE4hrlich und bei jeder deutlichen Ver\xE4nderung des Pferdes."
+  },
+  {
+    id: "ha11",
+    cat: "haltung",
+    level: "profi",
+    type: "single",
+    q: 'Was versteht man unter \u201EIntegration" in der Gruppenhaltung?',
+    options: [
+      "Das schrittweise Eingliedern eines neuen Pferdes in eine bestehende Herde",
+      "Das Zusammenlegen zweier St\xE4lle",
+      "Die F\xFCtterung aller Pferde an einem Platz",
+      "Die Eingew\xF6hnung an den Reiter"
+    ],
+    a: 0,
+    explain: "Neue Pferde werden \xFCber Sichtkontakt und einen ruhigen Partner schrittweise eingegliedert. Ausreichend Platz und mehrere Fress- und Ausweichm\xF6glichkeiten senken das Verletzungsrisiko."
+  },
+  {
+    id: "ha12",
+    cat: "haltung",
+    level: "aufbau",
+    type: "text",
+    q: "Wie nennt man eine Haltungsform, bei der die Pferde sich frei zwischen Liegehalle, Fressplatz und Auslauf bewegen k\xF6nnen?",
+    a: ["Offenstall", "Laufstall", "Aktivstall", "Bewegungsstall"],
+    explain: "Offen-, Lauf- oder Aktivstall (Bewegungsstall) f\xF6rdern Bewegung und Sozialkontakt. Wichtig sind mehrere Fresspl\xE4tze und gro\xDFz\xFCgige Wege."
+  },
+  {
+    id: "ha13",
+    cat: "haltung",
+    level: "basis",
+    type: "single",
+    q: "Wie oft sollte ein Pferd mindestens Zugang zu frischem Wasser haben?",
+    options: ["St\xE4ndig", "Zweimal t\xE4glich", "Nur nach der Arbeit", "Einmal t\xE4glich"],
+    a: 0,
+    explain: "Wasser muss st\xE4ndig verf\xFCgbar sein. Ein Pferd trinkt je nach Gr\xF6\xDFe, Futter und Wetter etwa 30\u201350 Liter pro Tag, bei Hitze und Arbeit deutlich mehr."
+  },
+  {
+    id: "ha14",
+    cat: "haltung",
+    level: "profi",
+    type: "truefalse",
+    q: "Die Weide sollte regelm\xE4\xDFig abge\xE4ppelt und gepflegt werden, um den Wurmdruck zu senken.",
+    a: true,
+    explain: "Ab\xE4ppeln (idealerweise 1\u20132 \xD7 pro Woche), Nachm\xE4hen der Geilstellen, Nachsaat und Weidewechsel reduzieren Parasitenbelastung und verbessern die Grasnarbe."
+  },
+  {
+    id: "ha15",
+    cat: "haltung",
+    level: "aufbau",
+    type: "single",
+    q: "Ein Pferd steht ganzt\xE4gig in der Box und wird nur kurz geritten. Welche Folge ist typisch?",
+    options: [
+      "Bewegungsmangel mit Verhaltensst\xF6rungen und Gesundheitsproblemen",
+      "Besonders gute Kondition",
+      "Robustere Hufe",
+      "Weniger Kolikgefahr"
+    ],
+    a: 0,
+    explain: "Bewegungsmangel beg\xFCnstigt Stereotypien (Weben, Koppen), Kreislauf- und Verdauungsprobleme, angelaufene Beine und Muskelverspannungen."
+  },
+  /* ------------------------------------------------------ FÜTTERUNG */
+  {
+    id: "fu01",
+    cat: "fuetterung",
+    level: "basis",
+    type: "single",
+    q: "Wie viel Heu (Raufutter) sollte ein Pferd mindestens pro 100 kg K\xF6rpergewicht und Tag bekommen?",
+    options: ["1,5 kg", "0,5 kg", "3,5 kg", "5 kg"],
+    a: 0,
+    explain: "Mindestens 1,5 kg Heu je 100 kg K\xF6rpergewicht \u2013 bei einem 600-kg-Pferd also mindestens 9 kg pro Tag. Besser sind 2 kg/100 kg, verteilt auf mehrere Portionen."
+  },
+  {
+    id: "fu02",
+    cat: "fuetterung",
+    level: "basis",
+    type: "truefalse",
+    q: "Kraftfutter wird vor dem Raufutter gef\xFCttert.",
+    a: false,
+    explain: "Erst Raufutter, dann Kraftfutter. Das Heu regt den Speichelfluss an und sorgt daf\xFCr, dass das Kraftfutter langsamer und gr\xFCndlicher gekaut wird."
+  },
+  {
+    id: "fu03",
+    cat: "fuetterung",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche F\xFCtterungsregeln sind richtig?",
+    options: [
+      "Lieber mehrere kleine Mahlzeiten als wenige gro\xDFe",
+      "Futterumstellungen langsam \xFCber mehrere Tage",
+      "Nach dem Kraftfutter mindestens eine Stunde Ruhe vor der Arbeit",
+      "Immer zur gleichen Zeit f\xFCttern",
+      "Verschimmeltes Heu ist nach dem Aussch\xFCtteln unbedenklich"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Schimmeliges oder staubiges Futter darf nie verf\xFCttert werden \u2013 es verursacht Koliken und Atemwegserkrankungen."
+  },
+  {
+    id: "fu04",
+    cat: "fuetterung",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne die Futtermittel der richtigen Gruppe zu.",
+    pairs: [
+      ["Heu", "Raufutter"],
+      ["Hafer", "Kraftfutter"],
+      ["M\xF6hren", "Saftfutter"],
+      ["Mineralpulver", "Erg\xE4nzungsfutter"]
+    ],
+    explain: "Raufutter: Heu, Stroh, Heulage. Saftfutter: Gras, Silage, R\xFCben, Obst und Gem\xFCse. Kraftfutter: Hafer, Gerste, Mais, M\xFCsli, Pellets."
+  },
+  {
+    id: "fu05",
+    cat: "fuetterung",
+    level: "basis",
+    type: "single",
+    q: "Welches Getreide gilt als das klassische und bek\xF6mmlichste Kraftfutter f\xFCr Pferde?",
+    options: ["Hafer", "Weizen", "Roggen", "Reis"],
+    a: 0,
+    explain: "Hafer hat eine gut verdauliche St\xE4rke und lockere Spelzen. Gerste und Mais m\xFCssen aufbereitet (gequetscht, gepoppt) werden. Weizen und Roggen sind ungeeignet."
+  },
+  {
+    id: "fu06",
+    cat: "fuetterung",
+    level: "aufbau",
+    type: "multi",
+    q: "Woran erkennt man gutes Heu?",
+    options: [
+      "Angenehm aromatischer Geruch",
+      "Gr\xFCnlich bis hellbraune Farbe",
+      "Staubfrei und ohne Schimmelnester",
+      "Muffiger Geruch und Staubwolken beim Sch\xFCtteln",
+      "Frei von Giftpflanzen"
+    ],
+    a: [0, 1, 2, 4],
+    explain: "Gutes Heu riecht aromatisch, ist trocken, staubarm, ohne Schimmel und ohne giftige Pflanzen. Heu sollte vor dem Verf\xFCttern mindestens 6\u20138 Wochen abgelagert sein."
+  },
+  {
+    id: "fu07",
+    cat: "fuetterung",
+    level: "profi",
+    type: "number",
+    q: "Wie viele Liter Wasser trinkt ein durchschnittliches Gro\xDFpferd in Ruhe etwa pro Tag?",
+    a: 40,
+    tol: 15,
+    unit: "Liter",
+    explain: "Etwa 30\u201350 Liter t\xE4glich \u2013 bei Hitze, Arbeit oder trockenem Futter (Heu) deutlich mehr, auf der saftigen Weide entsprechend weniger."
+  },
+  {
+    id: "fu08",
+    cat: "fuetterung",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Ein erhitztes, verschwitztes Pferd darf sofort gro\xDFe Mengen eiskaltes Wasser trinken.",
+    a: false,
+    explain: "Gro\xDFe Mengen kaltes Wasser direkt nach der Arbeit k\xF6nnen Kolik und Muskelprobleme ausl\xF6sen. Erst abk\xFChlen lassen, dann in Ruhe trinken lassen bzw. lauwarmes Wasser anbieten."
+  },
+  {
+    id: "fu09",
+    cat: "fuetterung",
+    level: "profi",
+    type: "single",
+    q: "Warum sollte man pro Kraftfuttermahlzeit keine zu gro\xDFen Mengen f\xFCttern?",
+    options: [
+      "Der Magen ist klein; unverdaute St\xE4rke gelangt sonst in den Dickdarm und st\xF6rt die Darmflora",
+      "Weil Kraftfutter zu teuer ist",
+      "Weil das Pferd sonst nicht mehr s\xE4uft",
+      "Weil sonst der Zahnabrieb zu stark ist"
+    ],
+    a: 0,
+    explain: "Der Pferdemagen fasst nur ca. 8\u201315 Liter. Gro\xDFe St\xE4rkemengen \xFCberfordern die D\xFCnndarmverdauung \u2013 Folge: G\xE4rung im Dickdarm, Kolik, Hufrehe. Faustregel: max. rund 0,3\u20130,5 kg Kraftfutter je 100 kg K\xF6rpergewicht pro Mahlzeit."
+  },
+  {
+    id: "fu10",
+    cat: "fuetterung",
+    level: "basis",
+    type: "text",
+    q: "Welches Mineral wird Pferden h\xE4ufig als Leckstein frei zur Verf\xFCgung gestellt?",
+    a: ["Salz", "Kochsalz", "Natriumchlorid"],
+    explain: "Ein Salzleckstein deckt den Natrium- und Chloridbedarf, besonders bei schwitzenden Pferden. Zus\xE4tzlich braucht es ein bedarfsgerechtes Mineralfutter."
+  },
+  {
+    id: "fu11",
+    cat: "fuetterung",
+    level: "profi",
+    type: "order",
+    q: "Bringe die Stationen der Verdauung in die richtige Reihenfolge.",
+    items: ["Maul", "Speiser\xF6hre", "Magen", "D\xFCnndarm", "Dickdarm", "Mastdarm"],
+    explain: "Im Maul wird zerkleinert und eingespeichelt, im Magen vorverdaut, im D\xFCnndarm werden St\xE4rke, Eiwei\xDF und Fett aufgeschlossen, im Dickdarm die Rohfaser mikrobiell abgebaut."
+  },
+  {
+    id: "fu12",
+    cat: "fuetterung",
+    level: "aufbau",
+    type: "single",
+    q: "Wof\xFCr ist Stroh in der F\xFCtterung besonders wertvoll?",
+    options: [
+      "Als strukturreiches Besch\xE4ftigungs- und Rohfaserfutter",
+      "Als Hauptenergielieferant",
+      "Als Eiwei\xDFquelle",
+      "Als Mineralstoffquelle"
+    ],
+    a: 0,
+    explain: "Stroh ist energiearm, aber rohfaserreich und verl\xE4ngert die Fresszeit. Es darf jedoch nur sauberes, staubfreies Stroh sein und ersetzt kein Heu."
+  },
+  {
+    id: "fu13",
+    cat: "fuetterung",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Folgen kann dauerhafte \xDCberf\xFCtterung mit Kraftfutter haben?",
+    options: ["\xDCbergewicht", "Kolik", "Hufrehe", "Stoffwechselprobleme", "Bessere Rittigkeit"],
+    a: [0, 1, 2, 3],
+    explain: "Zu viel Energie f\xFChrt zu Verfettung, Stoffwechselerkrankungen (EMS), Koliken und Hufrehe \u2013 und h\xE4ufig zu \xFCberm\xFCtigem, schwer kontrollierbarem Verhalten."
+  },
+  {
+    id: "fu14",
+    cat: "fuetterung",
+    level: "profi",
+    type: "truefalse",
+    q: "Heulage muss nach dem \xD6ffnen des Ballens z\xFCgig verf\xFCttert werden.",
+    a: true,
+    explain: "Angeschnittene Heulage verdirbt durch Luftzutritt schnell. Sie sollte innerhalb weniger Tage aufgebraucht werden; besch\xE4digte Ballen sind nicht verf\xFCtterbar (Botulismusgefahr)."
+  },
+  {
+    id: "fu15",
+    cat: "fuetterung",
+    level: "basis",
+    type: "single",
+    q: "Wie viele Stunden pro Tag frisst ein Pferd unter naturnahen Bedingungen?",
+    options: ["12\u201316 Stunden", "2\u20133 Stunden", "5\u20136 Stunden", "20\u201322 Stunden"],
+    a: 0,
+    explain: "Pferde sind Dauerfresser und nehmen \xFCber 12\u201316 Stunden verteilt Nahrung auf. Fresspausen von mehr als vier Stunden sollten vermieden werden (Magengeschw\xFCre)."
+  }
+];
+
+// js/data/q-gesundheit.js
+var q_gesundheit_default = [
+  /* ------------------------------------------------------ GESUNDHEIT */
+  {
+    id: "ge01",
+    cat: "gesundheit",
+    level: "basis",
+    type: "number",
+    q: "Wie hoch ist die normale K\xF6rpertemperatur eines erwachsenen Pferdes in Ruhe (in \xB0C)?",
+    a: 37.8,
+    tol: 0.5,
+    unit: "\xB0C",
+    explain: "Normal sind ca. 37,3\u201338,0 \xB0C (Fohlen bis ca. 38,5 \xB0C). Gemessen wird rektal. Ab ca. 38,5 \xB0C spricht man von Fieber."
+  },
+  {
+    id: "ge02",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "single",
+    q: "Wie hoch ist der Ruhepuls eines erwachsenen Pferdes?",
+    options: ["28\u201340 Schl\xE4ge/Minute", "60\u201380 Schl\xE4ge/Minute", "10\u201315 Schl\xE4ge/Minute", "90\u2013110 Schl\xE4ge/Minute"],
+    a: 0,
+    explain: "Ruhepuls: ca. 28\u201340 Schl\xE4ge/Min. Er wird an der Unterkieferarterie (Ganasche) oder mit dem Stethoskop hinter dem linken Ellenbogen gemessen."
+  },
+  {
+    id: "ge03",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "single",
+    q: "Wie viele Atemz\xFCge macht ein gesundes Pferd in Ruhe pro Minute?",
+    options: ["8\u201316", "25\u201335", "2\u20135", "40\u201350"],
+    a: 0,
+    explain: "Etwa 8\u201316 Atemz\xFCge pro Minute. Gez\xE4hlt wird an der Flanke oder den N\xFCstern \u2013 ein Ein- und Ausatmen z\xE4hlt als ein Atemzug."
+  },
+  {
+    id: "ge04",
+    cat: "gesundheit",
+    level: "basis",
+    type: "multi",
+    q: "Welche Anzeichen deuten auf eine Kolik hin?",
+    options: [
+      "Scharren und Unruhe",
+      "Blick zum Bauch, Flehmen",
+      "H\xE4ufiges Hinlegen und W\xE4lzen",
+      "Schwitzen ohne Anstrengung",
+      "Gieriges Fressen mit gutem Appetit"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Weitere Anzeichen: fehlender Kotabsatz, kein Appetit, erh\xF6hter Puls, angestrengte Atmung. Kolik ist immer ein Notfall \u2013 sofort den Tierarzt rufen."
+  },
+  {
+    id: "ge05",
+    cat: "gesundheit",
+    level: "basis",
+    type: "single",
+    q: "Was ist bei Verdacht auf Kolik das Wichtigste?",
+    options: [
+      "Sofort den Tierarzt verst\xE4ndigen und das Pferd beobachten",
+      "Sofort viel Kraftfutter anbieten",
+      "Das Pferd allein in der Box lassen und abwarten",
+      "Selbst ein Schmerzmittel spritzen"
+    ],
+    a: 0,
+    explain: "Tierarzt rufen, Futter wegnehmen, Wasser anbieten, das Pferd beobachten und bei W\xE4lzgefahr vorsichtig f\xFChren. Keine eigenm\xE4chtigen Medikamente \u2013 sie verschleiern die Symptome."
+  },
+  {
+    id: "ge06",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "multi",
+    q: "Woran erkennt man ein gesundes Pferd?",
+    options: [
+      "Gl\xE4nzendes Fell und aufmerksamer Blick",
+      "Gleichm\xE4\xDFige Atmung und normale Temperatur",
+      "Normaler Kot- und Harnabsatz",
+      "Gutes Fressverhalten",
+      "St\xE4ndig h\xE4ngender Kopf und Teilnahmslosigkeit"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Apathie, stumpfes Fell, Nasenausfluss, Husten, Appetitlosigkeit oder ver\xE4ndertes Verhalten sind Warnzeichen und geh\xF6ren kontrolliert."
+  },
+  {
+    id: "ge07",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "text",
+    q: "Wie hei\xDFt die hoch ansteckende bakterielle Erkrankung mit Fieber, eitrigem Nasenausfluss und geschwollenen Kehlgangslymphknoten?",
+    a: ["Druse"],
+    explain: "Die Druse wird durch Streptococcus equi ausgel\xF6st. Erkrankte Pferde m\xFCssen sofort isoliert werden, strikte Hygiene ist Pflicht (eigene Ger\xE4te, Handschuhe)."
+  },
+  {
+    id: "ge08",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "single",
+    q: "Was ist Hufrehe?",
+    options: [
+      "Eine schmerzhafte Entz\xFCndung der Huflederhaut",
+      "Ein Bruch des Hufbeins",
+      "Eine Pilzerkrankung des Strahls",
+      "Eine Entz\xFCndung der Beugesehne"
+    ],
+    a: 0,
+    explain: "Ausl\xF6ser sind u. a. Futterfehler (Getreide, junges Gras), \xDCberbelastung, Vergiftungen und Stoffwechselerkrankungen. Typisch ist die Trachtenfu\xDFung mit vorgestellten Vorderbeinen. Sofort Tierarzt rufen."
+  },
+  {
+    id: "ge09",
+    cat: "gesundheit",
+    level: "profi",
+    type: "match",
+    q: "Ordne jeder Erkrankung das typische Merkmal zu.",
+    pairs: [
+      ["Mauke", "Entz\xFCndete, verkrustete Fesselbeuge"],
+      ["Strahlf\xE4ule", "\xDCbelriechender, zersetzter Strahl"],
+      ["Sommerekzem", "Juckreiz an M\xE4hnenkamm und Schweifr\xFCbe"],
+      ["Kreuzverschlag", "Harte, schmerzhafte Kruppenmuskulatur nach Belastung"]
+    ],
+    explain: "Mauke entsteht bei N\xE4sse und Schmutz, Strahlf\xE4ule bei mangelnder Hufpflege und feuchter Einstreu, Sommerekzem durch Reaktion auf Stiche der Kriebelm\xFCcke."
+  },
+  {
+    id: "ge10",
+    cat: "gesundheit",
+    level: "basis",
+    type: "multi",
+    q: "Was geh\xF6rt in eine Stallapotheke?",
+    options: [
+      "Verbandmaterial und Wundauflagen",
+      "Fieberthermometer",
+      "Desinfektionsmittel",
+      "Schere und Einweghandschuhe",
+      "Verschreibungspflichtige Schmerzmittel auf Vorrat"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Zus\xE4tzlich sinnvoll: K\xFChlpacks, elastische Binden, Watte, Wunddesinfektion, Zeckenzange und die Notfallnummern von Tierarzt und Hufschmied. Medikamente nur nach tier\xE4rztlicher Anweisung."
+  },
+  {
+    id: "ge11",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Bei einer stark blutenden Wunde legt man einen Druckverband an und ruft den Tierarzt.",
+    a: true,
+    explain: "Ruhe bewahren, Pferd sichern, Blutung durch Druckverband stillen, Wunde nicht mit Puder oder Hausmitteln behandeln und den Tierarzt verst\xE4ndigen. Tetanusschutz pr\xFCfen."
+  },
+  {
+    id: "ge12",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "multi",
+    q: "Gegen welche Krankheiten werden Pferde \xFCblicherweise geimpft?",
+    options: ["Tetanus (Wundstarrkrampf)", "Influenza (Pferdegrippe)", "Herpes (EHV)", "Tollwut", "Hufrehe"],
+    a: [0, 1, 2, 3],
+    explain: "Tetanus und Influenza gelten als Basisimpfungen; Herpes und Tollwut werden je nach Bestand und Nutzung empfohlen. Hufrehe ist keine Infektionskrankheit und nicht impfbar."
+  },
+  {
+    id: "ge13",
+    cat: "gesundheit",
+    level: "profi",
+    type: "single",
+    q: "Wie wird der Wurmbefall heute bevorzugt kontrolliert?",
+    options: [
+      "Selektive Entwurmung nach Kotprobenuntersuchung",
+      "Jeden Monat entwurmen",
+      "Nur entwurmen, wenn W\xFCrmer im Kot sichtbar sind",
+      "Gar nicht, das regelt die Weide"
+    ],
+    a: 0,
+    explain: "Kotproben zeigen den tats\xE4chlichen Befall und vermeiden Resistenzen. Erg\xE4nzend: Weidehygiene, Ab\xE4ppeln, Wechselweiden. Bandwurm und Magendasseln werden zus\xE4tzlich strategisch behandelt."
+  },
+  {
+    id: "ge14",
+    cat: "gesundheit",
+    level: "profi",
+    type: "single",
+    q: "Wie pr\xFCft man am stehenden Pferd schnell die Durchblutung?",
+    options: [
+      "Kapillarf\xFCllungszeit an der Maulschleimhaut pr\xFCfen (< 2 Sekunden)",
+      "Am Huf klopfen",
+      "Die Ohren f\xFChlen",
+      "Den Schweif anheben"
+    ],
+    a: 0,
+    explain: "Auf die Schleimhaut dr\xFCcken: Die wei\xDFe Stelle sollte sich in unter 2 Sekunden wieder rosa f\xE4rben. Blasse, bl\xE4uliche oder ziegelrote Schleimh\xE4ute sind Alarmzeichen."
+  },
+  {
+    id: "ge15",
+    cat: "gesundheit",
+    level: "aufbau",
+    type: "single",
+    q: "Ein Pferd hustet beim Antraben mehrfach und hat wei\xDFlichen Nasenausfluss. Was ist richtig?",
+    options: [
+      "Arbeit beenden, Ursachen pr\xFCfen (Staub, Heuqualit\xE4t) und Tierarzt hinzuziehen",
+      "Weiterreiten, bis der Husten aufh\xF6rt",
+      "Sofort das Pferd longieren",
+      "Das Pferd zudecken und nichts weiter tun"
+    ],
+    a: 0,
+    explain: "Husten ist immer ernst zu nehmen. Staubarme Haltung (Heu bedampfen, Sp\xE4ne), gute L\xFCftung und tier\xE4rztliche Abkl\xE4rung verhindern chronische Atemwegserkrankungen."
+  },
+  /* ------------------------------------------------------------ HUFE */
+  {
+    id: "hu01",
+    cat: "hufe",
+    level: "basis",
+    type: "single",
+    q: "In welche Richtung kratzt man den Huf aus?",
+    options: [
+      "Von der Trachte zur Zehe hin",
+      "Von der Zehe zur Trachte hin",
+      "Quer \xFCber den Strahl",
+      "Kreisf\xF6rmig um die Sohle"
+    ],
+    a: 0,
+    explain: "Von hinten (Trachte) nach vorne (Zehe) arbeiten \u2013 so rutscht der Hufkratzer nicht in den empfindlichen Ballen. Besonders die Strahlfurchen gr\xFCndlich s\xE4ubern."
+  },
+  {
+    id: "hu02",
+    cat: "hufe",
+    level: "basis",
+    type: "text",
+    q: "Wie hei\xDFt das elastische, keilf\xF6rmige Horngebilde in der Mitte der Hufsohle, das f\xFCr Sto\xDFd\xE4mpfung und Durchblutung wichtig ist?",
+    a: ["Strahl"],
+    explain: "Der Strahl wirkt beim Auffu\xDFen wie eine Pumpe (Hufmechanismus) und f\xF6rdert so die Durchblutung des Hufes."
+  },
+  {
+    id: "hu03",
+    cat: "hufe",
+    level: "aufbau",
+    type: "number",
+    q: "Nach wie vielen Wochen sollte die Hufbearbeitung durch den Schmied in der Regel sp\xE4testens erfolgen?",
+    a: 8,
+    tol: 2,
+    unit: "Wochen",
+    explain: "\xDCblich sind 6\u20138 Wochen. Zu lange Intervalle f\xFChren zu Fehlstellungen, ausbrechendem Horn und Zwanghufen."
+  },
+  {
+    id: "hu04",
+    cat: "hufe",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Teile geh\xF6ren zum Huf?",
+    options: ["Tragrand", "Strahl", "Eckstreben", "Wei\xDFe Linie", "Ganasche"],
+    a: [0, 1, 2, 3],
+    explain: "Weitere Hufteile: Hufwand (Zehen-, Seiten-, Trachtenwand), Sohle, Ballen, Kronrand. Die Ganasche geh\xF6rt zum Kopf."
+  },
+  {
+    id: "hu05",
+    cat: "hufe",
+    level: "profi",
+    type: "single",
+    q: "Was versteht man unter dem Hufmechanismus?",
+    options: [
+      "Das Weiten und Zusammenziehen des Hufes bei Be- und Entlastung",
+      "Das Anpassen des Eisens an den Huf",
+      "Die Drehbewegung im Hufgelenk",
+      "Das Wachstum des Hufhorns"
+    ],
+    a: 0,
+    explain: "Beim Auffu\xDFen weitet sich der Huf im Trachtenbereich, beim Abfu\xDFen zieht er sich zusammen. Das f\xF6rdert die Durchblutung und d\xE4mpft St\xF6\xDFe \u2013 Bewegung ist deshalb Hufpflege."
+  },
+  {
+    id: "hu06",
+    cat: "hufe",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Das Hufhorn w\xE4chst am Kronrand nach und braucht etwa 9\u201312 Monate, bis es einmal komplett nachgewachsen ist.",
+    a: true,
+    explain: "Das Horn w\xE4chst ca. 6\u201310 mm im Monat. Ein kompletter Hufwechsel dauert bei Vorderhufen etwa ein Jahr \u2013 Hornsch\xE4den brauchen also lange, um herauszuwachsen."
+  },
+  {
+    id: "hu07",
+    cat: "hufe",
+    level: "basis",
+    type: "multi",
+    q: "Woran erkennt man, dass ein Beschlag erneuert werden muss?",
+    options: [
+      "Das Eisen sitzt locker oder klappert",
+      "Nietenden stehen ab",
+      "Der Tragrand steht deutlich \xFCber das Eisen hinaus",
+      "Das Eisen ist stark abgelaufen",
+      "Das Pferd hat frisch gewaschene Hufe"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Auch verschobene Eisen, verlorene N\xE4gel oder ausbrechendes Horn sind Gr\xFCnde. Vor jedem Reiten den Sitz der Eisen kontrollieren."
+  },
+  {
+    id: "hu08",
+    cat: "hufe",
+    level: "profi",
+    type: "single",
+    q: 'Welche Aussage zur \u201Ewei\xDFen Linie" ist richtig?',
+    options: [
+      "Sie ist die Verbindungszone zwischen Hufwand und Sohle und dient dem Schmied als Orientierung beim Nageln",
+      "Sie ist ein Teil des Strahls",
+      "Sie zeigt das Alter des Pferdes an",
+      "Sie liegt am Kronrand"
+    ],
+    a: 0,
+    explain: "Au\xDFerhalb der wei\xDFen Linie liegt unempfindliches Wandhorn, innerhalb die empfindliche Lederhaut. N\xE4gel d\xFCrfen nur in der Wand sitzen."
+  },
+  {
+    id: "hu09",
+    cat: "hufe",
+    level: "aufbau",
+    type: "single",
+    q: "Ein Pferd lahmt pl\xF6tzlich stark, der Huf ist warm und pulsiert. Was ist die wahrscheinlichste Ursache?",
+    options: ["Hufgeschw\xFCr", "Sommerekzem", "Druse", "Sattelzwang"],
+    a: 0,
+    explain: "Vermehrte Hufw\xE4rme und verst\xE4rkte Pulsation an der Fesselarterie deuten auf eine Entz\xFCndung im Huf hin \u2013 typisch f\xFCr Hufgeschw\xFCr oder Hufrehe. Tierarzt bzw. Hufschmied hinzuziehen."
+  },
+  {
+    id: "hu10",
+    cat: "hufe",
+    level: "basis",
+    type: "truefalse",
+    q: "Auch Barhufpferde brauchen regelm\xE4\xDFige Hufbearbeitung.",
+    a: true,
+    explain: "Ohne Beschlag muss das Horn regelm\xE4\xDFig ausgeschnitten und ausbalanciert werden, sonst entstehen Fehlbelastungen und Hornausbr\xFCche."
+  },
+  /* ----------------------------------------------- VERHALTEN & UMGANG */
+  {
+    id: "ve01",
+    cat: "verhalten",
+    level: "basis",
+    type: "multi",
+    q: "Welche Grundeigenschaften pr\xE4gen das Verhalten des Pferdes?",
+    options: ["Fluchttier", "Herdentier", "Lauftier", "Dauerfresser", "Einzelg\xE4nger und Raubtier"],
+    a: [0, 1, 2, 3],
+    explain: "Aus diesen Eigenschaften leiten sich alle Regeln im Umgang ab: ruhig ansprechen, Sozialkontakt und Bewegung erm\xF6glichen, kontinuierlich Raufutter anbieten."
+  },
+  {
+    id: "ve02",
+    cat: "verhalten",
+    level: "basis",
+    type: "single",
+    q: "Wie n\xE4hert man sich einem Pferd in der Box korrekt?",
+    options: [
+      "Ruhig ansprechen und von vorne seitlich herantreten",
+      "Leise von hinten anschleichen",
+      "Schnell hineingehen, damit es nicht ausb\xFCxt",
+      "Erst die T\xFCr aufrei\xDFen und laut rufen"
+    ],
+    a: 0,
+    explain: "Direkt vor der Stirn und hinter der Kruppe liegt der blinde Fleck. Ansprechen, abwarten, dann seitlich an Schulter oder Hals ber\xFChren."
+  },
+  {
+    id: "ve03",
+    cat: "verhalten",
+    level: "basis",
+    type: "multi",
+    q: "Welche Signale zeigen Unbehagen oder Abwehr beim Pferd?",
+    options: [
+      "Angelegte Ohren",
+      "Schlagen mit dem Schweif",
+      "Drohen mit aufgerissenen N\xFCstern und gestrecktem Hals",
+      "Wei\xDF sichtbares Augenwei\xDF und angespannte Muskulatur",
+      "Entspannt h\xE4ngende Unterlippe beim D\xF6sen"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Pferde kommunizieren \xFCber K\xF6rpersprache. Wer Ohren, Augen, Maul, Schweif und K\xF6rperspannung liest, erkennt Konflikte fr\xFChzeitig."
+  },
+  {
+    id: "ve04",
+    cat: "verhalten",
+    level: "aufbau",
+    type: "single",
+    q: "Wie f\xFChrt man ein Pferd sicher?",
+    options: [
+      "In H\xF6he des Pferdekopfes bzw. der Schulter, Strick locker in der Hand, nie um die Hand gewickelt",
+      "Direkt vor dem Pferd gehen und den Strick straff ziehen",
+      "Weit hinter dem Pferd bleiben",
+      "Den Strick mehrfach um die Hand wickeln, um mehr Halt zu haben"
+    ],
+    a: 0,
+    explain: "Der Strick wird locker in Schlaufen gehalten \u2013 niemals um Hand oder Arm wickeln (Verletzungsgefahr beim Losrei\xDFen). Beim F\xFChren auf der Stra\xDFe und im Turnierbereich Handschuhe tragen."
+  },
+  {
+    id: "ve05",
+    cat: "verhalten",
+    level: "basis",
+    type: "text",
+    q: "Wie hei\xDFt der Knoten, mit dem ein Pferd so angebunden wird, dass er sich im Notfall schnell mit einem Zug l\xF6sen l\xE4sst?",
+    a: ["Sicherheitsknoten", "Panikknoten"],
+    explain: "Angebunden wird immer mit Sicherheitsknoten \u2013 idealerweise an einem Strick mit Sollbruchstelle bzw. Panikhaken und in Kopfh\xF6he, damit sich das Pferd nicht verf\xE4ngt."
+  },
+  {
+    id: "ve06",
+    cat: "verhalten",
+    level: "aufbau",
+    type: "order",
+    q: "Bringe die Arbeitsschritte beim Putzen und Fertigmachen in eine sinnvolle Reihenfolge.",
+    items: ["Pferd anbinden", "Hufe auskratzen", "Fell putzen", "Satteln", "Trensen"],
+    explain: "Erst Hufe auskratzen und kontrollieren, dann putzen, dann satteln, zuletzt trensen. Der Sattelgurt wird schrittweise nachgegurtet."
+  },
+  {
+    id: "ve07",
+    cat: "verhalten",
+    level: "basis",
+    type: "match",
+    q: "Ordne jedes Putzzeug seiner Aufgabe zu.",
+    pairs: [
+      ["Hufkratzer", "Hufe reinigen"],
+      ["Kard\xE4tsche", "Feinen Staub aus dem Fell holen"],
+      ["Striegel", "Kard\xE4tsche reinigen und groben Schmutz l\xF6sen"],
+      ["Wurzelb\xFCrste", "Getrockneten Schmutz von Beinen b\xFCrsten"]
+    ],
+    explain: "Der Gummistriegel dient zum L\xF6sen von grobem Schmutz auf gro\xDFen Muskelpartien, der Metallstriegel ausschlie\xDFlich zum S\xE4ubern der Kard\xE4tsche \u2013 niemals am Pferd."
+  },
+  {
+    id: "ve08",
+    cat: "verhalten",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Ein Pferd lernt vor allem durch das sofortige Aufh\xF6ren des Drucks bzw. durch unmittelbares Lob.",
+    a: true,
+    explain: "Pferde verkn\xFCpfen nur, was innerhalb von etwa 1\u20133 Sekunden auf ihr Verhalten folgt. Timing ist deshalb wichtiger als St\xE4rke der Einwirkung. Strafe im Nachhinein ist wirkungslos und sch\xE4dlich."
+  },
+  {
+    id: "ve09",
+    cat: "verhalten",
+    level: "profi",
+    type: "single",
+    q: 'Was versteht man unter \u201EHabituation" (Gew\xF6hnung)?',
+    options: [
+      "Das Pferd reagiert auf einen wiederholten, folgenlosen Reiz immer weniger",
+      "Das Pferd lernt einen Reiz mit Futter zu verkn\xFCpfen",
+      "Das Pferd verlernt eine Lektion",
+      "Das Pferd fl\xFCchtet st\xE4rker als zuvor"
+    ],
+    a: 0,
+    explain: "Gew\xF6hnung ist die Basis jeder Gelassenheitsschulung: Reiz in geringer Intensit\xE4t anbieten, abwarten, bis das Pferd entspannt, dann steigern. Zu starke Reize f\xFChren dagegen zur Sensibilisierung."
+  },
+  {
+    id: "ve10",
+    cat: "verhalten",
+    level: "aufbau",
+    type: "single",
+    q: 'Warum kauen und schmatzen Fohlen gegen\xFCber \xE4lteren Pferden (\u201EUnterlegenheitsgeb\xE4rde")?',
+    options: [
+      "Sie signalisieren damit friedliche Absichten",
+      "Sie haben Hunger",
+      "Sie fordern zum Spielen auf",
+      "Sie zeigen Schmerzen an"
+    ],
+    a: 0,
+    explain: "Das Kaubewegungs-Signal (Unterlegenheitsgeb\xE4rde) beschwichtigt rangh\xF6here Pferde und verhindert Angriffe."
+  },
+  {
+    id: "ve11",
+    cat: "verhalten",
+    level: "profi",
+    type: "multi",
+    q: "Welche Verhaltensst\xF6rungen k\xF6nnen durch nicht artgerechte Haltung entstehen?",
+    options: ["Koppen", "Weben", "Boxenlaufen", "Holz benagen", "W\xE4lzen nach dem Weidegang"],
+    a: [0, 1, 2, 3],
+    explain: "Stereotypien entstehen durch Bewegungsmangel, Langeweile, fehlenden Sozialkontakt und zu lange Fresspausen. W\xE4lzen dagegen ist v\xF6llig normales Komfortverhalten."
+  },
+  {
+    id: "ve12",
+    cat: "verhalten",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Pferde k\xF6nnen auch im Stehen schlafen, f\xFCr den Tiefschlaf m\xFCssen sie sich jedoch hinlegen.",
+    a: true,
+    explain: "Durch den Spanns\xE4ge-Mechanismus (Stehapparat) d\xF6sen Pferde im Stehen. REM-Schlaf ist nur im Liegen m\xF6glich \u2013 deshalb brauchen sie eine sichere, ausreichend gro\xDFe Liegefl\xE4che."
+  },
+  {
+    id: "ve13",
+    cat: "verhalten",
+    level: "basis",
+    type: "single",
+    q: "Von welcher Seite wird ein Pferd \xFCblicherweise gef\xFChrt, gesattelt und bestiegen?",
+    options: ["Von links", "Von rechts", "Immer von hinten", "Von vorne"],
+    a: 0,
+    explain: "Traditionell von links. Trotzdem sollte ein gut ausgebildetes Pferd auch von rechts gef\xFChrt und bestiegen werden k\xF6nnen."
+  },
+  {
+    id: "ve14",
+    cat: "verhalten",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Regeln gelten beim Umgang im Stall?",
+    options: [
+      "Nie direkt hinter dem Pferd durchgehen, ohne es anzusprechen",
+      "Ruhig und leise arbeiten, nicht rennen",
+      "G\xE4nge frei von Werkzeug und Schubkarren halten",
+      "T\xFCren und Tore immer sichern",
+      "Fremde Pferde ungefragt f\xFCttern"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Fremde Pferde werden nie ohne Erlaubnis gef\xFCttert \u2013 wegen Allergien, Futterunvertr\xE4glichkeiten und weil Handf\xFCttern Aufdringlichkeit f\xF6rdert."
+  },
+  {
+    id: "ve15",
+    cat: "verhalten",
+    level: "profi",
+    type: "single",
+    q: "Ein Pferd erschrickt beim Ausreiten vor einer Plastikplane. Was ist die richtige Reaktion?",
+    options: [
+      "Ruhig bleiben, Sitz und Z\xFCgelverbindung sichern, das Pferd vorw\xE4rts geradeaus einwirken lassen und ihm Zeit geben",
+      "Sofort scharf strafen",
+      "Die Z\xFCgel loslassen und sich am Sattel festhalten",
+      "Absteigen und das Pferd wegdrehen"
+    ],
+    a: 0,
+    explain: "Ruhe des Reiters \xFCbertr\xE4gt sich. Ein erfahrener Partner kann vorangehen. Zwang verst\xE4rkt die Angst, Nachgeben in Panik gef\xE4hrdet Reiter und Pferd."
+  }
+];
+
+// js/data/q-reiten.js
+var q_reiten_default = [
+  /* ----------------------------------------------------- AUSRÜSTUNG */
+  {
+    id: "au01",
+    cat: "ausruestung",
+    level: "basis",
+    type: "multi",
+    q: "Aus welchen Teilen besteht eine einfache Trense (Wassertrense)?",
+    options: ["Genickst\xFCck", "Backenst\xFCcke", "Nasenriemen", "Stirnriemen und Kehlriemen", "Kinnkette"],
+    a: [0, 1, 2, 3],
+    explain: "Dazu kommen Gebiss und Z\xFCgel. Eine Kinnkette geh\xF6rt zur Kandare, nicht zur Wassertrense."
+  },
+  {
+    id: "au02",
+    cat: "ausruestung",
+    level: "basis",
+    type: "single",
+    q: "Wie weit sollte der Kehlriemen verschnallt sein?",
+    options: [
+      "Etwa eine Handbreit Platz zwischen Riemen und Ganasche",
+      "Straff anliegend",
+      "So weit, dass er auf dem Hals h\xE4ngt",
+      "Genau zwei Finger"
+    ],
+    a: 0,
+    explain: "Kehlriemen: eine Faust/Handbreit. Nasenriemen: etwa zwei Finger. Das Pferd muss kauen und schlucken k\xF6nnen."
+  },
+  {
+    id: "au03",
+    cat: "ausruestung",
+    level: "aufbau",
+    type: "single",
+    q: "Woran erkennt man, dass das Gebiss in der richtigen H\xF6he liegt?",
+    options: [
+      "Es bildet ein bis zwei leichte Falten im Maulwinkel",
+      "Es h\xE4ngt locker auf den Z\xE4hnen",
+      "Es zieht den Maulwinkel weit nach oben",
+      "Es liegt auf der Zunge auf und ber\xFChrt die Maulwinkel nicht"
+    ],
+    a: 0,
+    explain: "Zu tief verschnallt schl\xE4gt das Gebiss gegen die Z\xE4hne, zu hoch verursacht es Druck und Falten. Auch die Gebissbreite muss passen (ca. 0,5 cm \xDCberstand je Seite)."
+  },
+  {
+    id: "au04",
+    cat: "ausruestung",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Merkmale zeigen, dass ein Sattel passt?",
+    options: [
+      "Der Widerrist bleibt frei (auch mit Reiter)",
+      "Die Wirbels\xE4ule ist \xFCber die gesamte L\xE4nge frei (Kammer/Wirbels\xE4ulenkanal)",
+      "Der Sattel liegt gleichm\xE4\xDFig auf, ohne zu dr\xFCcken oder zu schaukeln",
+      "Der Sattel liegt hinter der Schulter und behindert diese nicht",
+      "Der Sattel liegt m\xF6glichst weit vorne auf der Schulter"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Ein zu weit vorn liegender Sattel behindert die Schulterfreiheit. Wei\xDFe Haare, Druckstellen, trockene Stellen im Schwei\xDFbild oder Widersetzlichkeit sind Warnzeichen."
+  },
+  {
+    id: "au05",
+    cat: "ausruestung",
+    level: "basis",
+    type: "order",
+    q: "Bringe die Schritte beim Satteln in die richtige Reihenfolge.",
+    items: [
+      "Sattellage kontrollieren und putzen",
+      "Schabracke/Satteldecke auflegen",
+      "Sattel behutsam auflegen",
+      "Decke in die Sattelkammer hochziehen",
+      "Gurt locker anziehen und sp\xE4ter schrittweise nachgurten"
+    ],
+    explain: "Der Sattel wird von links aufgelegt, nie in die Sattellage geworfen. Nachgurten erfolgt schrittweise \u2013 erstmals vor dem Aufsitzen, dann nach einigen Minuten Schritt."
+  },
+  {
+    id: "au06",
+    cat: "ausruestung",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne jeden Ausr\xFCstungsgegenstand seiner Funktion zu.",
+    pairs: [
+      ["Martingal", "Verhindert zu hohes Aufwerfen des Kopfes"],
+      ["Ausbinder", "Hilfsz\xFCgel beim Longieren"],
+      ["Gamaschen", "Schutz der Beine vor Schl\xE4gen"],
+      ["Abschwitzdecke", "Trocknen des verschwitzten Pferdes"]
+    ],
+    explain: "Hilfsz\xFCgel d\xFCrfen nie als Ersatz f\xFCr korrekte Ausbildung dienen und geh\xF6ren ausschlie\xDFlich in erfahrene H\xE4nde."
+  },
+  {
+    id: "au07",
+    cat: "ausruestung",
+    level: "profi",
+    type: "multi",
+    q: "Was geh\xF6rt zu einer korrekt verschnallten Kandarenz\xE4umung?",
+    options: ["Unterlegtrense", "Stangengebiss", "Kinnkette", "Zwei Z\xFCgelpaare", "Sperrriemen"],
+    a: [0, 1, 2, 3],
+    explain: "Die Kandare besteht aus Unterlegtrense und Stangengebiss mit Kinnkette und wird mit zwei Z\xFCgelpaaren geritten. Die Kinnkette soll bei ca. 45\xB0 Anzug greifen."
+  },
+  {
+    id: "au08",
+    cat: "ausruestung",
+    level: "basis",
+    type: "single",
+    q: "Wie lang sollten die Steigb\xFCgelriemen beim Dressurreiten grob eingestellt sein?",
+    options: [
+      "Die B\xFCgelsohle reicht etwa bis zum Kn\xF6chel des ausgestreckten Beins",
+      "Etwa bis zur Mitte des Unterschenkels",
+      "So kurz wie beim Springen",
+      "So lang, dass die Zehenspitze gerade noch hineinkommt"
+    ],
+    a: 0,
+    explain: "Faustregel: B\xFCgel bis Kn\xF6chelh\xF6he des locker herabh\xE4ngenden Beins. Beim Springen und Gel\xE4ndereiten werden die B\xFCgel deutlich k\xFCrzer geschnallt."
+  },
+  {
+    id: "au09",
+    cat: "ausruestung",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Lederzeug sollte nach jedem Gebrauch grob gereinigt und regelm\xE4\xDFig gefettet oder gepflegt werden.",
+    a: true,
+    explain: "Schwei\xDF und Sand greifen Leder und N\xE4hte an. Regelm\xE4\xDFige Kontrolle von N\xE4hten, Schnallen, Steigb\xFCgelriemen und Gurtstrippen ist ein Sicherheitsthema."
+  },
+  {
+    id: "au10",
+    cat: "ausruestung",
+    level: "profi",
+    type: "single",
+    q: "Welche Aufgabe hat ein Sperrriemen (Schwedischer/kombinierter Reithalfter)?",
+    options: [
+      "Er stabilisiert den Nasenriemen und soll das Maulaufsperren begrenzen \u2013 muss aber locker genug verschnallt sein",
+      "Er h\xE4lt den Sattel an Ort und Stelle",
+      "Er ersetzt die Kinnkette",
+      "Er verhindert das Kauen vollst\xE4ndig"
+    ],
+    a: 0,
+    explain: "Zu fest verschnallte Nasen- und Sperrriemen sind tierschutzrelevant. Zwei Finger Platz sind Pflicht \u2013 ein Pferd muss kauen und abkauen k\xF6nnen."
+  },
+  /* ------------------------------------------------------- REITLEHRE */
+  {
+    id: "rl01",
+    cat: "reitlehre",
+    level: "aufbau",
+    type: "order",
+    q: "Bringe die Punkte der Skala der Ausbildung in die richtige Reihenfolge.",
+    items: ["Takt", "Losgelassenheit", "Anlehnung", "Schwung", "Geraderichtung", "Versammlung"],
+    explain: "Die ersten drei Punkte bilden die Gew\xF6hnungsphase, Schwung und Geraderichtung die Entwicklung der Schubkraft, die Versammlung die Tragkraft."
+  },
+  {
+    id: "rl02",
+    cat: "reitlehre",
+    level: "basis",
+    type: "match",
+    q: "Ordne jeder Gangart den richtigen Takt zu.",
+    pairs: [
+      ["Schritt", "Viertakt"],
+      ["Trab", "Zweitakt"],
+      ["Galopp", "Dreitakt"]
+    ],
+    explain: "Der Schritt ist die einzige Gangart ohne Schwebephase. Trab und Galopp haben eine Schwebephase; im Galopp folgt nach dem dritten Takt der Schwebemoment."
+  },
+  {
+    id: "rl03",
+    cat: "reitlehre",
+    level: "basis",
+    type: "multi",
+    q: "Welche Hilfen geh\xF6ren zu den Einwirkungsm\xF6glichkeiten des Reiters?",
+    options: ["Gewichtshilfen", "Schenkelhilfen", "Z\xFCgelhilfen", "Stimme", "Lautes Schreien"],
+    a: [0, 1, 2, 3],
+    explain: "Die drei Grundhilfen sind Gewicht, Schenkel und Z\xFCgel; unterst\xFCtzend wirken Stimme, Gerte und Sporen. Hilfen wirken immer im Zusammenspiel."
+  },
+  {
+    id: "rl04",
+    cat: "reitlehre",
+    level: "basis",
+    type: "single",
+    q: "Was beschreibt eine halbe Parade?",
+    options: [
+      "Eine kurze Verst\xE4ndigung aus Gewichts-, Schenkel- und Z\xFCgelhilfen zur Vorbereitung von \xDCberg\xE4ngen und Lektionen",
+      "Das vollst\xE4ndige Anhalten aus dem Trab",
+      "Das Verk\xFCrzen des Z\xFCgels",
+      "Ein halber Zirkel"
+    ],
+    a: 0,
+    explain: "Die halbe Parade verbessert Aufmerksamkeit, Balance und Hankenbeugung. Die ganze Parade f\xFChrt zum Halten."
+  },
+  {
+    id: "rl05",
+    cat: "reitlehre",
+    level: "aufbau",
+    type: "single",
+    q: "Wie leichttrabt man richtig?",
+    options: [
+      "Beim Vortreten des \xE4u\xDFeren Vorderbeins aufstehen",
+      "Beim Vortreten des inneren Vorderbeins aufstehen",
+      "Immer zwei Tritte aufstehen, einen sitzen",
+      "Nur im Galopp"
+    ],
+    a: 0,
+    explain: "Man sitzt ein, wenn das \xE4u\xDFere Vorderbein auffu\xDFt, und steht auf, wenn es vorschwingt. So wird das innere Hinterbein entlastet. Beim Handwechsel wird umgesessen."
+  },
+  {
+    id: "rl06",
+    cat: "reitlehre",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Merkmale kennzeichnen einen korrekten Dressursitz?",
+    options: [
+      "Ohr \u2013 Schulter \u2013 H\xFCfte \u2013 Absatz auf einer senkrechten Linie",
+      "Aufrechter Oberk\xF6rper, geschmeidiges Becken",
+      "Ruhig anliegende Unterschenkel",
+      "Gerade Linie von Ellbogen \xFCber Hand zum Pferdemaul",
+      "Durchgedr\xFCckte Knie und feste Schultern"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Der ausbalancierte, geschmeidige Sitz ist Voraussetzung f\xFCr feine Hilfen. Verspannungen im Knie, R\xFCcken oder Handgelenk st\xF6ren Takt und Losgelassenheit."
+  },
+  {
+    id: "rl07",
+    cat: "reitlehre",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Losgelassenheit erkennt man unter anderem an einem schwingenden R\xFCcken, taktm\xE4\xDFiger Bewegung, zufriedenem Abkauen und pendelndem Schweif.",
+    a: true,
+    explain: 'Weitere Zeichen: gleichm\xE4\xDFige Atmung (\u201EAbschnauben"), zwanglose Kopf-Hals-Haltung und ein Pferd, das sich beim Z\xFCgel-aus-der-Hand-kauen-Lassen vertrauensvoll dehnt.'
+  },
+  {
+    id: "rl08",
+    cat: "reitlehre",
+    level: "profi",
+    type: "single",
+    q: "Was versteht man unter Anlehnung?",
+    options: [
+      "Die stete, weich-elastische Verbindung zwischen Reiterhand und Pferdemaul",
+      "Das Anlehnen des Pferdes an die Bande",
+      "Ein festes Ziehen am Z\xFCgel",
+      "Die Stellung des Kopfes zur Seite"
+    ],
+    a: 0,
+    explain: "Anlehnung entsteht von hinten nach vorne: Das Pferd tritt an die Hand heran, es zieht sie nicht zu sich. Sie ist Ergebnis von Takt und Losgelassenheit \u2013 nie durch Handeinwirkung erzwungen."
+  },
+  {
+    id: "rl09",
+    cat: "reitlehre",
+    level: "profi",
+    type: "match",
+    q: "Ordne die Lektionen ihrer Beschreibung zu.",
+    pairs: [
+      ["Schenkelweichen", "L\xF6sende Seitengangartige \xDCbung mit nur leichter Stellung"],
+      ["Schulterherein", "Auf drei Hufschlagen, Pferd um den inneren Schenkel gebogen"],
+      ["Travers", "Kruppenherein mit Stellung und Biegung zur Bewegungsrichtung"],
+      ["Kurzkehrtwendung", "Wendung um die Hinterhand im Schritt"]
+    ],
+    explain: "Schenkelweichen ist eine Gehorsams- und L\xF6sungs\xFCbung ohne L\xE4ngsbiegung; Schulterherein, Travers, Renvers und Traversale sind versammelnde Seiteng\xE4nge."
+  },
+  {
+    id: "rl10",
+    cat: "reitlehre",
+    level: "aufbau",
+    type: "single",
+    q: "Womit beginnt jede Reitstunde bzw. Trainingseinheit?",
+    options: [
+      "Mit einer L\xF6sungsphase, z. B. mindestens 10\u201315 Minuten Schritt am langen Z\xFCgel",
+      "Sofort mit Galopparbeit",
+      "Mit versammelnden Lektionen",
+      "Mit Springen"
+    ],
+    a: 0,
+    explain: "Aufw\xE4rmen sch\xFCtzt Sehnen, B\xE4nder und Muskulatur. Nach der Arbeit folgt die Erholungsphase im Schritt, bis das Pferd trocken und die Atmung ruhig ist."
+  },
+  {
+    id: "rl11",
+    cat: "reitlehre",
+    level: "basis",
+    type: "single",
+    q: "In welchem Tempo wird beim Springen \xFCblicherweise geritten (Grundtempo)?",
+    options: ["ca. 350 m/min", "ca. 150 m/min", "ca. 600 m/min", "ca. 220 m/min"],
+    a: 0,
+    explain: "Springen: rund 350 m/min. Zum Vergleich: Schritt etwa 100 m/min, Arbeitstrab rund 220 m/min."
+  },
+  {
+    id: "rl12",
+    cat: "reitlehre",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Phasen hat ein Sprung?",
+    options: ["Anritt", "Absprung", "Flugphase", "Landung", "R\xFCckw\xE4rtsrichten"],
+    a: [0, 1, 2, 3],
+    explain: 'Nach der Landung folgt der Weiterritt (\u201EAbritt"). Der Reiter geht im leichten Sitz mit, die Hand folgt dem Maul \xFCber die Flugphase.'
+  },
+  {
+    id: "rl13",
+    cat: "reitlehre",
+    level: "profi",
+    type: "truefalse",
+    q: "Beim Galopp auf der rechten Hand sollte das Pferd im Rechtsgalopp springen, das hei\xDFt das rechte Vorderbein greift weiter vor.",
+    a: true,
+    explain: "Im Rechtsgalopp ist die Fu\xDFfolge: linkes Hinterbein \u2013 diagonales Paar \u2013 rechtes Vorderbein, danach die Schwebephase. Falscher Galopp wird als Lektion bewusst geritten, Kreuzgalopp ist ein Fehler."
+  },
+  {
+    id: "rl14",
+    cat: "reitlehre",
+    level: "basis",
+    type: "text",
+    q: "Wie hei\xDFt der Sitz mit vorgeneigtem Oberk\xF6rper und entlastetem Ges\xE4\xDF, der beim Springen und Gel\xE4ndereiten verwendet wird?",
+    a: ["Leichter Sitz", "Entlastungssitz"],
+    explain: "Beim leichten Sitz federt der Reiter in Knie- und Sprunggelenken ab und entlastet den Pferder\xFCcken. Beim Dressursitz ist das Ges\xE4\xDF im Sattel."
+  },
+  {
+    id: "rl15",
+    cat: "reitlehre",
+    level: "profi",
+    type: "single",
+    q: 'Was bedeutet \u201EGeraderichten"?',
+    options: [
+      "Vorhand und Hinterhand auf einer Linie \u2013 das Pferd tritt mit den Hinterbeinen in die Spur der Vorderbeine",
+      "Das Pferd immer nur geradeaus zu reiten",
+      "Den Hals gerade nach vorn zu stellen",
+      "Die Z\xFCgel gleich lang zu halten"
+    ],
+    a: 0,
+    explain: "Jedes Pferd ist von Natur aus schief. Geraderichten (u. a. \xFCber Schulterherein, Zirkel, Konterlektionen) sorgt f\xFCr gleichm\xE4\xDFige Belastung und ist Voraussetzung f\xFCr Versammlung."
+  },
+  /* ------------------------------------------ BAHNREGELN & FIGUREN */
+  {
+    id: "ba01",
+    cat: "bahn",
+    level: "basis",
+    type: "single",
+    q: "Welchen Ruf verwendet man, bevor man die Reitbahn betritt oder verl\xE4sst?",
+    options: ['\u201ET\xFCr frei!"', '\u201EAchtung!"', '\u201EBahn frei!"', '\u201EHalt!"'],
+    a: 0,
+    explain: 'Erst \u201ET\xFCr frei!" rufen, Antwort abwarten, dann z\xFCgig eintreten oder hinausgehen. In der Bahn wird abseits des Hufschlags aufgestiegen.'
+  },
+  {
+    id: "ba02",
+    cat: "bahn",
+    level: "basis",
+    type: "single",
+    q: "Zwei Reiter begegnen sich auf dem Hufschlag. Wer bleibt am Hufschlag?",
+    options: [
+      "Der Reiter auf der linken Hand",
+      "Der Reiter auf der rechten Hand",
+      "Der schnellere Reiter",
+      "Der \xE4ltere Reiter"
+    ],
+    a: 0,
+    explain: "Beim Begegnen wird links an links ausgewichen. Der Reiter auf der linken Hand beh\xE4lt den ersten Hufschlag, der andere weicht nach innen aus."
+  },
+  {
+    id: "ba03",
+    cat: "bahn",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Bahnregeln sind richtig?",
+    options: [
+      "Ganze Bahn geht vor Zirkel",
+      "Schritt reitende Paare weichen den in Trab und Galopp reitenden aus",
+      "Mindestens eine Pferdel\xE4nge Abstand halten",
+      "Beim Halten den ersten Hufschlag freimachen",
+      "Beim Longieren darf ohne Absprache in der vollen Bahn longiert werden"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Longieren in der Bahn nur nach Absprache und mit ausreichend Platz. Wer st\xE4rkere Gangarten reitet, hat Vorrang auf dem ersten Hufschlag."
+  },
+  {
+    id: "ba04",
+    cat: "bahn",
+    level: "aufbau",
+    type: "single",
+    q: "Wie gro\xDF ist ein Zirkel in einer 20 \xD7 40 m Bahn?",
+    options: ["20 m Durchmesser", "10 m Durchmesser", "15 m Durchmesser", "30 m Durchmesser"],
+    a: 0,
+    explain: "Der Zirkel hat 20 m Durchmesser, also die Breite der Bahn. Volten sind mit 6, 8 oder 10 m deutlich kleiner."
+  },
+  {
+    id: "ba05",
+    cat: "bahn",
+    level: "aufbau",
+    type: "order",
+    q: "Nenne die Bahnpunkte der kleinen Dressurbahn (20 \xD7 40 m) in der Reihenfolge, wie sie von A aus auf der rechten Hand durchlaufen werden.",
+    items: ["A", "K", "E", "H", "C", "M", "B", "F"],
+    explain: 'Gro\xDFe Bahn (20 \xD7 60 m): A \u2013 K \u2013 V \u2013 E \u2013 S \u2013 H \u2013 C \u2013 M \u2013 R \u2013 B \u2013 P \u2013 F. Merksatz f\xFCr die Ecken: \u201EAlle Kinder Haben Chips Mit Fett".'
+  },
+  {
+    id: "ba06",
+    cat: "bahn",
+    level: "basis",
+    type: "single",
+    q: "Wo liegt der Bahnpunkt X?",
+    options: [
+      "In der Mitte der Bahn",
+      "Am Ende der langen Seite",
+      "Bei der Einfahrt",
+      "In der Ecke"
+    ],
+    a: 0,
+    explain: "X ist der Mittelpunkt der Bahn (Schnittpunkt von Mittellinie und Mittelzirkellinie). Weitere innere Punkte der gro\xDFen Bahn sind D, L, X, I und G."
+  },
+  {
+    id: "ba07",
+    cat: "bahn",
+    level: "aufbau",
+    type: "match",
+    q: "Ordne die Hufschlagfiguren ihrer Beschreibung zu.",
+    pairs: [
+      ["Volte", "Kleiner Kreis mit 6, 8 oder 10 m Durchmesser"],
+      ["Durch die ganze Bahn wechseln", "Diagonaler Handwechsel von Ecke zu Ecke"],
+      ["Durch den Zirkel wechseln", "Zwei halbe Zirkel mit Handwechsel in der Mitte"],
+      ["Schlangenlinie", "B\xF6gen entlang der Bahn mit Wechsel der Biegung"]
+    ],
+    explain: "Weitere Figuren: aus dem Zirkel wechseln, durch die L\xE4nge der Bahn wechseln, Achtfigur, aus der Ecke kehrt, Mittellinie."
+  },
+  {
+    id: "ba08",
+    cat: "bahn",
+    level: "profi",
+    type: "truefalse",
+    q: "In einer 20 \xD7 60 m Bahn liegen die Punkte V, S, R und P jeweils zwischen den Punkten der langen Seiten.",
+    a: true,
+    explain: "Die gro\xDFe Bahn hat die Reihenfolge A \u2013 K \u2013 V \u2013 E \u2013 S \u2013 H \u2013 C \u2013 M \u2013 R \u2013 B \u2013 P \u2013 F. V und P liegen zwischen K/E bzw. B/F, S und R zwischen E/H bzw. B/M."
+  },
+  {
+    id: "ba09",
+    cat: "bahn",
+    level: "basis",
+    type: "single",
+    q: 'Was bedeutet \u201Eauf der linken Hand reiten"?',
+    options: [
+      "Man reitet links herum \u2013 die linke Seite des Pferdes zeigt zur Bahnmitte",
+      "Man h\xE4lt die Z\xFCgel nur in der linken Hand",
+      "Man reitet rechts herum",
+      "Man reitet auf dem zweiten Hufschlag"
+    ],
+    a: 0,
+    explain: "Auf der linken Hand geht es gegen den Uhrzeigersinn; innen ist links. Handwechsel erfolgen \xFCber Diagonalen, Zirkel oder die Mittellinie."
+  },
+  {
+    id: "ba10",
+    cat: "bahn",
+    level: "aufbau",
+    type: "single",
+    q: "Warum reitet man in der Abteilung mit ausreichendem Abstand?",
+    options: [
+      "Um Auffahren, Schlagen und Unf\xE4lle zu vermeiden",
+      "Damit das Vorderpferd schneller wird",
+      "Weil die Bahn sonst zu klein ist",
+      "Damit man die Kommandos besser h\xF6rt"
+    ],
+    a: 0,
+    explain: "Mindestens eine Pferdel\xE4nge Abstand. Vor Pferden, die nicht angeritten werden d\xFCrfen (rote Schleife im Schweif), besonders vorsichtig sein."
+  },
+  {
+    id: "ba11",
+    cat: "bahn",
+    level: "profi",
+    type: "single",
+    q: "Was bedeutet eine rote Schleife im Schweif eines Pferdes?",
+    options: [
+      "Das Pferd schl\xE4gt \u2013 Abstand halten",
+      "Das Pferd ist ein Jungpferd",
+      "Das Pferd ist zu verkaufen",
+      "Das Pferd ist ein Turniersieger"
+    ],
+    a: 0,
+    explain: "Rote Schleife = schl\xE4gt. Eine gr\xFCne Schleife kennzeichnet je nach Region ein junges bzw. unerfahrenes Pferd."
+  },
+  {
+    id: "ba12",
+    cat: "bahn",
+    level: "aufbau",
+    type: "multi",
+    q: "Was ist beim Longieren oder Reiten in der Halle gemeinsam mit anderen zu beachten?",
+    options: [
+      "Vorher absprechen, wer welchen Bereich nutzt",
+      "Andere Reiter beim \xDCberholen ansprechen",
+      "Auf der Zirkellinie nicht schneiden",
+      "Beim Springen die Hindernisse ank\xFCndigen",
+      "M\xF6glichst dicht auffahren, um Platz zu sparen"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Kommunikation ist die wichtigste Bahnregel. Hindernisse werden nach dem Springen wieder aufgebaut bzw. abger\xE4umt."
+  },
+  {
+    id: "ba13",
+    cat: "bahn",
+    level: "profi",
+    type: "text",
+    q: "Wie hei\xDFt die Hufschlagfigur, bei der man von der Mitte der kurzen Seite (z. B. A) auf gerader Linie zur gegen\xFCberliegenden kurzen Seite (C) reitet?",
+    a: ["Mittellinie", "Durch die L\xE4nge der Bahn wechseln", "Ganze Mittellinie"],
+    explain: 'Das Reiten der Mittellinie \u2013 \u201EDurch die L\xE4nge der Bahn wechseln" \u2013 pr\xFCft Geradeaus-Richtung und Gleichgewicht besonders deutlich.'
+  },
+  {
+    id: "ba14",
+    cat: "bahn",
+    level: "basis",
+    type: "truefalse",
+    q: "Beim Auf- und Absitzen sollte man den ersten Hufschlag freihalten.",
+    a: true,
+    explain: "Auf- und Absitzen, Nachgurten oder B\xFCgelverstellen erfolgen in der Bahnmitte oder auf dem zweiten Hufschlag, damit andere Reiter ungehindert weiterreiten k\xF6nnen."
+  },
+  {
+    id: "ba15",
+    cat: "bahn",
+    level: "aufbau",
+    type: "single",
+    q: 'Was versteht man unter dem \u201Eersten Hufschlag"?',
+    options: [
+      "Die Spur direkt an der Bande bzw. am Bahnrand",
+      "Die Mittellinie",
+      "Die Zirkellinie",
+      "Die Spur einen Meter vor der Bande"
+    ],
+    a: 0,
+    explain: "Der zweite Hufschlag verl\xE4uft etwa 1\u20131,5 m weiter innen und wird u. a. beim Schrittreiten oder \xDCberholen genutzt."
+  }
+];
+
+// js/data/q-praxis.js
+var q_praxis_default = [
+  /* ------------------------------------------------------- LONGIEREN */
+  {
+    id: "lo01",
+    cat: "longieren",
+    level: "aufbau",
+    type: "multi",
+    q: "Welche Ausr\xFCstung tr\xE4gt der Longenf\xFChrer aus Sicherheitsgr\xFCnden?",
+    options: ["Handschuhe", "Festes Schuhwerk", "Reithelm", "Longierpeitsche in der zur Bewegungsrichtung passenden Hand", "Sporen"],
+    a: [0, 1, 2, 3],
+    explain: "Handschuhe sch\xFCtzen vor Verbrennungen durch die Longe, feste Schuhe vor Tritten. Die Longe wird nie um die Hand gewickelt, sondern in gleich gro\xDFen Schlaufen gehalten."
+  },
+  {
+    id: "lo02",
+    cat: "longieren",
+    level: "aufbau",
+    type: "single",
+    q: "Welche Position nimmt der Longenf\xFChrer zum Pferd ein?",
+    options: [
+      "Er bildet mit Longe, Peitsche und Pferd ein Dreieck und bleibt auf H\xF6he der Gurtlage",
+      "Er steht genau vor dem Pferd",
+      "Er l\xE4uft direkt hinter dem Pferd her",
+      "Er steht am Bahnrand"
+    ],
+    a: 0,
+    explain: 'Die Longe zeigt zum Pferdekopf, die Peitsche zur Hinterhand \u2013 der Longenf\xFChrer bleibt in der Mitte des Zirkels leicht hinter der Schulterlinie (\u201EDreieck").'
+  },
+  {
+    id: "lo03",
+    cat: "longieren",
+    level: "aufbau",
+    type: "number",
+    q: "Wie gro\xDF sollte der Longierzirkel mindestens im Durchmesser sein (in Metern)?",
+    a: 15,
+    tol: 3,
+    unit: "m",
+    explain: "Mindestens etwa 15 m, besser 18\u201320 m. Zu enge Zirkel belasten Gelenke und Sehnen erheblich, besonders bei jungen Pferden."
+  },
+  {
+    id: "lo04",
+    cat: "longieren",
+    level: "profi",
+    type: "truefalse",
+    q: "Hilfsz\xFCgel wie Ausbinder werden erst nach der Aufw\xE4rmphase und zun\xE4chst lang verschnallt.",
+    a: true,
+    explain: "Zuerst mindestens 10 Minuten ohne bzw. mit langen Ausbindern im Schritt l\xF6sen. Hilfsz\xFCgel nie am stehenden, angebundenen Pferd anlassen und nie zu kurz verschnallen."
+  },
+  {
+    id: "lo05",
+    cat: "longieren",
+    level: "aufbau",
+    type: "single",
+    q: "Warum wird beim Longieren regelm\xE4\xDFig die Hand gewechselt?",
+    options: [
+      "Um beide K\xF6rperseiten des Pferdes gleichm\xE4\xDFig zu belasten",
+      "Damit der Longenf\xFChrer sich nicht langweilt",
+      "Weil die Longe sonst verschlei\xDFt",
+      "Damit das Pferd schneller wird"
+    ],
+    a: 0,
+    explain: "Einseitige Belastung f\xFChrt zu Verspannungen und Schiefe. Die Gesamtdauer sollte je nach Trainingsstand rund 20\u201330 Minuten nicht \xFCberschreiten."
+  },
+  {
+    id: "lo06",
+    cat: "longieren",
+    level: "basis",
+    type: "multi",
+    q: "Welche Ziele hat Bodenarbeit?",
+    options: [
+      "Verbesserung von Vertrauen und Kommunikation",
+      "Gymnastizierung ohne Reitergewicht",
+      "Gew\xF6hnung an Umweltreize",
+      "Kontrolle des Pferdes vom Boden aus",
+      "Ersatz f\xFCr die tier\xE4rztliche Versorgung"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Bodenarbeit ist Ausbildung, kein Ersatz f\xFCr Tierarzt oder Hufschmied. Sinnvolle \xDCbungen: F\xFChrtraining, R\xFCckw\xE4rtsrichten, Weichen auf Hilfen, Gelassenheitstraining."
+  },
+  {
+    id: "lo07",
+    cat: "longieren",
+    level: "profi",
+    type: "single",
+    q: "Welches Ausr\xFCstungsteil erm\xF6glicht besonders gebisslose Longenarbeit?",
+    options: ["Kappzaum", "Kandare", "Martingal", "Sperrriemen"],
+    a: 0,
+    explain: "Der Kappzaum wirkt \xFCber den Nasenr\xFCcken und schont das Pferdemaul. Wird an der Trense longiert, wird die Longe korrekt verschnallt und nie direkt in einen Trensenring eingeh\xE4ngt und \xFCber den Kopf gef\xFChrt."
+  },
+  {
+    id: "lo08",
+    cat: "longieren",
+    level: "basis",
+    type: "truefalse",
+    q: "Die Longe darf zum besseren Halt um die Hand gewickelt werden.",
+    a: false,
+    explain: "Niemals! Bei einem Losrei\xDFen droht schwerste Handverletzung. Die Longe wird in gleichm\xE4\xDFigen Schlaufen aufgenommen und locker gehalten."
+  },
+  /* ---------------------------------------- SICHERHEIT & AUSREITEN */
+  {
+    id: "si01",
+    cat: "sicherheit",
+    level: "basis",
+    type: "multi",
+    q: "Welche Ausr\xFCstung geh\xF6rt zur Sicherheit des Reiters?",
+    options: [
+      "Reithelm nach aktueller Norm",
+      "Feste Schuhe mit Absatz oder Stiefel",
+      "Sicherheits- bzw. Schutzweste beim Springen und im Gel\xE4nde",
+      "Handschuhe",
+      "Lose Turnschuhe"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Der Helm muss richtig sitzen, mit geschlossenem Kinnriemen getragen und nach einem Sturz ausgetauscht werden. Schuhe brauchen Absatz oder es werden Sicherheitssteigb\xFCgel genutzt."
+  },
+  {
+    id: "si02",
+    cat: "sicherheit",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Reiter gelten im Stra\xDFenverkehr als Verkehrsteilnehmer und m\xFCssen sich an die StVO halten.",
+    a: true,
+    explain: "Reiter unterliegen der StVO (\xA7 28). Sie reiten auf der rechten Fahrbahnseite, d\xFCrfen Gehwege nicht nutzen und m\xFCssen Handzeichen geben. Reitwege sind zu benutzen, wo vorhanden."
+  },
+  {
+    id: "si03",
+    cat: "sicherheit",
+    level: "aufbau",
+    type: "multi",
+    q: "Was ist beim Ausreiten in der D\xE4mmerung zu beachten?",
+    options: [
+      "Reflektierende Kleidung bzw. Warnweste tragen",
+      "Beleuchtung mitf\xFChren (z. B. Steigb\xFCgellicht/Leuchte)",
+      "Reflektoren an Pferd und Ausr\xFCstung anbringen",
+      "Bekannte Wege w\xE4hlen und jemandem Bescheid geben",
+      "M\xF6glichst im Galopp auf der Stra\xDFe unterwegs sein"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Sichtbarkeit rettet Leben. Auf der Stra\xDFe wird Schritt geritten; Handy und Angaben zum Streckenverlauf geh\xF6ren zur Grundausstattung."
+  },
+  {
+    id: "si04",
+    cat: "sicherheit",
+    level: "basis",
+    type: "single",
+    q: "Wie verh\xE4lt man sich, wenn ein Auto beim Ausreiten von hinten naht?",
+    options: [
+      "Ruhig bleiben, Schritt reiten, ggf. Handzeichen zum Langsamfahren geben und am rechten Rand bleiben",
+      "Sofort antraben, um schneller vorbeizukommen",
+      "In der Stra\xDFenmitte bleiben, damit man gesehen wird",
+      "Absteigen und das Pferd auf die Fahrbahnmitte stellen"
+    ],
+    a: 0,
+    explain: "Deutliche Handzeichen und Blickkontakt zum Fahrer helfen. Bei unsicheren Pferden in eine Einfahrt ausweichen oder absteigen und das Pferd sichern."
+  },
+  {
+    id: "si05",
+    cat: "sicherheit",
+    level: "aufbau",
+    type: "single",
+    q: "Ab welcher Gruppengr\xF6\xDFe gilt eine Reitergruppe im Stra\xDFenverkehr als geschlossener Verband?",
+    options: ["Ab 16 Reitern", "Ab 4 Reitern", "Ab 8 Reitern", "Ab 30 Reitern"],
+    a: 0,
+    explain: "Ein geschlossener Verband ab 16 Reitern gilt verkehrsrechtlich als ein Fahrzeug und muss entsprechend gekennzeichnet und gef\xFChrt werden."
+  },
+  {
+    id: "si06",
+    cat: "sicherheit",
+    level: "basis",
+    type: "multi",
+    q: "Welche Regeln gelten f\xFCr das Ausreiten in der Gruppe?",
+    options: [
+      "Tempo gemeinsam absprechen und ansagen",
+      "Ausreichend Abstand halten",
+      "Auf das schw\xE4chste Pferd-Reiter-Paar R\xFCcksicht nehmen",
+      "Nicht ohne Vorwarnung \xFCberholen oder anhalten",
+      "Wer zuerst am Waldrand ist, gibt das Tempo vor"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Tempowechsel werden angek\xFCndigt und gemeinsam geritten. Ein erfahrenes Pferd f\xFChrt, unsichere Pferde reiten in der Mitte."
+  },
+  {
+    id: "si07",
+    cat: "sicherheit",
+    level: "profi",
+    type: "truefalse",
+    q: "Im Wald darf grunds\xE4tzlich \xFCberall frei geritten werden.",
+    a: false,
+    explain: "Das Reiten im Wald regeln die Landeswaldgesetze \u2013 meist ist es nur auf Wegen bzw. gekennzeichneten Reitwegen erlaubt. In einigen Bundesl\xE4ndern ist eine Reitplakette/Kennzeichnung Pflicht."
+  },
+  {
+    id: "si08",
+    cat: "sicherheit",
+    level: "aufbau",
+    type: "multi",
+    q: "Was ist beim Pferdetransport zu beachten?",
+    options: [
+      "Transportgamaschen oder Bandagen und ggf. Kopfschutz anlegen",
+      "Anh\xE4nger und Boden vor der Fahrt kontrollieren",
+      "Pferd sicher, aber mit ausreichend Bewegungsfreiheit anbinden",
+      "Ruhig und vorausschauend fahren, Pausen einplanen",
+      "Pferd mit dem F\xFChrstrick fest am Panikhaken verknoten, ohne Sicherheitsknoten"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Beim Transport geh\xF6ren Papiere (Equidenpass) mit ins Fahrzeug. Angebunden wird mit Sicherheitsknoten oder Panikhaken \u2013 nie starr."
+  },
+  {
+    id: "si09",
+    cat: "sicherheit",
+    level: "basis",
+    type: "single",
+    q: "Was tut man zuerst, wenn ein Reiter gest\xFCrzt ist und regungslos liegt?",
+    options: [
+      "Unfallstelle sichern, Pferd sichern lassen, Notruf 112 absetzen und die Person nicht unn\xF6tig bewegen",
+      "Den Reiter sofort aufsetzen",
+      "Den Helm sofort abnehmen",
+      "Warten, ob er von allein aufsteht"
+    ],
+    a: 0,
+    explain: "Erste Hilfe wie bei jedem Unfall: Sicherheit, Notruf, Betreuung. Der Helm wird nur abgenommen, wenn es zur Atemwegssicherung n\xF6tig ist \u2013 und dann m\xF6glichst zu zweit."
+  },
+  {
+    id: "si10",
+    cat: "sicherheit",
+    level: "profi",
+    type: "single",
+    q: "Warum sollte der Steigb\xFCgel zur Fu\xDFbreite passen bzw. ein Sicherheitssteigb\xFCgel genutzt werden?",
+    options: [
+      "Damit der Fu\xDF bei einem Sturz nicht im B\xFCgel h\xE4ngen bleibt und der Reiter geschleift wird",
+      "Damit der B\xFCgel sch\xF6ner aussieht",
+      "Damit die B\xFCgel nicht klappern",
+      "Damit der Sattel besser sitzt"
+    ],
+    a: 0,
+    explain: "Etwa 1\u20131,5 cm Platz beidseits des Stiefels. Zu enge oder zu weite B\xFCgel sind lebensgef\xE4hrlich. Vor dem Absitzen die B\xFCgel hochschieben, damit sie nicht h\xE4ngen bleiben."
+  },
+  /* ---------------------------------------------------------- TURNIER */
+  {
+    id: "tu01",
+    cat: "turnier",
+    level: "aufbau",
+    type: "order",
+    q: "Bringe die Leistungsklassen der Pr\xFCfungen von leicht nach schwer in die richtige Reihenfolge.",
+    items: ["E \u2013 Einsteiger", "A \u2013 Anf\xE4nger", "L \u2013 Leicht", "M \u2013 Mittel", "S \u2013 Schwer"],
+    explain: "Die Klassen bauen aufeinander auf. In Dressur und Springen gibt es zus\xE4tzlich Unterteilungen (z. B. A*, A**, M*, S*)."
+  },
+  {
+    id: "tu02",
+    cat: "turnier",
+    level: "aufbau",
+    type: "single",
+    q: "Welche Kopfbedeckung ist in Springpr\xFCfungen vorgeschrieben?",
+    options: [
+      "Reithelm mit Dreipunktbefestigung",
+      "Zylinder",
+      "Melone",
+      "Keine Vorschrift"
+    ],
+    a: 0,
+    explain: "In allen Springpr\xFCfungen sowie generell f\xFCr Reiter unter 18 Jahren ist ein Reithelm mit Dreipunkt-Befestigung Pflicht \u2013 auch beim Abreiten."
+  },
+  {
+    id: "tu03",
+    cat: "turnier",
+    level: "profi",
+    type: "single",
+    q: "Wie lang darf die Gerte in Springpr\xFCfungen maximal sein?",
+    options: ["75 cm", "120 cm", "100 cm", "Unbegrenzt"],
+    a: 0,
+    explain: "In Springpr\xFCfungen max. 75 cm, in Dressurpr\xFCfungen max. 120 cm (in Pr\xFCfungen, in denen die Gerte erlaubt ist). Details regelt die jeweils g\xFCltige LPO."
+  },
+  {
+    id: "tu04",
+    cat: "turnier",
+    level: "aufbau",
+    type: "multi",
+    q: "Was z\xE4hlt in einer Springpr\xFCfung als Fehler?",
+    options: [
+      "Abwurf einer Hindernisstange",
+      "Verweigerung",
+      "\xDCberschreiten der erlaubten Zeit",
+      "Sturz von Pferd oder Reiter",
+      "Ein zu weiter Galoppsprung"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Ein Abwurf z\xE4hlt 4 Fehlerpunkte, die erste Verweigerung 4 Fehlerpunkte, Zeit\xFCberschreitung wird anteilig berechnet. Sturz und die zweite Verweigerung f\xFChren zum Ausscheiden."
+  },
+  {
+    id: "tu05",
+    cat: "turnier",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Vor dem Start muss der Springparcours zu Fu\xDF besichtigt werden, um Weg, Distanzen und Reihenfolge festzulegen.",
+    a: true,
+    explain: "Beim Parcoursbegehen pr\xFCft man Nummerierung, Fahnen (rot rechts, wei\xDF links), Distanzen zwischen Hindernissen und den optimalen Weg."
+  },
+  {
+    id: "tu06",
+    cat: "turnier",
+    level: "basis",
+    type: "single",
+    q: "Auf welcher Seite muss die rote Fahne eines Hindernisses stehen?",
+    options: ["Rechts", "Links", "Beliebig", "In der Mitte"],
+    a: 0,
+    explain: 'Merksatz: \u201ERot rechts". Wei\xDFe Begrenzung links \u2013 auch beim Ein- und Ausreiten in Gel\xE4ndestrecken.'
+  },
+  {
+    id: "tu07",
+    cat: "turnier",
+    level: "profi",
+    type: "single",
+    q: "Wie werden Dressurlektionen bewertet?",
+    options: [
+      "Mit Wertnoten von 0 bis 10, bei Bedarf in halben Punkten",
+      "Mit Schulnoten von 1 bis 6",
+      "Nur mit Fehlerpunkten",
+      "Nach Zeit"
+    ],
+    a: 0,
+    explain: "10 = ausgezeichnet, 6 = befriedigend, 0 = nicht ausgef\xFChrt. In Aufgaben mit Einzelnoten kommen Gesamtnoten (Grundgangarten, Sitz und Einwirkung, Durchl\xE4ssigkeit) hinzu."
+  },
+  {
+    id: "tu08",
+    cat: "turnier",
+    level: "aufbau",
+    type: "multi",
+    q: "Was geh\xF6rt zur fairen und regelkonformen Turniervorbereitung?",
+    options: [
+      "Rechtzeitige Nennung nach Ausschreibung",
+      "G\xFCltiger Impfschutz und Equidenpass",
+      "Korrekte, regelkonforme Ausr\xFCstung",
+      "Faires Abreiten mit R\xFCcksicht auf andere",
+      "Ausr\xFCstung erst auf dem Abreiteplatz zusammensuchen"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Die Ausschreibung nennt Pr\xFCfungen, Nennungsschluss, Teilnahmebedingungen und Anforderungen. Auf dem Abreiteplatz gilt links an links und R\xFCcksichtnahme."
+  },
+  {
+    id: "tu09",
+    cat: "turnier",
+    level: "profi",
+    type: "truefalse",
+    q: 'Im Turniersport gilt das Wohl des Pferdes als oberstes Gebot (\u201EHorse First").',
+    a: true,
+    explain: "Die Ethischen Grunds\xE4tze des Pferdefreundes und die LPO stellen das Wohl des Pferdes \xFCber sportlichen Erfolg. Ersch\xF6pfte, lahme oder verletzte Pferde d\xFCrfen nicht starten."
+  },
+  {
+    id: "tu10",
+    cat: "turnier",
+    level: "basis",
+    type: "single",
+    q: "Wie verh\xE4lt man sich als Zuschauer am Rand eines Turnierplatzes?",
+    options: [
+      "Ruhig verhalten, nicht ins Bild springen, Hunde anleinen",
+      "Laut anfeuern, w\xE4hrend ein Paar in der Dressuraufgabe ist",
+      "Regenschirme pl\xF6tzlich aufspannen",
+      "Nah an den Zaun treten und das Pferd anfassen"
+    ],
+    a: 0,
+    explain: "Pl\xF6tzliche Bewegungen und Ger\xE4usche erschrecken Pferde. Applaus erst nach dem Schlussgru\xDF bzw. nach der Runde."
+  },
+  /* ------------------------------------------------ ZUCHT & AUFZUCHT */
+  {
+    id: "zu01",
+    cat: "zucht",
+    level: "aufbau",
+    type: "number",
+    q: "Wie viele Monate dauert die Tr\xE4chtigkeit einer Stute ungef\xE4hr?",
+    a: 11,
+    tol: 0.5,
+    unit: "Monate",
+    explain: "Rund 11 Monate bzw. etwa 330\u2013340 Tage. Fohlen kommen meist im Fr\xFChjahr zur Welt, damit sie in der Weidesaison aufwachsen."
+  },
+  {
+    id: "zu02",
+    cat: "zucht",
+    level: "profi",
+    type: "single",
+    q: "In welchem Abstand tritt bei der Stute in der Decksaison typischerweise die Rosse auf?",
+    options: ["Etwa alle 21 Tage", "Etwa alle 7 Tage", "Etwa alle 60 Tage", "Nur einmal im Jahr"],
+    a: 0,
+    explain: "Der Zyklus dauert im Mittel 21 Tage; die Rosse selbst etwa 5\u20137 Tage. Stuten sind saisonal poly\xF6strisch \u2013 vor allem im Fr\xFChjahr und Sommer."
+  },
+  {
+    id: "zu03",
+    cat: "zucht",
+    level: "aufbau",
+    type: "truefalse",
+    q: "Das Fohlen sollte innerhalb der ersten Lebensstunden die erste Milch (Kolostrum) aufnehmen.",
+    a: true,
+    explain: "Das Kolostrum enth\xE4lt lebenswichtige Antik\xF6rper. Es sollte m\xF6glichst innerhalb der ersten 2\u20134 Stunden aufgenommen werden \u2013 sp\xE4ter kann der Darm die Antik\xF6rper nicht mehr aufnehmen."
+  },
+  {
+    id: "zu04",
+    cat: "zucht",
+    level: "aufbau",
+    type: "single",
+    q: "Wann werden Fohlen \xFCblicherweise abgesetzt?",
+    options: ["Mit etwa 6 Monaten", "Mit 2 Monaten", "Mit 12 Monaten", "Mit 3 Wochen"],
+    a: 0,
+    explain: "\xDCblich ist das Absetzen im Alter von rund 6 Monaten, m\xF6glichst stressarm und in Gesellschaft anderer Absetzer."
+  },
+  {
+    id: "zu05",
+    cat: "zucht",
+    level: "profi",
+    type: "single",
+    q: "Woran kann man das Alter eines Pferdes grob absch\xE4tzen?",
+    options: [
+      "Am Gebiss (Zahnwechsel, Kunden, Zahnform und -winkel)",
+      "An der Fellfarbe",
+      "An der Gr\xF6\xDFe",
+      "An der M\xE4hnenl\xE4nge"
+    ],
+    a: 0,
+    explain: "Der Zahnwechsel von Milch- zu Dauerz\xE4hnen ist mit etwa 5 Jahren abgeschlossen. Danach helfen Kunden, Zahnform und Zahnwinkel \u2013 die Sch\xE4tzung wird mit zunehmendem Alter ungenauer."
+  },
+  {
+    id: "zu06",
+    cat: "zucht",
+    level: "basis",
+    type: "match",
+    q: "Ordne die Begriffe richtig zu.",
+    pairs: [
+      ["Stute", "Weibliches Pferd"],
+      ["Hengst", "M\xE4nnliches, unkastriertes Pferd"],
+      ["Wallach", "Kastriertes m\xE4nnliches Pferd"],
+      ["J\xE4hrling", "Einj\xE4hriges Pferd"]
+    ],
+    explain: "Weitere Begriffe: Fohlen (im ersten Lebensjahr), Absetzer, Stutfohlen und Hengstfohlen."
+  },
+  {
+    id: "zu07",
+    cat: "zucht",
+    level: "profi",
+    type: "multi",
+    q: "Was ist bei der Aufzucht von Jungpferden wichtig?",
+    options: [
+      "Viel freie Bewegung auf der Weide",
+      "Aufwachsen in einer Gruppe Gleichaltriger",
+      "Bedarfsgerechte F\xFCtterung mit Mineralstoffversorgung",
+      "Regelm\xE4\xDFige Hufkontrolle und Gew\xF6hnung an den Menschen",
+      "M\xF6glichst fr\xFChes intensives Training unter dem Sattel"
+    ],
+    a: [0, 1, 2, 3],
+    explain: "Das Skelett ist erst mit etwa 5\u20136 Jahren voll ausgereift. Zu fr\xFChe oder zu intensive Belastung sch\xE4digt Gelenke und Wachstumsfugen dauerhaft."
+  },
+  {
+    id: "zu08",
+    cat: "zucht",
+    level: "aufbau",
+    type: "single",
+    q: "Was versteht man unter einem K\xF6rung bzw. einer Stutbuchaufnahme?",
+    options: [
+      "Die Zuchtzulassung eines Hengstes bzw. die Eintragung einer Stute in ein Zuchtbuch",
+      "Ein Turnier f\xFCr Jungpferde",
+      "Die tier\xE4rztliche Untersuchung vor dem Verkauf",
+      "Die Ausbildung des Fohlens"
+    ],
+    a: 0,
+    explain: "Zuchtverb\xE4nde beurteilen Exterieur, Bewegung, Gesundheit und Abstammung. Nur gek\xF6rte Hengste bzw. eingetragene Stuten liefern Nachkommen mit vollem Zuchtbuchstatus."
+  }
+];
+
+// js/data/index.js
+var QUESTIONS = [...q_pferdekunde_default, ...q_gesundheit_default, ...q_reiten_default, ...q_praxis_default];
+var seen = /* @__PURE__ */ new Set();
+for (const q of QUESTIONS) {
+  if (seen.has(q.id)) console.warn("Doppelte Frage-ID:", q.id);
+  seen.add(q.id);
+}
+var QUESTION_BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
+
+// js/data/categories.js
+var CATEGORIES = [
+  { id: "anatomie", name: "Anatomie & K\xF6rperbau", emoji: "\u{1F9B4}" },
+  { id: "rassen", name: "Rassen, Farben & Abzeichen", emoji: "\u{1F3A8}" },
+  { id: "haltung", name: "Haltung & Stallmanagement", emoji: "\u{1F3E0}" },
+  { id: "fuetterung", name: "F\xFCtterung", emoji: "\u{1F33E}" },
+  { id: "gesundheit", name: "Gesundheit & Erste Hilfe", emoji: "\u{1FA7A}" },
+  { id: "hufe", name: "Hufe & Beschlag", emoji: "\u{1F9F2}" },
+  { id: "verhalten", name: "Verhalten & Umgang", emoji: "\u{1F9E0}" },
+  { id: "ausruestung", name: "Ausr\xFCstung & Sattelkunde", emoji: "\u{1FAA2}" },
+  { id: "reitlehre", name: "Reitlehre & Hilfen", emoji: "\u{1F3C7}" },
+  { id: "bahn", name: "Bahnregeln & Hufschlagfiguren", emoji: "\u{1F4D0}" },
+  { id: "longieren", name: "Longieren & Bodenarbeit", emoji: "\u{1F504}" },
+  { id: "sicherheit", name: "Sicherheit, Ausreiten & Recht", emoji: "\u{1F9BA}" },
+  { id: "turnier", name: "Turnier & Wettkampf", emoji: "\u{1F3C6}" },
+  { id: "zucht", name: "Zucht & Aufzucht", emoji: "\u{1F423}" }
+];
+var LEVELS = [
+  { id: "basis", name: "Basis", hint: "Basispass / RA 10\u20136" },
+  { id: "aufbau", name: "Aufbau", hint: "RA 5 & 4" },
+  { id: "profi", name: "Profi", hint: "RA 3\u20131" }
+];
+var CAT_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
+var LEVEL_BY_ID = Object.fromEntries(LEVELS.map((l) => [l.id, l]));
+
+// js/util.js
+var $ = (sel, root = document) => root.querySelector(sel);
+function el(tag, opts = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(opts)) {
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else if (k === "html") node.innerHTML = v;
+    else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== void 0 && v !== false) node.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of [].concat(children)) {
+    if (c) node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function normalize(str) {
+  return String(str).toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, " ").trim();
+}
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length || !b.length) return Math.max(a.length, b.length);
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function fuzzyEqual(input, target) {
+  const a = normalize(input);
+  const b = normalize(target);
+  if (!a) return false;
+  if (a === b) return true;
+  const tolerance = b.length >= 8 ? 2 : b.length >= 5 ? 1 : 0;
+  return levenshtein(a, b) <= tolerance;
+}
+function sameSet(a, b) {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort((x, y) => x - y);
+  const sb = [...b].sort((x, y) => x - y);
+  return sa.every((v, i) => v === sb[i]);
+}
+function formatTime(ms) {
+  const total = Math.floor(ms / 1e3);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor(total % 3600 / 60);
+  const s = total % 60;
+  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+  return (h > 0 ? `${h}:` : "") + `${mm}:${String(s).padStart(2, "0")}`;
+}
+function parseNumberDE(value) {
+  const n = parseFloat(String(value).replace(",", ".").replace(/[^0-9.\-]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+function formatNumberDE(n) {
+  return String(n).replace(".", ",");
+}
+
+// js/store.js
+var KEY = "reitabzeichen-trainer.v1";
+var DEFAULT_STATE = () => ({
+  version: 1,
+  settings: {
+    cats: null,
+    // null = alle Kategorien aktiv
+    levels: null,
+    // null = alle Stufen aktiv
+    srs: true,
+    hardOnly: false,
+    shuffle: true
+  },
+  // cards[fragenId] = { box, right, wrong, streak, seenAt }
+  cards: {},
+  totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
+  seq: 0
+  // Zähler der beantworteten Fragen (für "zuletzt gesehen")
+});
+var state = DEFAULT_STATE();
+var saveTimer = null;
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...DEFAULT_STATE(), ...parsed };
+      state.settings = { ...DEFAULT_STATE().settings, ...parsed.settings || {} };
+      state.totals = { ...DEFAULT_STATE().totals, ...parsed.totals || {} };
+      state.cards = parsed.cards || {};
+    }
+  } catch (err) {
+    console.warn("Gespeicherter Fortschritt konnte nicht gelesen werden:", err);
+    state = DEFAULT_STATE();
+  }
+  return state;
+}
+function getState() {
+  return state;
+}
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn("Fortschritt konnte nicht gespeichert werden:", err);
+    }
+  }, 120);
+}
+function saveNow() {
+  clearTimeout(saveTimer);
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch (err) {
+    console.warn("Fortschritt konnte nicht gespeichert werden:", err);
+  }
+}
+function resetProgress() {
+  const settings = state.settings;
+  state = DEFAULT_STATE();
+  state.settings = settings;
+  saveNow();
+  return state;
+}
+function getCard(id) {
+  let card = state.cards[id];
+  if (!card) {
+    card = { box: 1, right: 0, wrong: 0, streak: 0, seenAt: -1 };
+    state.cards[id] = card;
+  }
+  return card;
+}
+function hasCard(id) {
+  return Object.prototype.hasOwnProperty.call(state.cards, id);
+}
+
+// js/srs.js
+var MAX_BOX = 5;
+var BOX_WEIGHT = { 1: 24, 2: 12, 3: 6, 4: 3, 5: 1 };
+var NEW_WEIGHT = 14;
+var RECENT_PENALTY = 0.08;
+function isMastered(id) {
+  return hasCard(id) && getState().cards[id].box >= MAX_BOX;
+}
+function isHard(id) {
+  if (!hasCard(id)) return false;
+  const c = getState().cards[id];
+  return c.box < MAX_BOX && (c.wrong > 0 || c.box <= 2);
+}
+function weightOf(id, recentWindow) {
+  const state3 = getState();
+  if (!hasCard(id)) return NEW_WEIGHT;
+  const card = state3.cards[id];
+  let w = BOX_WEIGHT[card.box] ?? 1;
+  w *= 1 + Math.min(card.wrong, 5) * 0.35;
+  if (card.seenAt >= 0 && state3.seq - card.seenAt < recentWindow) w *= RECENT_PENALTY;
+  return Math.max(w, 0.05);
+}
+function pickNext(pool, useSrs, lastId) {
+  if (!pool.length) return null;
+  const candidates = pool.length > 1 ? pool.filter((q) => q.id !== lastId) : pool;
+  if (!useSrs) {
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+  const recentWindow = Math.min(Math.max(3, Math.floor(candidates.length / 3)), 12);
+  const weights = candidates.map((q) => weightOf(q.id, recentWindow));
+  const sum = weights.reduce((a, b) => a + b, 0);
+  let roll = Math.random() * sum;
+  for (let i = 0; i < candidates.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
+function recordAnswer(id, correct) {
+  const state3 = getState();
+  const card = getCard(id);
+  const boxBefore = card.box;
+  if (correct) {
+    card.right++;
+    card.streak++;
+    card.box = Math.min(MAX_BOX, card.box + 1);
+  } else {
+    card.wrong++;
+    card.streak = 0;
+    card.box = 1;
+  }
+  card.seenAt = state3.seq;
+  state3.seq++;
+  state3.totals.total++;
+  if (correct) state3.totals.right++;
+  else state3.totals.wrong++;
+  return { boxBefore, boxAfter: card.box, mastered: correct && card.box >= MAX_BOX };
+}
+function poolProgress(pool) {
+  const state3 = getState();
+  let mastered = 0, seen2 = 0, hard = 0;
+  const boxes = [0, 0, 0, 0, 0];
+  for (const q of pool) {
+    const card = state3.cards[q.id];
+    if (!card) continue;
+    seen2++;
+    boxes[card.box - 1]++;
+    if (card.box >= MAX_BOX) mastered++;
+    else if (card.wrong > 0 || card.box <= 2) hard++;
+  }
+  return { total: pool.length, seen: seen2, mastered, hard, boxes };
+}
+
+// js/types.js
+var LETTERS = "ABCDEFGH";
+var TYPE_HINTS = {
+  single: "Eine Antwort ausw\xE4hlen.",
+  multi: "Mehrfachauswahl \u2013 alle richtigen Antworten antippen.",
+  truefalse: "Ist die Aussage richtig oder falsch?",
+  text: "Antwort eintippen (Tippfehler werden verziehen).",
+  number: "Zahl eingeben.",
+  order: "In der richtigen Reihenfolge antippen.",
+  match: "Jeder Zeile die passende Antwort zuordnen."
+};
+function createAnswerUI(q, opts = {}) {
+  const factory = {
+    single: singleUI,
+    multi: multiUI,
+    truefalse: trueFalseUI,
+    text: textUI,
+    number: numberUI,
+    order: orderUI,
+    match: matchUI
+  }[q.type];
+  if (!factory) throw new Error(`Unbekannter Fragetyp: ${q.type}`);
+  return factory(q, opts);
+}
+function optionButton(label, marker, extraClass, onClick) {
+  return el("button", {
+    type: "button",
+    class: `opt ${extraClass}`,
+    "aria-pressed": "false",
+    onclick: onClick
+  }, [
+    el("span", { class: "marker", text: marker }),
+    el("span", { class: "opt-text", text: label })
+  ]);
+}
+function singleUI(q, { shuffle = true, onChange, onSubmit } = {}) {
+  let selected = null;
+  const order = shuffle ? shuffled(q.options.map((_, i) => i)) : q.options.map((_, i) => i);
+  const buttons = [];
+  return {
+    render(container) {
+      order.forEach((orig, pos) => {
+        const btn = optionButton(q.options[orig], LETTERS[pos], "radio", () => {
+          selected = orig;
+          buttons.forEach((b) => {
+            const on = b.dataset.orig === String(orig);
+            b.classList.toggle("selected", on);
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+          });
+          onChange?.();
+        });
+        btn.dataset.orig = String(orig);
+        btn.addEventListener("dblclick", () => onSubmit?.());
+        buttons.push(btn);
+        container.appendChild(btn);
+      });
+    },
+    selectByIndex(pos) {
+      buttons[pos]?.click();
+    },
+    hasAnswer: () => selected !== null,
+    evaluate: () => ({ correct: selected === q.a, solution: q.options[q.a] }),
+    reveal() {
+      buttons.forEach((b) => {
+        const orig = Number(b.dataset.orig);
+        b.disabled = true;
+        b.classList.remove("selected");
+        if (orig === q.a) b.classList.add("correct");
+        else if (orig === selected) b.classList.add("wrong");
+      });
+    }
+  };
+}
+function multiUI(q, { shuffle = true, onChange } = {}) {
+  const selected = /* @__PURE__ */ new Set();
+  const order = shuffle ? shuffled(q.options.map((_, i) => i)) : q.options.map((_, i) => i);
+  const buttons = [];
+  return {
+    render(container) {
+      order.forEach((orig) => {
+        const btn = optionButton(q.options[orig], "\u2713", "check", () => {
+          if (selected.has(orig)) selected.delete(orig);
+          else selected.add(orig);
+          const on = selected.has(orig);
+          btn.classList.toggle("selected", on);
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+          onChange?.();
+        });
+        btn.dataset.orig = String(orig);
+        buttons.push(btn);
+        container.appendChild(btn);
+      });
+    },
+    selectByIndex(pos) {
+      buttons[pos]?.click();
+    },
+    hasAnswer: () => selected.size > 0,
+    evaluate: () => ({
+      correct: sameSet([...selected], q.a),
+      solution: q.a.map((i) => q.options[i]).join(" \xB7 ")
+    }),
+    reveal() {
+      buttons.forEach((b) => {
+        const orig = Number(b.dataset.orig);
+        b.disabled = true;
+        b.classList.remove("selected");
+        const isCorrect = q.a.includes(orig);
+        const wasPicked = selected.has(orig);
+        if (isCorrect && wasPicked) b.classList.add("correct");
+        else if (isCorrect) b.classList.add("correct", "missed");
+        else if (wasPicked) b.classList.add("wrong");
+      });
+    }
+  };
+}
+function trueFalseUI(q, { onChange } = {}) {
+  let selected = null;
+  const buttons = [];
+  return {
+    render(container) {
+      const row = el("div", { class: "tf-row" });
+      [["Richtig", true], ["Falsch", false]].forEach(([label, value]) => {
+        const btn = optionButton(label, value ? "\u2713" : "\u2717", "radio", () => {
+          selected = value;
+          buttons.forEach((b) => {
+            const on = b.dataset.value === String(value);
+            b.classList.toggle("selected", on);
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+          });
+          onChange?.();
+        });
+        btn.dataset.value = String(value);
+        buttons.push(btn);
+        row.appendChild(btn);
+      });
+      container.appendChild(row);
+    },
+    selectByIndex(pos) {
+      buttons[pos]?.click();
+    },
+    hasAnswer: () => selected !== null,
+    evaluate: () => ({
+      correct: selected === q.a,
+      solution: q.a ? "Die Aussage ist richtig." : "Die Aussage ist falsch."
+    }),
+    reveal() {
+      buttons.forEach((b) => {
+        const value = b.dataset.value === "true";
+        b.disabled = true;
+        b.classList.remove("selected");
+        if (value === q.a) b.classList.add("correct");
+        else if (value === selected) b.classList.add("wrong");
+      });
+    }
+  };
+}
+function textUI(q, { onChange, onSubmit } = {}) {
+  const input = el("input", {
+    class: "text-input",
+    type: "text",
+    autocomplete: "off",
+    autocorrect: "off",
+    spellcheck: "false",
+    enterkeyhint: "go",
+    placeholder: "Antwort eingeben \u2026",
+    "aria-label": "Antwort"
+  });
+  return {
+    render(container) {
+      input.addEventListener("input", () => onChange?.());
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          onSubmit?.();
+        }
+      });
+      container.appendChild(input);
+    },
+    focus: () => input.focus(),
+    hasAnswer: () => input.value.trim().length > 0,
+    evaluate: () => ({
+      correct: q.a.some((target) => fuzzyEqual(input.value, target)),
+      solution: q.a[0]
+    }),
+    reveal(correct) {
+      input.disabled = true;
+      input.classList.add(correct ? "correct" : "wrong");
+    }
+  };
+}
+function numberUI(q, { onChange, onSubmit } = {}) {
+  const input = el("input", {
+    class: "text-input",
+    type: "text",
+    inputmode: "decimal",
+    autocomplete: "off",
+    enterkeyhint: "go",
+    placeholder: "Zahl eingeben \u2026",
+    "aria-label": "Zahl eingeben"
+  });
+  return {
+    render(container) {
+      input.addEventListener("input", () => onChange?.());
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          onSubmit?.();
+        }
+      });
+      const row = el("div", { class: "unit-row" }, [input]);
+      if (q.unit) row.appendChild(el("span", { class: "unit", text: q.unit }));
+      container.appendChild(row);
+    },
+    focus: () => input.focus(),
+    hasAnswer: () => parseNumberDE(input.value) !== null,
+    evaluate() {
+      const value = parseNumberDE(input.value);
+      const tol = q.tol ?? 0;
+      const correct = value !== null && Math.abs(value - q.a) <= tol + 1e-9;
+      let solution = formatNumberDE(q.a) + (q.unit ? ` ${q.unit}` : "");
+      if (tol > 0) solution += ` (akzeptiert: ${formatNumberDE(q.a - tol)}\u2013${formatNumberDE(q.a + tol)})`;
+      return { correct, solution };
+    },
+    reveal(correct) {
+      input.disabled = true;
+      input.classList.add(correct ? "correct" : "wrong");
+    }
+  };
+}
+function orderUI(q, { onChange } = {}) {
+  const order = shuffled(q.items.map((_, i) => i));
+  const picks = [];
+  const buttons = /* @__PURE__ */ new Map();
+  let resetBtn = null;
+  function repaint() {
+    buttons.forEach((btn, orig) => {
+      const pos = picks.indexOf(orig);
+      btn.classList.toggle("picked", pos >= 0);
+      btn.querySelector(".marker").textContent = pos >= 0 ? String(pos + 1) : "";
+      btn.setAttribute("aria-pressed", pos >= 0 ? "true" : "false");
+    });
+    if (resetBtn) resetBtn.disabled = picks.length === 0;
+    onChange?.();
+  }
+  return {
+    render(container) {
+      order.forEach((orig) => {
+        const btn = optionButton(q.items[orig], "", "order-item", () => {
+          const at = picks.indexOf(orig);
+          if (at >= 0) picks.splice(at, 1);
+          else picks.push(orig);
+          repaint();
+        });
+        buttons.set(orig, btn);
+        container.appendChild(btn);
+      });
+      resetBtn = el("button", {
+        type: "button",
+        class: "chip",
+        text: "Auswahl zur\xFCcksetzen",
+        disabled: true,
+        onclick: () => {
+          picks.length = 0;
+          repaint();
+        }
+      });
+      container.appendChild(el("div", { class: "chip-row" }, [resetBtn]));
+    },
+    hasAnswer: () => picks.length === q.items.length,
+    evaluate: () => ({
+      correct: picks.every((orig, i) => orig === i) && picks.length === q.items.length,
+      solution: q.items.map((t, i) => `${i + 1}. ${t}`).join("  \u2192  ")
+    }),
+    reveal() {
+      buttons.forEach((btn, orig) => {
+        btn.disabled = true;
+        btn.classList.remove("picked");
+        const chosenPos = picks.indexOf(orig);
+        btn.querySelector(".marker").textContent = String(orig + 1);
+        if (chosenPos === orig) btn.classList.add("correct");
+        else btn.classList.add("wrong");
+      });
+      if (resetBtn) resetBtn.disabled = true;
+    }
+  };
+}
+function matchUI(q, { onChange } = {}) {
+  const rights = shuffled(q.pairs.map((p) => p[1]));
+  const rows = [];
+  return {
+    render(container) {
+      const grid = el("div", { class: "match-grid" });
+      q.pairs.forEach(([left], i) => {
+        const select = el("select", { "aria-label": `Zuordnung f\xFCr ${left}` });
+        select.appendChild(el("option", { value: "", text: "bitte w\xE4hlen \u2026" }));
+        rights.forEach((r) => select.appendChild(el("option", { value: r, text: r })));
+        select.addEventListener("change", () => onChange?.());
+        const row = el("div", { class: "match-pair" }, [
+          el("span", { class: "m-left", text: left }),
+          select
+        ]);
+        rows.push({ row, select, index: i });
+        grid.appendChild(row);
+      });
+      container.appendChild(grid);
+    },
+    hasAnswer: () => rows.every((r) => r.select.value !== ""),
+    evaluate: () => ({
+      correct: rows.every((r) => r.select.value === q.pairs[r.index][1]),
+      solution: q.pairs.map(([l, r]) => `${l} \u2192 ${r}`).join(" \xB7 ")
+    }),
+    reveal() {
+      rows.forEach((r) => {
+        const expected = q.pairs[r.index][1];
+        const ok = r.select.value === expected;
+        r.select.disabled = true;
+        r.row.classList.add(ok ? "correct" : "wrong");
+        if (!ok) r.row.appendChild(el("span", { class: "m-fix", text: `richtig: ${expected}` }));
+      });
+    }
+  };
+}
+
+// js/app.js
+var state2 = loadState();
+var session = {
+  right: 0,
+  wrong: 0,
+  total: 0,
+  ms: 0,
+  running: false,
+  startedAt: 0,
+  ticker: null,
+  pool: [],
+  current: null,
+  ui: null,
+  answered: false,
+  lastId: null
+};
+var screens = {
+  start: $("#screen-start"),
+  quiz: $("#screen-quiz"),
+  stats: $("#screen-stats")
+};
+var activeScreen = "start";
+var statsCameFrom = "start";
+function showScreen(name) {
+  activeScreen = name;
+  for (const [key, node] of Object.entries(screens)) node.hidden = key !== name;
+  $("#btn-home").hidden = name === "start";
+  $("#btn-stats").hidden = name === "stats";
+  if (name === "quiz") startTimer();
+  else stopTimer();
+  if (name === "start") renderStart();
+  if (name === "stats") renderStats();
+  window.scrollTo({ top: 0 });
+}
+function startTimer() {
+  if (session.running) return;
+  session.running = true;
+  session.startedAt = Date.now();
+  session.ticker = setInterval(tickTimer, 1e3);
+  tickTimer();
+}
+function stopTimer() {
+  if (!session.running) return;
+  flushTimer();
+  session.running = false;
+  clearInterval(session.ticker);
+  session.ticker = null;
+  save();
+}
+function flushTimer() {
+  if (!session.running) return;
+  const now = Date.now();
+  const delta = now - session.startedAt;
+  session.startedAt = now;
+  session.ms += delta;
+  state2.totals.timeMs += delta;
+}
+function tickTimer() {
+  flushTimer();
+  $("#s-time").textContent = formatTime(session.ms);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopTimer();
+    saveNow();
+  } else if (activeScreen === "quiz") startTimer();
+});
+window.addEventListener("pagehide", () => {
+  stopTimer();
+  saveNow();
+});
+function activeCats() {
+  const set = state2.settings.cats;
+  return set === null ? CATEGORIES.map((c) => c.id) : set;
+}
+function activeLevels() {
+  const set = state2.settings.levels;
+  return set === null ? LEVELS.map((l) => l.id) : set;
+}
+function basePool() {
+  const cats = new Set(activeCats());
+  const levels = new Set(activeLevels());
+  return QUESTIONS.filter((q) => cats.has(q.cat) && levels.has(q.level));
+}
+function buildPool() {
+  let pool = basePool();
+  if (state2.settings.hardOnly) {
+    const hard = pool.filter((q) => isHard(q.id));
+    if (hard.length >= 1) pool = hard;
+    else toast("Noch keine schwierigen Fragen \u2013 es werden alle abgefragt.");
+  }
+  return pool;
+}
+function renderStart() {
+  const cats = new Set(activeCats());
+  const levels = new Set(activeLevels());
+  const list = $("#cat-list");
+  list.textContent = "";
+  for (const cat of CATEGORIES) {
+    const qs = QUESTIONS.filter((q) => q.cat === cat.id && levels.has(q.level));
+    const prog = poolProgress(qs);
+    const pct = qs.length ? Math.round(prog.mastered / qs.length * 100) : 0;
+    const input = el("input", { type: "checkbox" });
+    input.checked = cats.has(cat.id);
+    input.addEventListener("change", () => {
+      const next = new Set(activeCats());
+      if (input.checked) next.add(cat.id);
+      else next.delete(cat.id);
+      state2.settings.cats = [...next];
+      save();
+      updatePoolInfo();
+    });
+    const row = el("label", { class: "cat-row" }, [
+      input,
+      el("span", { class: "tick", text: "\u2713" }),
+      el("span", { class: "cat-main" }, [
+        el("span", { class: "cat-top" }, [
+          el("span", { class: "cat-emoji", text: cat.emoji, "aria-hidden": "true" }),
+          el("span", { class: "cat-name", text: cat.name }),
+          el("span", { class: "cat-count", text: `${prog.mastered}/${qs.length}` })
+        ]),
+        el("span", { class: "cat-bar" }, [el("i", { style: `width:${pct}%` })])
+      ])
+    ]);
+    list.appendChild(el("li", {}, [row]));
+  }
+  const levelList = $("#level-list");
+  levelList.textContent = "";
+  for (const lvl of LEVELS) {
+    const count = QUESTIONS.filter((q) => q.level === lvl.id).length;
+    const input = el("input", { type: "checkbox" });
+    input.checked = levels.has(lvl.id);
+    const pill = el("label", { class: `level-pill${input.checked ? " on" : ""}` }, [
+      input,
+      el("span", {}, [
+        el("span", { text: lvl.name }),
+        el("br"),
+        el("small", { text: `${lvl.hint} \xB7 ${count}` })
+      ])
+    ]);
+    input.addEventListener("change", () => {
+      const next = new Set(activeLevels());
+      if (input.checked) next.add(lvl.id);
+      else next.delete(lvl.id);
+      if (next.size === 0) {
+        input.checked = true;
+        next.add(lvl.id);
+        toast("Mindestens eine Stufe muss aktiv bleiben.");
+      }
+      state2.settings.levels = [...next];
+      save();
+      renderStart();
+    });
+    levelList.appendChild(el("li", {}, [pill]));
+  }
+  $("#opt-srs").checked = state2.settings.srs;
+  $("#opt-hard").checked = state2.settings.hardOnly;
+  $("#opt-shuffle").checked = state2.settings.shuffle;
+  const all = poolProgress(QUESTIONS);
+  const quote = state2.totals.total ? Math.round(state2.totals.right / state2.totals.total * 100) : 0;
+  const summary = $("#global-progress");
+  summary.textContent = "";
+  [
+    `\u2705 ${all.mastered}/${QUESTIONS.length} gelernt`,
+    `\u{1F3AF} ${quote}% Trefferquote`,
+    `\u23F1 ${formatTime(state2.totals.timeMs)} ge\xFCbt`
+  ].forEach((t) => summary.appendChild(el("span", { class: "pill", text: t })));
+  updatePoolInfo();
+}
+function updatePoolInfo() {
+  const base = basePool();
+  const prog = poolProgress(base);
+  const info = $("#pool-info");
+  if (!base.length) {
+    info.textContent = "Keine Fragen ausgew\xE4hlt \u2013 bitte mindestens eine Kategorie aktivieren.";
+    $("#btn-start").disabled = true;
+    return;
+  }
+  $("#btn-start").disabled = false;
+  info.textContent = `${base.length} Fragen ausgew\xE4hlt \xB7 ${prog.mastered} sitzen \xB7 ${prog.hard} zu wiederholen`;
+}
+function startQuiz() {
+  session.pool = buildPool();
+  if (!session.pool.length) {
+    toast("Keine Fragen im Auswahlbereich.");
+    return;
+  }
+  session.right = session.wrong = session.total = 0;
+  session.ms = 0;
+  session.lastId = null;
+  updateStatbar();
+  showScreen("quiz");
+  nextQuestion();
+}
+function nextQuestion() {
+  if (state2.settings.hardOnly) {
+    const refreshed = basePool().filter((q2) => isHard(q2.id));
+    if (refreshed.length) session.pool = refreshed;
+  }
+  const q = pickNext(session.pool, state2.settings.srs, session.lastId);
+  if (!q) {
+    toast("Keine Fragen verf\xFCgbar.");
+    showScreen("start");
+    return;
+  }
+  session.current = q;
+  session.answered = false;
+  const cat = CAT_BY_ID[q.cat];
+  const lvl = LEVEL_BY_ID[q.level];
+  const card = state2.cards[q.id];
+  $("#q-cat").textContent = `${cat.emoji} ${cat.name}`;
+  $("#q-level").textContent = lvl ? lvl.name : "";
+  $("#q-box").textContent = card ? `Fach ${card.box}/${MAX_BOX}` : "neu";
+  $("#quiz-question").textContent = q.q;
+  $("#q-hint").textContent = TYPE_HINTS[q.type] || "";
+  const area = $("#answer-area");
+  area.textContent = "";
+  session.ui = createAnswerUI(q, {
+    shuffle: state2.settings.shuffle,
+    onChange: () => {
+      $("#btn-check").disabled = !session.ui.hasAnswer();
+    },
+    onSubmit: () => {
+      if (session.ui.hasAnswer()) checkAnswer();
+    }
+  });
+  session.ui.render(area);
+  $("#feedback").hidden = true;
+  $("#btn-check").hidden = false;
+  $("#btn-check").disabled = true;
+  $("#btn-next").hidden = true;
+  $("#btn-skip").hidden = false;
+  updateQuota();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function checkAnswer() {
+  if (session.answered || !session.ui) return;
+  const q = session.current;
+  const { correct, solution } = session.ui.evaluate();
+  session.answered = true;
+  session.lastId = q.id;
+  const move = recordAnswer(q.id, correct);
+  session.total++;
+  if (correct) session.right++;
+  else session.wrong++;
+  session.ui.reveal(correct);
+  const fb = $("#feedback");
+  fb.hidden = false;
+  fb.classList.toggle("good", correct);
+  fb.classList.toggle("bad", !correct);
+  $("#fb-title").textContent = correct ? move.mastered ? "Richtig \u2013 die Frage sitzt! \u{1F389}" : "Richtig!" : "Leider falsch";
+  $("#fb-solution").textContent = correct ? "" : `Richtige Antwort: ${solution}`;
+  $("#fb-solution").hidden = correct;
+  $("#fb-explain").textContent = q.explain ? q.explain + `  \xB7  Karteikasten: Fach ${move.boxBefore} \u2192 Fach ${move.boxAfter}` : `Karteikasten: Fach ${move.boxBefore} \u2192 Fach ${move.boxAfter}`;
+  $("#q-box").textContent = `Fach ${move.boxAfter}/${MAX_BOX}`;
+  $("#btn-check").hidden = true;
+  $("#btn-skip").hidden = true;
+  $("#btn-next").hidden = false;
+  $("#btn-next").focus({ preventScroll: true });
+  updateStatbar();
+  updateQuota();
+  save();
+}
+function updateStatbar() {
+  flushTimer();
+  $("#s-time").textContent = formatTime(session.ms);
+  $("#s-right").textContent = session.right;
+  $("#s-wrong").textContent = session.wrong;
+  $("#s-total").textContent = session.total;
+}
+function updateQuota() {
+  const prog = poolProgress(session.pool.length ? session.pool : basePool());
+  const pct = prog.total ? prog.mastered / prog.total * 100 : 0;
+  const bar = $("#quota-fill");
+  bar.style.width = `${pct}%`;
+  bar.parentElement.title = `${prog.mastered} von ${prog.total} Fragen sitzen`;
+}
+function renderStats() {
+  const t = state2.totals;
+  $("#t-right").textContent = t.right;
+  $("#t-wrong").textContent = t.wrong;
+  $("#t-total").textContent = t.total;
+  $("#t-quote").textContent = t.total ? `${Math.round(t.right / t.total * 100)}%` : "\u2013";
+  $("#t-time").textContent = formatTime(t.timeMs);
+  const all = poolProgress(QUESTIONS);
+  $("#t-mastered").textContent = `${all.mastered}/${QUESTIONS.length}`;
+  const list = $("#statcat-list");
+  list.textContent = "";
+  for (const cat of CATEGORIES) {
+    const qs = QUESTIONS.filter((q) => q.cat === cat.id);
+    const prog = poolProgress(qs);
+    const pct = qs.length ? Math.round(prog.mastered / qs.length * 100) : 0;
+    list.appendChild(el("li", { class: "statcat-row" }, [
+      el("div", { class: "statcat-top" }, [
+        el("b", { text: `${cat.emoji} ${cat.name}` }),
+        el("span", { text: `${prog.mastered}/${qs.length} \xB7 ${pct}%` })
+      ]),
+      el("div", { class: "statcat-bar" }, [el("i", { style: `width:${pct}%` })])
+    ]));
+  }
+  const chart = $("#box-chart");
+  chart.textContent = "";
+  const maxBoxCount = Math.max(1, ...all.boxes);
+  all.boxes.forEach((count, i) => {
+    const h = Math.round(count / maxBoxCount * 90);
+    chart.appendChild(el("div", { class: "box-col" }, [
+      el("span", { class: "b-n", text: String(count) }),
+      el("i", { style: `height:${h}px` }),
+      el("span", { class: "b-l", text: `Fach ${i + 1}` })
+    ]));
+  });
+  const hardList = $("#hard-list");
+  hardList.textContent = "";
+  const hard = QUESTIONS.map((q) => ({ q, card: state2.cards[q.id] })).filter((x) => x.card && x.card.wrong > 0 && !isMastered(x.q.id)).sort((a, b) => b.card.wrong - b.card.right - (a.card.wrong - a.card.right) || b.card.wrong - a.card.wrong).slice(0, 8);
+  if (!hard.length) {
+    hardList.appendChild(el("li", { class: "muted", text: "Noch nichts h\xE4ngen geblieben \u2013 weiter so!" }));
+  } else {
+    for (const { q, card } of hard) {
+      hardList.appendChild(el("li", {}, [
+        el("span", { class: "h-score", text: `${card.wrong}\xD7\u2717` }),
+        el("span", { text: q.q })
+      ]));
+    }
+  }
+}
+var toastTimer = null;
+function toast(msg) {
+  const node = $("#toast");
+  node.textContent = msg;
+  node.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    node.hidden = true;
+  }, 2600);
+}
+$("#btn-start").addEventListener("click", startQuiz);
+$("#btn-check").addEventListener("click", checkAnswer);
+$("#btn-next").addEventListener("click", nextQuestion);
+$("#btn-skip").addEventListener("click", () => {
+  session.lastId = session.current?.id ?? null;
+  nextQuestion();
+});
+$("#btn-home").addEventListener("click", () => {
+  showScreen(activeScreen === "stats" ? statsCameFrom : "start");
+});
+$("#btn-stats").addEventListener("click", () => {
+  statsCameFrom = activeScreen;
+  showScreen("stats");
+});
+$("#cat-all").addEventListener("click", () => {
+  state2.settings.cats = CATEGORIES.map((c) => c.id);
+  save();
+  renderStart();
+});
+$("#cat-none").addEventListener("click", () => {
+  state2.settings.cats = [];
+  save();
+  renderStart();
+});
+$("#opt-srs").addEventListener("change", (ev) => {
+  state2.settings.srs = ev.target.checked;
+  save();
+});
+$("#opt-hard").addEventListener("change", (ev) => {
+  state2.settings.hardOnly = ev.target.checked;
+  save();
+  updatePoolInfo();
+});
+$("#opt-shuffle").addEventListener("change", (ev) => {
+  state2.settings.shuffle = ev.target.checked;
+  save();
+});
+$("#btn-reset").addEventListener("click", () => {
+  if (!confirm("Wirklich den gesamten Lernfortschritt auf diesem Ger\xE4t l\xF6schen?")) return;
+  state2 = resetProgress();
+  session.right = session.wrong = session.total = 0;
+  session.ms = 0;
+  toast("Fortschritt gel\xF6scht.");
+  renderStats();
+});
+document.addEventListener("keydown", (ev) => {
+  if (activeScreen !== "quiz") return;
+  const tag = document.activeElement?.tagName;
+  const typing = tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA";
+  if (ev.key === "Enter" && !typing) {
+    ev.preventDefault();
+    if (session.answered) nextQuestion();
+    else if (session.ui?.hasAnswer()) checkAnswer();
+    return;
+  }
+  if (!typing && !session.answered && /^[1-9]$/.test(ev.key) && session.ui?.selectByIndex) {
+    session.ui.selectByIndex(Number(ev.key) - 1);
+  }
+});
+showScreen("start");
+var isSingleFile = !!document.querySelector('meta[name="build"][content="single-file"]');
+if ("serviceWorker" in navigator && !isSingleFile) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register(new URL("../sw.js", import.meta.url)).catch((err) => console.warn("Service Worker nicht registriert:", err));
+  });
+}
+
+</script>
+</body>
+</html>
