@@ -14,7 +14,7 @@ export default [
     explain: 'Tölt und Pass sind Spezialgangarten, die nur Gangpferderassen (z. B. Isländer) zeigen. Ziel der Arbeit in den Grundgangarten ist der Erhalt und die Förderung der natürlichen Bewegung – deshalb liegt das Augenmerk auf Takt und Gleichmaß.'
   },
   {
-    id: 'gg02', cat: 'gangarten', level: 'basis', type: 'match',
+    id: 'gg02', twin: 'takt-und-phasen', cat: 'gangarten', level: 'basis', type: 'match',
     q: 'Ordne jeder Gangart Takt und Phasenzahl zu.',
     pairs: [
       ['Schritt', 'Viertakt in 8 Phasen'],
@@ -24,13 +24,13 @@ export default [
     explain: 'Nur der Schritt hat keine Schwebephase. Trab und Galopp haben jeweils einen Moment der freien Schwebe.'
   },
   {
-    id: 'gg03', cat: 'gangarten', level: 'aufbau', type: 'number',
+    id: 'gg03', twin: 'takt-und-phasen', cat: 'gangarten', level: 'aufbau', type: 'number',
     q: 'Aus wie vielen Phasen besteht der Schritt?',
     a: 8, tol: 0, unit: 'Phasen',
     explain: 'Acht Phasen: Es wechseln sich immer eine Dreibeinstütze und eine Zweibeinstütze ab.'
   },
   {
-    id: 'gg04', cat: 'gangarten', level: 'aufbau', type: 'number',
+    id: 'gg04', twin: 'takt-und-phasen', cat: 'gangarten', level: 'aufbau', type: 'number',
     q: 'Aus wie vielen Phasen besteht der Galopp?',
     a: 6, tol: 0, unit: 'Phasen',
     explain: 'Sechs Phasen – von der Fußung des äußeren Hinterbeins über Dreibein-, Zweibein- und Einbeinstütze bis zur Schwebephase.'
@@ -151,14 +151,14 @@ export default [
     explain: 'Kreuzgalopp ist ein Fehler im Galopp. Ursachen für Trabfehler sind Reiterfehler, Überforderung in Balance oder Tempo sowie mangelnde Losgelassenheit, Durchlässigkeit und Geraderichtung.'
   },
   {
-    id: 'gg15', cat: 'gangarten', level: 'basis', type: 'single',
+    id: 'gg15', twin: 'takt-und-phasen', cat: 'gangarten', level: 'basis', type: 'single',
     q: 'In welchem Takt geht das Pferd im Galopp?',
     options: ['Dreitakt', 'Zweitakt', 'Viertakt', 'Fünftakt'],
     a: 0,
     explain: 'Der Galopp ist ein Dreitakt mit klarer Schwebephase, insgesamt sechs Phasen. Wird daraus ein Viertakt (Vierschlag), ist der Takt verloren gegangen.'
   },
   {
-    id: 'gg16', cat: 'gangarten', level: 'profi', type: 'order',
+    id: 'gg16', twin: 'galopp-fussfolge', cat: 'gangarten', level: 'profi', type: 'order',
     q: 'Bringe die Phasen des Linksgalopps in die richtige Reihenfolge. Beginne mit der Fußung nach der Schwebephase.',
     legend: LEGEND_STAND,
     items: [
@@ -172,14 +172,14 @@ export default [
     explain: 'Im Linksgalopp beginnt die Fußfolge mit dem äußeren Hinterbein, dann folgt das diagonale Beinpaar und zuletzt das innere Vorderbein („führendes Bein"), bevor die Schwebephase kommt. Im Rechtsgalopp ist alles spiegelverkehrt.'
   },
   {
-    id: 'gg17', cat: 'gangarten', level: 'aufbau', type: 'single',
+    id: 'gg17', twin: 'galopp-fuehrendes-bein', cat: 'gangarten', level: 'aufbau', type: 'single',
     q: 'Welches Bein greift im Linksgalopp am weitesten nach vorne?',
     options: ['Das linke Vorderbein', 'Das rechte Vorderbein', 'Das linke Hinterbein', 'Das rechte Hinterbein'],
     a: 0,
     explain: 'Das innere Vorderbein ist das „führende" Bein und greift am weitesten vor. Daran erkennt man vom Boden und vom Sattel aus, auf welcher Hand galoppiert wird.'
   },
   {
-    id: 'gg18', cat: 'gangarten', level: 'aufbau', type: 'single',
+    id: 'gg18', twin: 'galopp-fuehrendes-bein', cat: 'gangarten', level: 'aufbau', type: 'single',
     q: 'Was versteht man unter Handgalopp?',
     options: [
       'Das Pferd galoppiert auf der Hand, auf der es geritten wird – auf der rechten Hand also im Rechtsgalopp',
@@ -247,7 +247,7 @@ export default [
     explain: 'Alles Weitere baut darauf auf: Ohne Takt und Gleichmaß gibt es keine Losgelassenheit – und damit keine Ausbildung nach der Skala.'
   },
   {
-    id: 'gg25', cat: 'gangarten', level: 'profi', type: 'single',
+    id: 'gg25', twin: 'galopp-fussfolge', cat: 'gangarten', level: 'profi', type: 'single',
     q: 'Welche Stütze zeigt das Pferd im Galopp unmittelbar nach der Schwebephase?',
     options: [
       'Einbeinstütze auf dem äußeren Hinterbein',

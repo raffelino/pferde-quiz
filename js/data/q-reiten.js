@@ -110,18 +110,6 @@ export default [
 
   /* ------------------------------------------------------- REITLEHRE */
   {
-    id: 'rl01', cat: 'ausbildung', level: 'aufbau', type: 'single',
-    q: 'Welche drei Punkte der Skala der Ausbildung bilden die Gewöhnungsphase?',
-    options: [
-      'Takt, Losgelassenheit, Anlehnung',
-      'Anlehnung, Schwung, Geraderichtung',
-      'Schwung, Geraderichtung, Versammlung',
-      'Takt, Schwung, Versammlung'
-    ],
-    a: 0,
-    explain: 'Gewöhnungsphase: Takt, Losgelassenheit, Anlehnung. Es folgen die Entwicklung der Schubkraft (Schwung, Geraderichtung) und der Tragkraft (Versammlung).'
-  },
-  {
     id: 'rl03', cat: 'reitlehre', level: 'basis', type: 'multi',
     q: 'Welche Hilfen gehören zu den Einwirkungsmöglichkeiten des Reiters?',
     options: ['Gewichtshilfen', 'Schenkelhilfen', 'Zügelhilfen', 'Stimme', 'Lautes Schreien'],

@@ -40,7 +40,7 @@ export default [
     explain: 'Der Reiter sitzt permanent auf dem Pferderücken – jede Veränderung seines Gewichts wird wahrgenommen. Deshalb wirkt der Sitz immer mit, ob gewollt oder nicht.'
   },
   {
-    id: 'hi04', cat: 'hilfen', level: 'aufbau', type: 'multi',
+    id: 'hi04', twin: 'gewichtshilfen-arten', cat: 'hilfen', level: 'aufbau', type: 'multi',
     q: 'Welche Arten von Gewichtshilfen gibt es?',
     options: [
       'Beidseitig belastende Gewichtshilfe',
@@ -88,7 +88,7 @@ export default [
     explain: 'Typisch im Entlastungssitz bzw. leichten Sitz – etwa in der Lösungsphase, bei jungen Pferden oder im Gelände.'
   },
   {
-    id: 'hi08', cat: 'hilfen', level: 'aufbau', type: 'match',
+    id: 'hi08', twin: 'schenkelhilfen-arten', cat: 'hilfen', level: 'aufbau', type: 'match',
     q: 'Ordne jede Schenkelhilfe ihrer Lage und Aufgabe zu.',
     pairs: [
       ['Vorwärts treibender Schenkel', 'Liegt am Gurt und treibt im Rhythmus der Bewegung'],
@@ -117,7 +117,7 @@ export default [
     explain: 'Er liegt immer außen, eine Handbreit hinter dem Gurt – nötig in jeder Biegung, kombiniert mit einer entsprechenden Beckenposition.'
   },
   {
-    id: 'hi11', cat: 'hilfen', level: 'aufbau', type: 'multi',
+    id: 'hi11', twin: 'zuegelhilfen-arten', cat: 'hilfen', level: 'aufbau', type: 'multi',
     q: 'Welche Arten von Zügelhilfen gibt es?',
     options: [
       'Annehmende Zügelhilfe',
@@ -315,19 +315,19 @@ export default [
 
   /* --- Wie viele? Zahlen und Abgrenzungen --------------------------- */
   {
-    id: 'hi29', cat: 'hilfen', level: 'aufbau', type: 'number',
+    id: 'hi29', twin: 'gewichtshilfen-arten', cat: 'hilfen', level: 'aufbau', type: 'number',
     q: 'Wie viele Arten von Gewichtshilfen unterscheidet man?',
     a: 3, tol: 0, unit: 'Arten',
     explain: 'Drei: beidseitig belastend, einseitig belastend und entlastend.'
   },
   {
-    id: 'hi30', cat: 'hilfen', level: 'aufbau', type: 'number',
+    id: 'hi30', twin: 'schenkelhilfen-arten', cat: 'hilfen', level: 'aufbau', type: 'number',
     q: 'Wie viele Arten von Schenkelhilfen unterscheidet man?',
     a: 3, tol: 0, unit: 'Arten',
     explain: 'Drei: vorwärts treibend (am Gurt), vorwärts-seitwärts treibend (knapp eine Handbreit hinter dem Gurt, innen) und verwahrend (eine Handbreit hinter dem Gurt, außen).'
   },
   {
-    id: 'hi31', cat: 'hilfen', level: 'profi', type: 'number',
+    id: 'hi31', twin: 'zuegelhilfen-arten', cat: 'hilfen', level: 'profi', type: 'number',
     q: 'Wie viele Arten von Zügelhilfen unterscheidet man?',
     a: 5, tol: 0, unit: 'Arten',
     explain: 'Fünf: annehmend, nachgebend, verwahrend, aushaltend (auch durchhaltend genannt) und seitwärts weisend.'
@@ -352,7 +352,7 @@ export default [
     explain: 'Zügelhilfen wirken nie treibend – treiben ist Aufgabe der Schenkel. „Entlastend" gehört zu den Gewichtshilfen, „seitwärts weisend" zu den Zügelhilfen.'
   },
   {
-    id: 'hi34', cat: 'hilfen', level: 'aufbau', type: 'multi',
+    id: 'hi34', twin: 'schenkelhilfen-arten', cat: 'hilfen', level: 'aufbau', type: 'multi',
     q: 'Welche dieser Schenkelhilfen liegen hinter dem Gurt?',
     options: [
       'Vorwärts-seitwärts treibender Schenkel',

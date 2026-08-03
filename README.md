@@ -28,6 +28,9 @@ ohne Build-Schritt.
   zweiten Mal nach 16–35 Fragen. Steht eine Wiederholung am Rundenende noch aus,
   wandert sie in die nächste Runde und belegt dort den Platz der Frage. Die Kopfzeile zeigt „Runde 2 · 37/250", der Startbildschirm den
   Rundenfortschritt samt „Runde neu starten".
+- **Verwandte Fragen** (z. B. „Welche Arten von Zügelhilfen gibt es?" und „Wie viele
+  Arten von Zügelhilfen unterscheidet man?") sind über ein `twin`-Feld gruppiert und
+  kommen nie dicht hintereinander.
 - **Kategorien priorisieren**: Über die Zahl rechts an jeder Kategorie (1× / 2× / 3×)
   kommen deren Fragen innerhalb einer Runde deutlich früher dran.
 - **Karteikarten-System (Leitner)**: 5 Fächer. Richtig beantwortet → ein Fach weiter,
@@ -134,8 +137,21 @@ Optionaler Browser-Smoketest (benötigt Playwright und einen laufenden Server au
 node tools/smoke-test.mjs
 ```
 
-Nach Änderungen an Dateien, die im Service Worker gecacht werden, in `sw.js` die
-`CACHE_VERSION` erhöhen – sonst sehen bereits installierte Clients die alte Version.
+## Versionen und Updates
+
+Der Service Worker holt die App-Dateien **zuerst aus dem Netz** und nutzt den Cache nur
+als Offline-Reserve. Damit startet die App nach einem Deploy sofort mit dem neuen Code;
+übernimmt eine neue Version, lädt sich die Seite einmal selbst neu.
+
+Bei jeder Veröffentlichung beide Stellen erhöhen:
+
+- `CACHE_VERSION` in `sw.js`
+- `APP_VERSION` in `js/version.js` (steht unten auf dem Startbildschirm)
+
+`node tools/build-single-file.mjs` bricht ab, wenn die beiden auseinanderlaufen.
+`node tools/round-stress.mjs` spielt 1 500 Fragen je Lauf mit wechselnden Kategorien
+durch und prüft, dass eine richtig beantwortete Frage in derselben Runde nicht
+wiederkommt.
 
 ## Hinweis zu den Inhalten
 

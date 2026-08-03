@@ -451,6 +451,7 @@ p:last-child { margin-bottom: 0; }
 .start-actions { display: flex; flex-direction: column; gap: 8px; }
 .pool-info { text-align: center; color: var(--text-dim); font-size: .88rem; margin: 0; }
 .disclaimer { font-size: .74rem; color: var(--text-dim); text-align: center; margin: 6px 0 0; }
+.version { display: block; margin-top: 4px; opacity: .7; font-variant-numeric: tabular-nums; }
 
 .progress-summary {
   display: flex;

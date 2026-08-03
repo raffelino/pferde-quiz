@@ -1,7 +1,7 @@
 // Service Worker: App offline verfügbar machen.
 // Bei jeder inhaltlichen Änderung CACHE_VERSION erhöhen.
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = `reitabzeichen-trainer-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -11,6 +11,7 @@ const ASSETS = [
   'manifest.webmanifest',
   'icons/icon.svg',
   'js/app.js',
+  'js/version.js',
   'js/util.js',
   'js/store.js',
   'js/srs.js',
@@ -60,19 +61,18 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Assets: sofort aus dem Cache, im Hintergrund aktualisieren.
+  // Assets: erst Netz, dann Cache. Die App ist klein (rund 200 KB), dafür
+  // startet sie nach einem Update garantiert mit dem neuen Code. Ohne Netz
+  // kommt weiterhin alles aus dem Cache.
   event.respondWith(
-    caches.match(req).then(cached => {
-      const network = fetch(req)
-        .then(res => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then(c => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(req)
+      .then(res => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });

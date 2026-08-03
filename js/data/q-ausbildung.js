@@ -21,7 +21,7 @@ const PFERD = [
 
 export default [
   {
-    id: 'aus01', cat: 'ausbildung', level: 'basis', type: 'pyramid',
+    id: 'aus01', twin: 'reiterweg-reihenfolge', cat: 'ausbildung', level: 'basis', type: 'pyramid',
     q: 'Baue den Ausbildungsweg des Reiters auf – von der untersten Stufe bis zur Spitze.',
     caption: 'Ausbildungsweg des Reiters',
     levels: REITER,
@@ -33,14 +33,14 @@ export default [
     explain: 'Die ersten drei Stufen bilden die Entwicklung des Sitzes, die beiden oberen die Entwicklung der Einwirkung. Parallel dazu entwickelt sich über den gesamten Weg hinweg das Gefühl.'
   },
   {
-    id: 'aus02', cat: 'ausbildung', level: 'aufbau', type: 'pyramid',
+    id: 'aus02', twin: 'skala-reihenfolge', cat: 'ausbildung', level: 'aufbau', type: 'pyramid',
     q: 'Baue die Skala der Ausbildung des Pferdes auf – von der untersten Stufe bis zur Spitze.',
     caption: 'Skala der Ausbildung',
     levels: PFERD,
     explain: 'Takt, Losgelassenheit und Anlehnung bilden die Gewöhnungsphase, Schwung und Geraderichtung die Entwicklung der Schubkraft, die Versammlung steht für die Tragkraft. Die Punkte greifen ineinander – ohne Takt keine Losgelassenheit, ohne Losgelassenheit keine echte Anlehnung.'
   },
   {
-    id: 'aus03', cat: 'ausbildung', level: 'aufbau', type: 'pyramid',
+    id: 'aus03', twin: 'reiterweg-reihenfolge', cat: 'ausbildung', level: 'aufbau', type: 'pyramid',
     q: 'Ergänze die fehlenden Stufen im Ausbildungsweg des Reiters.',
     caption: 'Ausbildungsweg des Reiters',
     levels: REITER,
@@ -48,7 +48,7 @@ export default [
     explain: 'Auf dem Gleichgewicht baut die Losgelassenheit des Reiters auf, danach das Eingehen in die Bewegung. Erst dann folgen Hilfengebung und das Zusammenwirken der Hilfen.'
   },
   {
-    id: 'aus04', cat: 'ausbildung', level: 'profi', type: 'pyramid',
+    id: 'aus04', twin: 'skala-reihenfolge', cat: 'ausbildung', level: 'profi', type: 'pyramid',
     q: 'Ergänze die fehlenden Punkte der Skala der Ausbildung.',
     caption: 'Skala der Ausbildung',
     levels: PFERD,
@@ -63,7 +63,7 @@ export default [
     explain: 'Ohne Gleichgewicht klammert sich der Reiter am Zügel oder mit den Schenkeln fest – eine unabhängige Hilfengebung ist dann unmöglich.'
   },
   {
-    id: 'aus06', cat: 'ausbildung', level: 'aufbau', type: 'single',
+    id: 'aus06', twin: 'reiterweg-reihenfolge', cat: 'ausbildung', level: 'aufbau', type: 'single',
     q: 'Welche Stufe steht im Ausbildungsweg des Reiters direkt über der Losgelassenheit?',
     options: ['Eingehen in die Bewegung', 'Gleichgewicht', 'Hilfengebung', 'Zusammenwirken der Hilfen'],
     a: 0,
@@ -119,7 +119,7 @@ export default [
     explain: 'Die Versammlung setzt alle vorherigen Punkte voraus: Das Pferd nimmt vermehrt Last auf die Hinterhand auf, die Hanken beugen sich, der Rahmen wird kürzer und höher.'
   },
   {
-    id: 'aus13', cat: 'ausbildung', level: 'profi', type: 'order',
+    id: 'aus13', twin: 'skala-reihenfolge', cat: 'ausbildung', level: 'profi', type: 'order',
     q: 'Bringe die Punkte der Skala der Ausbildung in die richtige Reihenfolge.',
     items: PFERD,
     explain: 'Takt – Losgelassenheit – Anlehnung – Schwung – Geraderichtung – Versammlung. Die Skala gilt für die tägliche Arbeit genauso wie für die gesamte Ausbildung eines Pferdes.'

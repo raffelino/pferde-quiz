@@ -9,6 +9,7 @@ import {
   pickInRound, queueRetry, clearRetry, roundProgress, newRound, normalizeRound
 } from './srs.js';
 import { createAnswerUI, TYPE_HINTS } from './types.js';
+import { APP_VERSION } from './version.js';
 
 let state = loadState();
 state.round = normalizeRound(state.round);
@@ -53,8 +54,10 @@ const screens = {
 };
 let activeScreen = 'start';
 let statsCameFrom = 'start';
+let updatePending = false;   // neue Programmversion wartet auf einen Neustart
 
 function showScreen(name) {
+  if (name === 'start' && updatePending) { window.location.reload(); return; }
   activeScreen = name;
   for (const [key, node] of Object.entries(screens)) node.hidden = key !== name;
   $('#btn-home').hidden = name === 'start';
@@ -261,6 +264,7 @@ function renderStart() {
     `⏱ ${formatTime(state.totals.timeMs)} geübt`
   ].forEach(t => summary.appendChild(el('span', { class: 'pill', text: t })));
 
+  $('#app-version').textContent = `Version ${APP_VERSION}`;
   updatePoolInfo();
 }
 
@@ -631,5 +635,19 @@ if ('serviceWorker' in navigator && !isSingleFile) {
     navigator.serviceWorker
       .register(new URL('../sw.js', import.meta.url))
       .catch(err => console.warn('Service Worker nicht registriert:', err));
+  });
+
+  // Übernimmt eine neue Version, wird einmal neu geladen – sonst liefe die
+  // App bis zum nächsten Kaltstart mit dem alten Code weiter.
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return;
+    reloading = true;
+    if (activeScreen === 'start') {
+      window.location.reload();
+    } else {
+      updatePending = true;
+      toast('Neue Version geladen – wird beim nächsten Start aktiv.');
+    }
   });
 }

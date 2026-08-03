@@ -95,6 +95,13 @@ for (const q of QUESTIONS) {
   }
 }
 
+// Verwandte Fragen ("twin") müssen mindestens zu zweit sein
+const twins = {};
+for (const q of QUESTIONS) if (q.twin) (twins[q.twin] ||= []).push(q.id);
+for (const [name, ids] of Object.entries(twins)) {
+  if (ids.length < 2) errors.push(`twin "${name}" hat nur eine Frage (${ids[0]}) – Tippfehler?`);
+}
+
 // Verteilung ausgeben
 const byCat = {};
 const byType = {};
@@ -109,6 +116,7 @@ console.log(`Fragen gesamt: ${QUESTIONS.length}`);
 console.log('Nach Kategorie:', byCat);
 console.log('Nach Typ:', byType);
 console.log('Nach Stufe:', byLevel);
+console.log('Verwandte Fragengruppen:', Object.fromEntries(Object.entries(twins).map(([k, v]) => [k, v.length])));
 
 for (const c of CATEGORIES) {
   if (!byCat[c.id]) errors.push(`Kategorie "${c.id}" hat keine Fragen`);

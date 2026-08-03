@@ -21,6 +21,15 @@ const outFile = outIdx >= 0 && args[outIdx + 1]
   ? resolve(args[outIdx + 1])
   : resolve(root, 'dist/reitabzeichen-trainer.html');
 
+// Version in sw.js und js/version.js muss zusammenpassen, sonst bekommen
+// installierte Clients eine neue App mit altem Cache (oder umgekehrt).
+const swVersion = /CACHE_VERSION = '([^']+)'/.exec(readFileSync(resolve(root, 'sw.js'), 'utf8'))?.[1];
+const appVersion = /APP_VERSION = '([^']+)'/.exec(readFileSync(resolve(root, 'js/version.js'), 'utf8'))?.[1];
+if (swVersion !== appVersion) {
+  console.error(`Versionen unterschiedlich: sw.js=${swVersion}, js/version.js=${appVersion}`);
+  process.exit(1);
+}
+
 const css = readFileSync(resolve(root, 'css/styles.css'), 'utf8');
 const js = execFileSync(
   'npx',

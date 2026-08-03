@@ -127,9 +127,17 @@ export function pickInRound(pool, round, { useSrs = true, lastId = null, prio = 
   // sonst käme die Runde nicht mehr durch.
   const recent = new Set((round.recent || []).slice(-RETRY_MIN_GAP));
   const useRecent = pool.length > RETRY_MIN_GAP + 1;
-  const free = id => byId.has(id)
-    && !(id === lastId && pool.length > 1)
-    && !(useRecent && recent.has(id));
+  // Inhaltlich verwandte Fragen ("twin") sollen nicht direkt nacheinander
+  // kommen – sonst wirkt es wie dieselbe Frage in neuer Verpackung.
+  const recentTwins = new Set([...recent].map(id => byId.get(id)?.twin).filter(Boolean));
+  const free = id => {
+    const q = byId.get(id);
+    if (!q) return false;
+    if (id === lastId && pool.length > 1) return false;
+    if (!useRecent) return true;
+    if (recent.has(id)) return false;
+    return !(q.twin && recentTwins.has(q.twin));
+  };
 
   const serve = (question, opts) => {
     round.recent = [...(round.recent || []), question.id].slice(-RETRY_MIN_GAP * 2);

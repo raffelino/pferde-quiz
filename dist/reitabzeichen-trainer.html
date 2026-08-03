@@ -461,6 +461,7 @@ p:last-child { margin-bottom: 0; }
 .start-actions { display: flex; flex-direction: column; gap: 8px; }
 .pool-info { text-align: center; color: var(--text-dim); font-size: .88rem; margin: 0; }
 .disclaimer { font-size: .74rem; color: var(--text-dim); text-align: center; margin: 6px 0 0; }
+.version { display: block; margin-top: 4px; opacity: .7; font-variant-numeric: tabular-nums; }
 
 .progress-summary {
   display: flex;
@@ -939,6 +940,7 @@ p:last-child { margin-bottom: 0; }
     Inoffizielle Lernhilfe zur Prüfungsvorbereitung. Inhalte orientieren sich an den
     Lernzielen der FN-Ausbildungsliteratur (Basispass Pferdekunde, Reitabzeichen).
     Keine Verbindung zur Deutschen Reiterlichen Vereinigung (FN).
+    <span id="app-version" class="version"></span>
   </p>
 </main>
 
@@ -2386,21 +2388,6 @@ var q_reiten_default = [
   },
   /* ------------------------------------------------------- REITLEHRE */
   {
-    id: "rl01",
-    cat: "ausbildung",
-    level: "aufbau",
-    type: "single",
-    q: "Welche drei Punkte der Skala der Ausbildung bilden die Gew\xF6hnungsphase?",
-    options: [
-      "Takt, Losgelassenheit, Anlehnung",
-      "Anlehnung, Schwung, Geraderichtung",
-      "Schwung, Geraderichtung, Versammlung",
-      "Takt, Schwung, Versammlung"
-    ],
-    a: 0,
-    explain: "Gew\xF6hnungsphase: Takt, Losgelassenheit, Anlehnung. Es folgen die Entwicklung der Schubkraft (Schwung, Geraderichtung) und der Tragkraft (Versammlung)."
-  },
-  {
     id: "rl03",
     cat: "reitlehre",
     level: "basis",
@@ -3270,6 +3257,7 @@ var q_hilfen_default = [
   },
   {
     id: "hi04",
+    twin: "gewichtshilfen-arten",
     cat: "hilfen",
     level: "aufbau",
     type: "multi",
@@ -3330,6 +3318,7 @@ var q_hilfen_default = [
   },
   {
     id: "hi08",
+    twin: "schenkelhilfen-arten",
     cat: "hilfen",
     level: "aufbau",
     type: "match",
@@ -3368,6 +3357,7 @@ var q_hilfen_default = [
   },
   {
     id: "hi11",
+    twin: "zuegelhilfen-arten",
     cat: "hilfen",
     level: "aufbau",
     type: "multi",
@@ -3619,6 +3609,7 @@ var q_hilfen_default = [
   /* --- Wie viele? Zahlen und Abgrenzungen --------------------------- */
   {
     id: "hi29",
+    twin: "gewichtshilfen-arten",
     cat: "hilfen",
     level: "aufbau",
     type: "number",
@@ -3630,6 +3621,7 @@ var q_hilfen_default = [
   },
   {
     id: "hi30",
+    twin: "schenkelhilfen-arten",
     cat: "hilfen",
     level: "aufbau",
     type: "number",
@@ -3641,6 +3633,7 @@ var q_hilfen_default = [
   },
   {
     id: "hi31",
+    twin: "zuegelhilfen-arten",
     cat: "hilfen",
     level: "profi",
     type: "number",
@@ -3677,6 +3670,7 @@ var q_hilfen_default = [
   },
   {
     id: "hi34",
+    twin: "schenkelhilfen-arten",
     cat: "hilfen",
     level: "aufbau",
     type: "multi",
@@ -3716,6 +3710,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg02",
+    twin: "takt-und-phasen",
     cat: "gangarten",
     level: "basis",
     type: "match",
@@ -3729,6 +3724,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg03",
+    twin: "takt-und-phasen",
     cat: "gangarten",
     level: "aufbau",
     type: "number",
@@ -3740,6 +3736,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg04",
+    twin: "takt-und-phasen",
     cat: "gangarten",
     level: "aufbau",
     type: "number",
@@ -3896,6 +3893,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg15",
+    twin: "takt-und-phasen",
     cat: "gangarten",
     level: "basis",
     type: "single",
@@ -3906,6 +3904,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg16",
+    twin: "galopp-fussfolge",
     cat: "gangarten",
     level: "profi",
     type: "order",
@@ -3923,6 +3922,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg17",
+    twin: "galopp-fuehrendes-bein",
     cat: "gangarten",
     level: "aufbau",
     type: "single",
@@ -3933,6 +3933,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg18",
+    twin: "galopp-fuehrendes-bein",
     cat: "gangarten",
     level: "aufbau",
     type: "single",
@@ -4022,6 +4023,7 @@ var q_gangarten_default = [
   },
   {
     id: "gg25",
+    twin: "galopp-fussfolge",
     cat: "gangarten",
     level: "profi",
     type: "single",
@@ -4056,6 +4058,7 @@ var PFERD = [
 var q_ausbildung_default = [
   {
     id: "aus01",
+    twin: "reiterweg-reihenfolge",
     cat: "ausbildung",
     level: "basis",
     type: "pyramid",
@@ -4071,6 +4074,7 @@ var q_ausbildung_default = [
   },
   {
     id: "aus02",
+    twin: "skala-reihenfolge",
     cat: "ausbildung",
     level: "aufbau",
     type: "pyramid",
@@ -4081,6 +4085,7 @@ var q_ausbildung_default = [
   },
   {
     id: "aus03",
+    twin: "reiterweg-reihenfolge",
     cat: "ausbildung",
     level: "aufbau",
     type: "pyramid",
@@ -4092,6 +4097,7 @@ var q_ausbildung_default = [
   },
   {
     id: "aus04",
+    twin: "skala-reihenfolge",
     cat: "ausbildung",
     level: "profi",
     type: "pyramid",
@@ -4113,6 +4119,7 @@ var q_ausbildung_default = [
   },
   {
     id: "aus06",
+    twin: "reiterweg-reihenfolge",
     cat: "ausbildung",
     level: "aufbau",
     type: "single",
@@ -4190,6 +4197,7 @@ var q_ausbildung_default = [
   },
   {
     id: "aus13",
+    twin: "skala-reihenfolge",
     cat: "ausbildung",
     level: "profi",
     type: "order",
@@ -4493,7 +4501,15 @@ function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = 
   const byId = new Map(pool.map((q) => [q.id, q]));
   const recent = new Set((round.recent || []).slice(-RETRY_MIN_GAP));
   const useRecent = pool.length > RETRY_MIN_GAP + 1;
-  const free = (id) => byId.has(id) && !(id === lastId && pool.length > 1) && !(useRecent && recent.has(id));
+  const recentTwins = new Set([...recent].map((id) => byId.get(id)?.twin).filter(Boolean));
+  const free = (id) => {
+    const q = byId.get(id);
+    if (!q) return false;
+    if (id === lastId && pool.length > 1) return false;
+    if (!useRecent) return true;
+    if (recent.has(id)) return false;
+    return !(q.twin && recentTwins.has(q.twin));
+  };
   const serve = (question, opts) => {
     round.recent = [...round.recent || [], question.id].slice(-RETRY_MIN_GAP * 2);
     return { question, newPass: _newPass, retry: false, ...opts };
@@ -5061,6 +5077,9 @@ function matchUI(q, { onChange } = {}) {
   };
 }
 
+// js/version.js
+var APP_VERSION = "v7";
+
 // js/app.js
 var state2 = loadState();
 state2.round = normalizeRound(state2.round);
@@ -5097,7 +5116,12 @@ var screens = {
 };
 var activeScreen = "start";
 var statsCameFrom = "start";
+var updatePending = false;
 function showScreen(name) {
+  if (name === "start" && updatePending) {
+    window.location.reload();
+    return;
+  }
   activeScreen = name;
   for (const [key, node] of Object.entries(screens)) node.hidden = key !== name;
   $("#btn-home").hidden = name === "start";
@@ -5285,6 +5309,7 @@ function renderStart() {
     `\u{1F3AF} ${quote}% Trefferquote`,
     `\u23F1 ${formatTime(state2.totals.timeMs)} ge\xFCbt`
   ].forEach((t) => summary.appendChild(el("span", { class: "pill", text: t })));
+  $("#app-version").textContent = `Version ${APP_VERSION}`;
   updatePoolInfo();
 }
 function updatePoolInfo() {
@@ -5611,6 +5636,17 @@ var isSingleFile = !!document.querySelector('meta[name="build"][content="single-
 if ("serviceWorker" in navigator && !isSingleFile) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register(new URL("../sw.js", import.meta.url)).catch((err) => console.warn("Service Worker nicht registriert:", err));
+  });
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    if (activeScreen === "start") {
+      window.location.reload();
+    } else {
+      updatePending = true;
+      toast("Neue Version geladen \u2013 wird beim n\xE4chsten Start aktiv.");
+    }
   });
 }
 
