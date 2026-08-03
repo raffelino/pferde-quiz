@@ -30,6 +30,10 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Aktiviert GitHub Pages beim ersten Lauf automatisch,
+          # falls es in den Repository-Einstellungen noch aus ist.
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
