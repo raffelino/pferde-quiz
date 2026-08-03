@@ -16,7 +16,7 @@ const DEFAULT_STATE = () => ({
   // cards[fragenId] = { box, right, wrong, streak, seenAt }
   cards: {},
   // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
-  round: { pass: 1, asked: [], retry: [], counts: {} },
+  round: { pass: 1, asked: [], retry: [], counts: {}, recent: [] },
   totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
   seq: 0                 // Zähler der beantworteten Fragen (für "zuletzt gesehen")
 });

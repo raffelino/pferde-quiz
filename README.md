@@ -23,8 +23,8 @@ ohne Build-Schritt.
   die richtige Reihenfolge gebracht werden.
 - **Runden**: Innerhalb einer Runde kommt jede Frage genau einmal dran – eine sofort
   richtig beantwortete Frage taucht erst in der nächsten Runde wieder auf. Falsch
-  beantwortete Fragen werden nach mindestens acht weiteren Fragen bis zu zweimal
-  wiederholt. Die Kopfzeile zeigt „Runde 2 · 37/250", der Startbildschirm den
+  beantwortete Fragen werden bis zu zweimal wiederholt – nach einem zufälligen
+  Abstand von 8–17 Fragen, beim zweiten Mal nach 16–35 Fragen. Die Kopfzeile zeigt „Runde 2 · 37/250", der Startbildschirm den
   Rundenfortschritt samt „Runde neu starten".
 - **Kategorien priorisieren**: Über die Zahl rechts an jeder Kategorie (1× / 2× / 3×)
   kommen deren Fragen innerhalb einer Runde deutlich früher dran.

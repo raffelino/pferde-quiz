@@ -68,11 +68,25 @@ export function pickNext(pool, useSrs, lastId, prio = {}) {
 // genau einmal dran, bevor irgendeine ein zweites Mal erscheint. Falsch
 // beantwortete Fragen wandern zusätzlich in eine Nachholrunde am Ende.
 
-export const MAX_RETRIES = 2;    // wie oft eine falsche Frage je Runde nachkommt
-export const RETRY_GAP = 8;      // so viele Fragen liegen mindestens dazwischen
+export const MAX_RETRIES = 2;      // wie oft eine falsche Frage je Runde nachkommt
+export const RETRY_MIN_GAP = 8;    // so viele Fragen liegen mindestens dazwischen
+export const RETRY_SPREAD = 10;    // zufällige Streuung obendrauf
+
+/**
+ * Abstand bis zur Wiederholung – zufällig, damit die Wiederholung nicht
+ * vorhersehbar wird, und beim zweiten Anlauf deutlich später.
+ * @param {number} attempt  1 = erste Wiederholung, 2 = zweite
+ * @param {number} poolSize Größe des Fragenpools (begrenzt den Abstand)
+ */
+export function retryDelay(attempt = 1, poolSize = Infinity) {
+  const min = RETRY_MIN_GAP * attempt;
+  const delay = min + Math.floor(Math.random() * RETRY_SPREAD * attempt);
+  const maxUseful = Math.max(2, poolSize - 2);
+  return Math.min(delay, maxUseful);
+}
 
 export function newRound(pass = 1) {
-  return { pass, asked: [], retry: [], counts: {} };
+  return { pass, asked: [], retry: [], counts: {}, recent: [] };
 }
 
 /** Sorgt dafür, dass ein gespeicherter Rundenstand vollständig ist. */
@@ -85,7 +99,8 @@ export function normalizeRound(round) {
     pass: Number.isInteger(round.pass) && round.pass > 0 ? round.pass : 1,
     asked: Array.isArray(round.asked) ? round.asked.filter(id => typeof id === 'string') : [],
     retry,
-    counts: round.counts && typeof round.counts === 'object' ? round.counts : {}
+    counts: round.counts && typeof round.counts === 'object' ? round.counts : {},
+    recent: Array.isArray(round.recent) ? round.recent.filter(id => typeof id === 'string') : []
   };
 }
 
@@ -103,48 +118,61 @@ export function normalizeRound(round) {
  *
  * @returns {{question: object|null, newPass: boolean, retry: boolean}}
  */
-export function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = {}) {
+export function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = {}, _newPass = false) {
   if (!pool.length) return { question: null, newPass: false, retry: false };
 
   const byId = new Map(pool.map(q => [q.id, q]));
-  const usable = entry => byId.has(entry.id) && !(entry.id === lastId && pool.length > 1);
+  // Zuletzt gestellte Fragen sind gesperrt – auch über den Rundenwechsel hinweg.
+  // Bei sehr kleinen Pools greift nur die Sperre für die direkt vorige Frage,
+  // sonst käme die Runde nicht mehr durch.
+  const recent = new Set((round.recent || []).slice(-RETRY_MIN_GAP));
+  const useRecent = pool.length > RETRY_MIN_GAP + 1;
+  const free = id => byId.has(id)
+    && !(id === lastId && pool.length > 1)
+    && !(useRecent && recent.has(id));
+
+  const serve = (question, opts) => {
+    round.recent = [...(round.recent || []), question.id].slice(-RETRY_MIN_GAP * 2);
+    return { question, newPass: _newPass, retry: false, ...opts };
+  };
 
   // 1. fällige Wiederholung
-  const dueIndex = round.retry.findIndex(e => usable(e) && e.dueAt <= round.asked.length);
+  const dueIndex = round.retry.findIndex(e => free(e.id) && e.dueAt <= round.asked.length);
   if (dueIndex >= 0) {
     const [entry] = round.retry.splice(dueIndex, 1);
-    return { question: byId.get(entry.id), newPass: false, retry: true };
+    return serve(byId.get(entry.id), { retry: true });
   }
 
   // 2. noch offene Fragen dieser Runde
   const asked = new Set(round.asked);
-  const open = pool.filter(q => !asked.has(q.id) && !(q.id === lastId && pool.length > 1));
+  let open = pool.filter(q => !asked.has(q.id));
   if (open.length) {
+    const preferred = open.filter(q => free(q.id));
+    if (preferred.length) open = preferred;
     const question = pickNext(open, useSrs, lastId, prio) || open[0];
     round.asked.push(question.id);
-    return { question, newPass: false, retry: false };
+    return serve(question);
   }
 
   // 3. neue Runde. Noch offene Wiederholungen wandern mit – sie kämen sonst
   //    direkt hintereinander, weil nichts anderes mehr übrig ist.
+  if (_newPass) return serve(pool[0], {});          // Sicherheitsnetz
   round.pass += 1;
   round.asked = [];
   round.counts = {};
   round.retry = round.retry
     .filter(e => byId.has(e.id))
-    .map(e => ({ id: e.id, dueAt: RETRY_GAP }));
-  const fresh = pool.filter(q => !(q.id === lastId && pool.length > 1));
-  const question = pickNext(fresh, useSrs, lastId, prio) || fresh[0] || pool[0];
-  round.asked.push(question.id);
-  return { question, newPass: true, retry: false };
+    .map(e => ({ id: e.id, dueAt: retryDelay(1, pool.length) }));
+  return pickInRound(pool, round, { useSrs, lastId, prio }, true);
 }
 
 /** Falsch beantwortete Frage für eine Wiederholung in dieser Runde vormerken. */
-export function queueRetry(round, id, gap = RETRY_GAP) {
+export function queueRetry(round, id, poolSize = Infinity) {
   const used = round.counts[id] || 0;
   if (used >= MAX_RETRIES || round.retry.some(e => e.id === id)) return false;
-  round.counts[id] = used + 1;
-  round.retry.push({ id, dueAt: round.asked.length + gap });
+  const attempt = used + 1;
+  round.counts[id] = attempt;
+  round.retry.push({ id, dueAt: round.asked.length + retryDelay(attempt, poolSize) });
   return true;
 }
 

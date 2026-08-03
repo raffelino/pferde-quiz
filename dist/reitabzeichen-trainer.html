@@ -4362,7 +4362,7 @@ var DEFAULT_STATE = () => ({
   // cards[fragenId] = { box, right, wrong, streak, seenAt }
   cards: {},
   // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
-  round: { pass: 1, asked: [], retry: [], counts: {} },
+  round: { pass: 1, asked: [], retry: [], counts: {}, recent: [] },
   totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
   seq: 0
   // Zähler der beantworteten Fragen (für "zuletzt gesehen")
@@ -4466,9 +4466,16 @@ function pickNext(pool, useSrs, lastId, prio = {}) {
   return candidates[candidates.length - 1];
 }
 var MAX_RETRIES = 2;
-var RETRY_GAP = 8;
+var RETRY_MIN_GAP = 8;
+var RETRY_SPREAD = 10;
+function retryDelay(attempt = 1, poolSize = Infinity) {
+  const min = RETRY_MIN_GAP * attempt;
+  const delay = min + Math.floor(Math.random() * RETRY_SPREAD * attempt);
+  const maxUseful = Math.max(2, poolSize - 2);
+  return Math.min(delay, maxUseful);
+}
 function newRound(pass = 1) {
-  return { pass, asked: [], retry: [], counts: {} };
+  return { pass, asked: [], retry: [], counts: {}, recent: [] };
 }
 function normalizeRound(round) {
   if (!round || typeof round !== "object") return newRound();
@@ -4477,39 +4484,47 @@ function normalizeRound(round) {
     pass: Number.isInteger(round.pass) && round.pass > 0 ? round.pass : 1,
     asked: Array.isArray(round.asked) ? round.asked.filter((id) => typeof id === "string") : [],
     retry,
-    counts: round.counts && typeof round.counts === "object" ? round.counts : {}
+    counts: round.counts && typeof round.counts === "object" ? round.counts : {},
+    recent: Array.isArray(round.recent) ? round.recent.filter((id) => typeof id === "string") : []
   };
 }
-function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = {}) {
+function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = {}, _newPass = false) {
   if (!pool.length) return { question: null, newPass: false, retry: false };
   const byId = new Map(pool.map((q) => [q.id, q]));
-  const usable = (entry) => byId.has(entry.id) && !(entry.id === lastId && pool.length > 1);
-  const dueIndex = round.retry.findIndex((e) => usable(e) && e.dueAt <= round.asked.length);
+  const recent = new Set((round.recent || []).slice(-RETRY_MIN_GAP));
+  const useRecent = pool.length > RETRY_MIN_GAP + 1;
+  const free = (id) => byId.has(id) && !(id === lastId && pool.length > 1) && !(useRecent && recent.has(id));
+  const serve = (question, opts) => {
+    round.recent = [...round.recent || [], question.id].slice(-RETRY_MIN_GAP * 2);
+    return { question, newPass: _newPass, retry: false, ...opts };
+  };
+  const dueIndex = round.retry.findIndex((e) => free(e.id) && e.dueAt <= round.asked.length);
   if (dueIndex >= 0) {
     const [entry] = round.retry.splice(dueIndex, 1);
-    return { question: byId.get(entry.id), newPass: false, retry: true };
+    return serve(byId.get(entry.id), { retry: true });
   }
   const asked = new Set(round.asked);
-  const open = pool.filter((q) => !asked.has(q.id) && !(q.id === lastId && pool.length > 1));
+  let open = pool.filter((q) => !asked.has(q.id));
   if (open.length) {
-    const question2 = pickNext(open, useSrs, lastId, prio) || open[0];
-    round.asked.push(question2.id);
-    return { question: question2, newPass: false, retry: false };
+    const preferred = open.filter((q) => free(q.id));
+    if (preferred.length) open = preferred;
+    const question = pickNext(open, useSrs, lastId, prio) || open[0];
+    round.asked.push(question.id);
+    return serve(question);
   }
+  if (_newPass) return serve(pool[0], {});
   round.pass += 1;
   round.asked = [];
   round.counts = {};
-  round.retry = round.retry.filter((e) => byId.has(e.id)).map((e) => ({ id: e.id, dueAt: RETRY_GAP }));
-  const fresh = pool.filter((q) => !(q.id === lastId && pool.length > 1));
-  const question = pickNext(fresh, useSrs, lastId, prio) || fresh[0] || pool[0];
-  round.asked.push(question.id);
-  return { question, newPass: true, retry: false };
+  round.retry = round.retry.filter((e) => byId.has(e.id)).map((e) => ({ id: e.id, dueAt: retryDelay(1, pool.length) }));
+  return pickInRound(pool, round, { useSrs, lastId, prio }, true);
 }
-function queueRetry(round, id, gap = RETRY_GAP) {
+function queueRetry(round, id, poolSize = Infinity) {
   const used = round.counts[id] || 0;
   if (used >= MAX_RETRIES || round.retry.some((e) => e.id === id)) return false;
-  round.counts[id] = used + 1;
-  round.retry.push({ id, dueAt: round.asked.length + gap });
+  const attempt = used + 1;
+  round.counts[id] = attempt;
+  round.retry.push({ id, dueAt: round.asked.length + retryDelay(attempt, poolSize) });
   return true;
 }
 function roundProgress(pool, round) {
@@ -5365,7 +5380,7 @@ function checkAnswer() {
   if (correct) session.right++;
   else session.wrong++;
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
-  if (!correct) queueRetry(state2.round, q.id);
+  if (!correct) queueRetry(state2.round, q.id, session.pool.length);
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
   session.ui.reveal(correct);
   const fb = $("#feedback");

@@ -14,7 +14,7 @@ globalThis.localStorage = {
 };
 
 const { loadState } = await import('../js/store.js');
-const { pickInRound, queueRetry, recordAnswer, newRound, RETRY_GAP } = await import('../js/srs.js');
+const { pickInRound, queueRetry, recordAnswer, newRound, RETRY_MIN_GAP } = await import('../js/srs.js');
 
 loadState();
 
@@ -31,6 +31,7 @@ const errors = [];
   const rounds = [[]];       // gestellte Fragen je Runde
   const all = [];            // alle Fragen in Reihenfolge
   const lastSeen = {};       // id -> Position in "all"
+  const gaps = [];           // beobachtete Abstände bis zur Wiederholung
   let last = null;
   let counted = 0;
 
@@ -42,8 +43,9 @@ const errors = [];
     }
     if (retry && lastSeen[question.id] !== undefined) {
       const gap = all.length - lastSeen[question.id];
-      if (gap < RETRY_GAP) {
-        errors.push(`${question.id} kam schon nach ${gap} Fragen wieder (mindestens ${RETRY_GAP})`);
+      gaps.push(gap);
+      if (gap < RETRY_MIN_GAP) {
+        errors.push(`${question.id} kam schon nach ${gap} Fragen wieder (mindestens ${RETRY_MIN_GAP})`);
       }
     }
     const correct = !HARD.has(question.id);
@@ -76,6 +78,8 @@ const errors = [];
 
   console.log(`Zwei Runden: ${rounds.map(r => r.length).join(' + ')} Fragen gestellt.`);
   console.log(`Dauerhaft falsche Fragen: ${[...HARD].map(id => `${id}×${all.filter(x => x === id).length}`).join(', ')}`);
+  console.log(`Abstände bis zur Wiederholung: ${gaps.sort((a, b) => a - b).join(', ')}`);
+  if (new Set(gaps).size < 2) errors.push('Die Abstände sind immer gleich – der Zufall fehlt');
 }
 
 /* ---------------- 2) Priorisierung: wichtige Kategorie kommt früher -------- */
@@ -95,6 +99,44 @@ const errors = [];
   const neutral = (POOL.length - 1) / 2;
   console.log(`Priorisierte Kategorie: durchschnittliche Position ${avg.toFixed(1)} von ${POOL.length} (ohne Priorität wären ~${neutral}).`);
   if (avg >= neutral) errors.push('Priorisierte Kategorie kam nicht früher dran als der Rest');
+}
+
+/* ---------------- 2c) Streuung der Wiederholungsabstände ------------------ */
+{
+  const { retryDelay, RETRY_SPREAD } = await import('../js/srs.js');
+  const first = Array.from({ length: 400 }, () => retryDelay(1, 250));
+  const second = Array.from({ length: 400 }, () => retryDelay(2, 250));
+  const range = arr => [Math.min(...arr), Math.max(...arr)];
+  const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const [f1, f2] = range(first);
+  const [s1, s2] = range(second);
+  console.log(`1. Wiederholung: ${f1}–${f2} Fragen (Ø ${avg(first).toFixed(1)})`);
+  console.log(`2. Wiederholung: ${s1}–${s2} Fragen (Ø ${avg(second).toFixed(1)})`);
+  if (f1 < RETRY_MIN_GAP) errors.push(`Mindestabstand unterschritten: ${f1}`);
+  if (f2 - f1 < 3) errors.push('Zu wenig Streuung bei der ersten Wiederholung');
+  if (f2 >= RETRY_MIN_GAP + RETRY_SPREAD) errors.push(`Abstand über dem erwarteten Fenster: ${f2}`);
+  if (avg(second) <= avg(first) * 1.5) errors.push('Die zweite Wiederholung liegt nicht deutlich später');
+}
+
+/* ---------------- 2d) Sehr kleiner Pool (eine Kategorie) ------------------ */
+{
+  const SMALL = Array.from({ length: 6 }, (_, i) => ({ id: `s${i}`, cat: 'klein' }));
+  const round = newRound();
+  const seen = [];
+  let last = null;
+  for (let i = 0; i < 18; i++) {
+    const { question } = pickInRound(SMALL, round, { useSrs: true, lastId: last });
+    if (!question) { errors.push('Kleiner Pool liefert keine Frage mehr'); break; }
+    recordAnswer(question.id, i % 4 !== 0);           // jede vierte Antwort falsch
+    if (i % 4 === 0) queueRetry(round, question.id, SMALL.length);
+    seen.push(question.id);
+    last = question.id;
+  }
+  // In jeder Runde muss jede der sechs Fragen einmal gestellt worden sein
+  if (round.pass < 2) errors.push('Kleiner Pool: keine zweite Runde erreicht');
+  if (new Set(seen).size !== 6) errors.push(`Kleiner Pool: nur ${new Set(seen).size} von 6 Fragen gestellt`);
+  if (seen.some((id, i) => i > 0 && id === seen[i - 1])) errors.push('Kleiner Pool: Frage direkt hintereinander');
+  console.log(`Kleiner Pool (6 Fragen): ${seen.join(' ')} → Runde ${round.pass}`);
 }
 
 /* ---------------- 3) Rundenwechsel ---------------------------------------- */
