@@ -37,13 +37,21 @@ Nach dem ersten erfolgreichen Deployment erreichbar unter:
 https://<dein-github-name>.github.io/pferde-quiz/
 ```
 
-### GitHub Pages aktivieren (einmalig)
+### GitHub Pages aktivieren (einmalig, muss von Hand passieren)
+
+Der Workflow kann GitHub Pages nicht selbst einschalten – der Token einer Action darf
+keine Pages-Site anlegen. Deshalb einmalig:
 
 1. Im Repository auf **Settings → Pages** gehen
 2. Unter **Build and deployment → Source** den Eintrag **GitHub Actions** wählen
-3. Fertig – der Workflow `.github/workflows/deploy-pages.yml` veröffentlicht die Seite
-   bei jedem Push (auf `main`, `master` oder einen `claude/**`-Branch) und lässt sich
-   unter **Actions → Deploy to GitHub Pages → Run workflow** auch manuell starten.
+3. Unter **Actions → Deploy to GitHub Pages → Run workflow** den Workflow einmal starten
+   (oder einfach den nächsten Push abwarten)
+
+Solange Schritt 1–2 fehlen, bricht der Workflow im Schritt „Setup Pages" mit
+`Get Pages site failed` ab – das ist erwartet und behebt sich mit der Einstellung.
+
+Danach veröffentlicht `.github/workflows/deploy-pages.yml` die Seite bei jedem Push
+auf `main`, `master` oder einen `claude/**`-Branch.
 
 ## Lokal starten
 

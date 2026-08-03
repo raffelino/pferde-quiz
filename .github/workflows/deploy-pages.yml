@@ -28,12 +28,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Voraussetzung: In den Repository-Einstellungen unter "Pages" muss als
+      # Source "GitHub Actions" gewählt sein. Das kann der Workflow nicht selbst
+      # einschalten (der GITHUB_TOKEN darf keine Pages-Site anlegen).
       - name: Setup Pages
         uses: actions/configure-pages@v5
-        with:
-          # Aktiviert GitHub Pages beim ersten Lauf automatisch,
-          # falls es in den Repository-Einstellungen noch aus ist.
-          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
