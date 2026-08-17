@@ -27,7 +27,9 @@ mitgelieferte Backend mit Google-Anmeldung.
   | Pyramide | Ausbildungsskala bzw. Ausbildungsweg Stufe für Stufe aufbauen |
 
   Fußfolge-Fragen zeigen statt Text kleine Diagramme des Pferdes von oben, die in
-  die richtige Reihenfolge gebracht werden.
+  die richtige Reihenfolge gebracht werden. Bei der Auflösung bleibt die selbst
+  gewählte Reihenfolge stehen: Die eigene Zahl wird durchgestrichen, die richtige
+  steht direkt daneben – man sieht also, *was* man verwechselt hat.
 - **Runden**: Innerhalb einer Runde kommt jede Frage genau einmal dran. Sobald eine
   Frage richtig beantwortet ist, taucht sie in dieser Runde nicht mehr auf – auch dann
   nicht, wenn sie vorher schon einmal falsch war. Falsch beantwortete Fragen werden
@@ -180,6 +182,7 @@ Einzeln:
 | `npm run test:e2e` | Anmelden, lernen, neu laden, zweites Gerät, offline |
 | `npm run test:ui` | Browser: alle Antworttypen und das Stufensystem (Server auf Port 8080) |
 | `node tools/stage-ui.mjs` | nur Stufen: Auswahl, Aufstieg, Empfehlung, alte Stände |
+| `node tools/order-ui.mjs` | Reihenfolge-Auflösung: eigene Wahl bleibt lesbar, Layout hält |
 
 Die Tests laufen bei jedem Push über GitHub Actions (`.github/workflows/ci.yml`).
 

@@ -310,14 +310,26 @@ p:last-child { margin-bottom: 0; }
 }
 .round-box p { margin: 0; }
 
+/* Auflösung einer Reihenfolge: die eigene Zahl bleibt stehen, durchgestrichen,
+   die richtige direkt daneben. Beide gehören zusammen gelesen – deshalb sitzen
+   sie nebeneinander und nicht an entgegengesetzten Enden der Zeile. */
 .order-fix {
-  margin-left: auto;
-  font-size: .72rem;
+  font-size: .8rem;
   font-weight: 700;
   color: var(--ok);
   white-space: nowrap;
+  flex: none;
+  font-variant-numeric: tabular-nums;
 }
-.order-card .order-fix { margin: 0; }
+.order-item.wrong .marker { text-decoration: line-through; }
+
+/* Bild-Karten: Die Zahl klebt oben links auf der Karte, die richtige daneben. */
+.order-card .order-fix {
+  position: absolute;
+  top: 5px;
+  left: 34px;
+  font-size: .78rem;
+}
 
 .cat-row {
   display: flex;

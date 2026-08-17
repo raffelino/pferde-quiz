@@ -352,17 +352,28 @@ function orderUI(q, { onChange } = {}) {
         btn.disabled = true;
         btn.classList.remove('picked');
         const chosenPos = picks.indexOf(orig);
+        const marker = btn.querySelector('.marker');
+        const label = itemLabel(q.items[orig]);
         // Die eigene Wahl bleibt stehen – sonst sieht die Musterlösung wie die
-        // eigene Antwort aus. Die richtige Position kommt als Hinweis daneben.
-        btn.querySelector('.marker').textContent = chosenPos >= 0 ? String(chosenPos + 1) : '–';
+        // eigene Antwort aus.
+        marker.textContent = chosenPos >= 0 ? String(chosenPos + 1) : '–';
         const caption = btn.querySelector('.order-caption');
-        if (caption) caption.textContent = itemLabel(q.items[orig]);
+        if (caption) caption.textContent = label;
+
         if (chosenPos === orig) {
           btn.classList.add('correct');
-        } else {
-          btn.classList.add('wrong');
-          btn.appendChild(el('span', { class: 'order-fix', text: `richtig: ${orig + 1}` }));
+          btn.setAttribute('aria-label', `${label}: Position ${orig + 1}, richtig`);
+          return;
         }
+
+        // Falsch einsortiert: Die eigene Zahl wird durchgestrichen und die
+        // richtige steht direkt daneben. Stünden beide Zahlen unverbunden
+        // nebeneinander, wäre nicht zu erkennen, welche welche ist – und weit
+        // auseinander (Zahl oben, Hinweis unten) erst recht nicht.
+        btn.classList.add('wrong');
+        marker.after(el('span', { class: 'order-fix', text: `→ ${orig + 1}`, 'aria-hidden': 'true' }));
+        btn.setAttribute('aria-label',
+          `${label}: von dir auf Position ${chosenPos + 1} gesetzt, richtig ist Position ${orig + 1}`);
       });
       if (resetBtn) resetBtn.disabled = true;
     }

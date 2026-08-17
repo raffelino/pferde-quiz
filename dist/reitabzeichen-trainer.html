@@ -322,14 +322,26 @@ p:last-child { margin-bottom: 0; }
 }
 .round-box p { margin: 0; }
 
+/* Auflösung einer Reihenfolge: die eigene Zahl bleibt stehen, durchgestrichen,
+   die richtige direkt daneben. Beide gehören zusammen gelesen – deshalb sitzen
+   sie nebeneinander und nicht an entgegengesetzten Enden der Zeile. */
 .order-fix {
-  margin-left: auto;
-  font-size: .72rem;
+  font-size: .8rem;
   font-weight: 700;
   color: var(--ok);
   white-space: nowrap;
+  flex: none;
+  font-variant-numeric: tabular-nums;
 }
-.order-card .order-fix { margin: 0; }
+.order-item.wrong .marker { text-decoration: line-through; }
+
+/* Bild-Karten: Die Zahl klebt oben links auf der Karte, die richtige daneben. */
+.order-card .order-fix {
+  position: absolute;
+  top: 5px;
+  left: 34px;
+  font-size: .78rem;
+}
 
 .cat-row {
   display: flex;
@@ -5200,15 +5212,22 @@ function orderUI(q, { onChange } = {}) {
         btn.disabled = true;
         btn.classList.remove("picked");
         const chosenPos = picks.indexOf(orig);
-        btn.querySelector(".marker").textContent = chosenPos >= 0 ? String(chosenPos + 1) : "\u2013";
+        const marker = btn.querySelector(".marker");
+        const label = itemLabel(q.items[orig]);
+        marker.textContent = chosenPos >= 0 ? String(chosenPos + 1) : "\u2013";
         const caption = btn.querySelector(".order-caption");
-        if (caption) caption.textContent = itemLabel(q.items[orig]);
+        if (caption) caption.textContent = label;
         if (chosenPos === orig) {
           btn.classList.add("correct");
-        } else {
-          btn.classList.add("wrong");
-          btn.appendChild(el("span", { class: "order-fix", text: `richtig: ${orig + 1}` }));
+          btn.setAttribute("aria-label", `${label}: Position ${orig + 1}, richtig`);
+          return;
         }
+        btn.classList.add("wrong");
+        marker.after(el("span", { class: "order-fix", text: `\u2192 ${orig + 1}`, "aria-hidden": "true" }));
+        btn.setAttribute(
+          "aria-label",
+          `${label}: von dir auf Position ${chosenPos + 1} gesetzt, richtig ist Position ${orig + 1}`
+        );
       });
       if (resetBtn) resetBtn.disabled = true;
     }
@@ -5369,7 +5388,7 @@ function matchUI(q, { onChange } = {}) {
 }
 
 // js/version.js
-var APP_VERSION = "v10";
+var APP_VERSION = "v11";
 
 // js/api.js
 var OVERRIDE_KEY = "reitabzeichen-trainer.api";
