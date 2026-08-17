@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Browser-Smoketest: klickt sich durch viele Fragen und prüft auf JS-Fehler.
 // Aufruf:  node tools/smoke-test.mjs [http://localhost:8080]
 

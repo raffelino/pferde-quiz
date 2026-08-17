@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Zusammenbau der API. createApp() liefert einen Request-Handler – dadurch
 // lässt sich alles testen, ohne einen echten Port zu belegen.
 

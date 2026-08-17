@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Fragenpool: Ausrüstung & Sattelkunde, Reitlehre & Hilfen, Bahnregeln & Hufschlagfiguren
 
 export default [

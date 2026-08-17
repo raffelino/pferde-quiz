@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Karteikasten-Logik für den Browser.
 //
 // Die Regeln selbst stehen in js/core/srs-core.js – dieselbe Datei nutzt auch

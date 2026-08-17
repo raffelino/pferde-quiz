@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Start des Servers. Konfiguration ausschließlich über Umgebungsvariablen –
 // im Repository stehen keine Zugangsdaten.
 //

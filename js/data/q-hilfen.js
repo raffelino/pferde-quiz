@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Fragenpool: Hilfengebung & Paraden
 // Inhaltlich nach den Lernzielen der Lerneinheit "Reitlehre I – Hilfengebung"
 // (Einwirkungen des Reiters, Paraden, diagonale Hilfengebung).

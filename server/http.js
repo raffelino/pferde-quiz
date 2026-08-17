@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Kleine HTTP-Helfer: JSON lesen und schreiben, CORS, ein einfacher Router.
 // Bewusst schmal gehalten – die API hat wenige Endpunkte.
 

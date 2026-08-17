@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Der Server kennt den Fragenpool – aus derselben Quelle wie die App.
 //
 // Damit landen nur echte Fragen-IDs in der Datenbank, und die Auswertung kann

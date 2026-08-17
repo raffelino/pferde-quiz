@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Anmeldung: Google-ID-Token prüfen und Sitzungen verwalten.
 //
 // Der Server vertraut dem Client nichts an: Das ID-Token wird vollständig

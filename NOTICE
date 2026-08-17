@@ -1,0 +1,17 @@
+Reitabzeichen Trainer
+Copyright 2026 Reitabzeichen Trainer contributors
+
+Dieses Produkt steht unter der Apache License, Version 2.0 (siehe LICENSE).
+
+Der Programmcode enthält keine Bibliotheken Dritter: Die App läuft mit
+Bordmitteln des Browsers, der Server ausschließlich mit der Node-Standard-
+bibliothek. Werkzeuge, die nur beim Entwickeln geladen werden (esbuild,
+Playwright), sind nicht Bestandteil der Auslieferung.
+
+Zu den Inhalten: Die Fragen und Erklärungen sind eigenständig formuliert.
+Sie orientieren sich an den Lernzielen und Themengebieten der Ausbildungs-
+und Prüfungsliteratur der Deutschen Reiterlichen Vereinigung (FN) sowie an
+eigenen Kursunterlagen; Texte aus diesen Werken wurden nicht übernommen.
+Es besteht keine Verbindung zur FN. "Basispass Pferdekunde", "Reitabzeichen"
+und die Namen der genannten Werke gehören ihren jeweiligen Inhabern; ihre
+Nennung dient allein der Beschreibung des Lernstoffs.

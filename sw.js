@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Service Worker: App offline verfügbar machen.
 // Bei jeder inhaltlichen Änderung CACHE_VERSION erhöhen.
 

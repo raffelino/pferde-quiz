@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Abgleich: Ereignisse verbuchen, Kartenstände ableiten, Zustand speichern.
 // Hier steckt die eigentliche Konsistenzzusage des Backends.
 

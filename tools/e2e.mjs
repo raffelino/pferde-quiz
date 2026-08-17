@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Ende-zu-Ende: echter Server, echte Datenbank, echter Browser.
 //
 // Geprüft wird die Zusage, um die es beim Backend geht:

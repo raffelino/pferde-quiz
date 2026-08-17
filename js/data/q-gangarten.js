@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Fragenpool: Grundgangarten – Takt, Phasen, Fußfolge, Tempi und Störungen.
 // Fragen mit "hooves" zeigen kleine Fußfolge-Diagramme statt Text.
 // Kürzel: VL = vorne links, VR = vorne rechts, HL = hinten links, HR = hinten rechts.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Konto und Abgleich mit dem Server.
 //
 // Die App bleibt offline-fähig: Gelernt wird immer lokal, jede Antwort landet

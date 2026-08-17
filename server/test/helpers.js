@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Werkzeuge für die Servertests: echter HTTP-Server auf zufälligem Port,
 // temporäre Datenbank, selbst signierte "Google"-Tokens.
 

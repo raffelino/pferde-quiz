@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Die API von außen: echte HTTP-Aufrufe gegen einen laufenden Server.
 
 import { test, describe, before, after } from 'node:test';

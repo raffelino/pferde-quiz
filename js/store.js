@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Persistenz von Lernfortschritt, Statistik und Einstellungen (localStorage).
 
 const KEY = 'reitabzeichen-trainer.v1';

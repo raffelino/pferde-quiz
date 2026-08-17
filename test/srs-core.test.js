@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Regressionstests der Lernlogik, die Browser und Server gemeinsam nutzen.
 // Die ausführlichen Simulationen stehen in tools/, hier sind die Zusagen
 // festgehalten, die nie wieder kaputtgehen dürfen.

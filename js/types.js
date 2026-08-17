@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Antwort-Oberflächen je Fragetyp.
 //
 // Jeder Typ liefert ein Objekt mit:

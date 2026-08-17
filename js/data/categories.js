@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Kategorien und Schwierigkeitsstufen des Fragenpools.
 
 export const CATEGORIES = [

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Zugriff auf das Backend. Ohne konfigurierte API bleibt die App rein lokal.
 //
 // Die Adresse steht in index.html:

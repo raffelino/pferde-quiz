@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Baut die App in eine einzige HTML-Datei (CSS und JS eingebettet).
 // Nützlich zum Weitergeben per Messenger, für Offline-Nutzung ohne Server
 // oder zum Hochladen auf beliebigen Webspace.
@@ -46,6 +47,8 @@ const markup = body.replace(/<script[\s\S]*?<\/script>/g, '').trim();
 const head = [
   '<title>Reitabzeichen Trainer</title>',
   '<meta name="build" content="single-file">',
+  '<meta name="license" content="Apache-2.0">',
+  '<!-- SPDX-License-Identifier: Apache-2.0 -->',
   '<meta name="description" content="Lern-App zum Training für die Reitabzeichen und den Basispass Pferdekunde – mit Karteikarten-System, Kategorien und Statistik.">',
   `<style>\n${css}\n</style>`
 ].join('\n');

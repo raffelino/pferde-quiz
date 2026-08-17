@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Fragenpool: Anatomie, Rassen/Farben, Haltung, Fütterung
 // type: single | multi | truefalse | text | number | order | match
 

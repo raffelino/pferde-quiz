@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Simulation der Rundenlogik:
 //   * Kommt wirklich jede Frage einmal dran, bevor sich etwas wiederholt?
 //   * Bleiben richtig beantwortete Fragen bis zum Rundenende außen vor?

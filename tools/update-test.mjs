@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Prüft, ob ein Deploy auf einem Gerät ankommt, auf dem die App schon läuft:
 // installieren -> Dateien auf dem "Server" austauschen -> neu laden -> neue Version?
 import { chromium } from 'playwright';

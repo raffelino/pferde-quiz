@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Simulation des Karteikasten-Systems: kommen falsch beantwortete Fragen
 // tatsächlich häufiger dran?  Aufruf:  node tools/srs-sim.mjs
 

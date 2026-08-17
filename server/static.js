@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Auslieferung der statischen App (Betriebsart A: App und API auf einer Domain).
 // Bewusst eng gefasst: nur bekannte Dateitypen, kein Verlassen des Wurzelverzeichnisses.
 

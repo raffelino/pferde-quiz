@@ -191,6 +191,19 @@ Bei jeder Veröffentlichung beide Stellen erhöhen:
 durch und prüft, dass eine richtig beantwortete Frage in derselben Runde nicht
 wiederkommt.
 
+## Lizenz
+
+Programmcode und Inhalte stehen unter der **Apache License 2.0** – siehe
+[LICENSE](LICENSE) und [NOTICE](NOTICE). Kurz: benutzen, verändern und
+weitergeben ist erlaubt, auch kommerziell, solange Lizenz- und
+Urheberrechtshinweis erhalten bleiben und Änderungen kenntlich gemacht werden.
+Die Lizenz gibt außerdem eine ausdrückliche Patentlizenz und schließt jede
+Gewährleistung aus.
+
+Jede Quelldatei trägt `SPDX-License-Identifier: Apache-2.0`. Fremde
+Bibliotheken sind nicht enthalten: Die App nutzt nur Bordmittel des Browsers,
+der Server nur die Node-Standardbibliothek.
+
 ## Hinweis zu den Inhalten
 
 Dies ist eine **inoffizielle, privat erstellte Lernhilfe**. Die Fragen orientieren sich an

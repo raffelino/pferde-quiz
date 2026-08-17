@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Datenbankzugriff über die in Node eingebaute SQLite.
 //
 // Auf Node 22 braucht das den Schalter --experimental-sqlite, ab Node 24 nicht

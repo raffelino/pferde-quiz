@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Stresstest der Rundenregel am echten Fragenpool:
 // "Sobald eine Frage in einer Runde richtig beantwortet wurde, darf sie in
 //  derselben Runde nicht noch einmal kommen."

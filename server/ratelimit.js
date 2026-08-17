@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Einfache Begrenzung pro Absender (Token-Bucket, im Speicher).
 //
 // Reicht für einen einzelnen Serverprozess. Bei mehreren Instanzen müsste das

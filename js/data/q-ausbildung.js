@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Fragenpool: Ausbildungsweg des Reiters und Skala der Ausbildung des Pferdes.
 // Der Typ "pyramid" zeigt eine leere Pyramide, deren Stufen von unten nach oben
 // einsortiert werden müssen. "given" markiert bereits vorgegebene Stufen.

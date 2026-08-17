@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Lernlogik ohne Umgebung: keine Zugriffe auf localStorage, Datenbank oder DOM.
 //
 // Dieses Modul wird von zwei Seiten genutzt:

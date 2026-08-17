@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Kleine Helfer ohne Abhängigkeiten.
 
 export const $ = (sel, root = document) => root.querySelector(sel);

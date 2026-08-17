@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Prüft den Fragenpool auf Struktur- und Konsistenzfehler.
 // Aufruf:  node tools/validate-questions.mjs
 

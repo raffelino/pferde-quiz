@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Anmeldung: Prüfung der Google-Tokens und Verwaltung der Sitzungen.
 
 import { test, describe } from 'node:test';

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import pferdekunde from './q-pferdekunde.js';
 import gesundheit from './q-gesundheit.js';
 import reiten from './q-reiten.js';

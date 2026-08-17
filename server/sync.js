@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Abgleich zwischen Gerät und Server.
 //
 // Grundgedanke: Antworten sind Ereignisse mit eigener ID. Der Server speichert
