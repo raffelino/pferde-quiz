@@ -10,6 +10,7 @@ import {
 } from './srs.js';
 import { createAnswerUI, TYPE_HINTS } from './types.js';
 import { APP_VERSION } from './version.js';
+import * as sync from './sync.js';
 
 let state = loadState();
 state.round = normalizeRound(state.round);
@@ -265,7 +266,119 @@ function renderStart() {
   ].forEach(t => summary.appendChild(el('span', { class: 'pill', text: t })));
 
   $('#app-version').textContent = `Version ${APP_VERSION}`;
+  renderAccount();
   updatePoolInfo();
+}
+
+/* ---------------------------------------------------------------- Konto */
+
+function renderAccount() {
+  const card = $('#account-card');
+  const info = sync.status();
+
+  // Ohne erreichbares Backend bleibt die App rein lokal – dann keine Karte.
+  if (!info.configured || (!info.googleClientId && !info.testLogin && !info.loggedIn)) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+
+  const badge = $('#sync-badge');
+  if (!info.loggedIn) {
+    badge.textContent = 'nur auf diesem Gerät';
+    badge.className = 'sync-badge';
+  } else if (info.lastError) {
+    badge.textContent = 'Abgleich klemmt';
+    badge.className = 'sync-badge bad';
+  } else if (info.pending) {
+    badge.textContent = `${info.pending} offen`;
+    badge.className = 'sync-badge pending';
+  } else {
+    badge.textContent = 'gesichert';
+    badge.className = 'sync-badge ok';
+  }
+
+  const body = $('#account-body');
+  body.textContent = '';
+
+  if (!info.loggedIn) {
+    body.appendChild(el('p', {
+      class: 'muted small',
+      text: 'Ohne Anmeldung bleibt dein Lernstand nur auf diesem Gerät. Mit Google-Konto '
+          + 'wird er gesichert und du kannst auf mehreren Geräten weiterlernen.'
+    }));
+    const slot = el('div', { class: 'google-slot', id: 'google-slot' });
+    body.appendChild(slot);
+
+    sync.mountGoogleButton(slot, {
+      onDone: err => {
+        if (err) toast(`Anmeldung fehlgeschlagen: ${err.message}`);
+        renderStart();
+      }
+    }).then(ok => {
+      if (!ok && info.testLogin) {
+        slot.appendChild(el('button', {
+          class: 'btn', text: 'Test-Anmeldung (nur lokal)',
+          onclick: async () => {
+            try {
+              await sync.loginForTest();
+              renderStart();
+            } catch (err) { toast(err.message); }
+          }
+        }));
+      } else if (!ok && !info.testLogin) {
+        slot.appendChild(el('p', { class: 'muted small', text: 'Anmeldung derzeit nicht verfügbar.' }));
+      }
+    });
+    return;
+  }
+
+  const user = info.user || {};
+  body.appendChild(el('div', { class: 'account-row' }, [
+    el('span', { class: 'account-avatar' }, [
+      user.picture
+        ? el('img', { src: user.picture, alt: '', referrerpolicy: 'no-referrer' })
+        : el('span', { text: '🐴' })
+    ]),
+    el('span', { class: 'account-main' }, [
+      el('div', { class: 'account-name', text: user.name || 'Angemeldet' }),
+      el('div', { class: 'account-mail', text: user.email || '' })
+    ])
+  ]));
+
+  const zeit = info.lastSyncAt
+    ? new Date(info.lastSyncAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+    : null;
+  body.appendChild(el('p', {
+    class: 'muted small',
+    text: info.lastError
+      ? `Letzter Abgleich fehlgeschlagen: ${info.lastError}`
+      : zeit ? `Zuletzt gesichert um ${zeit} Uhr.` : 'Noch nicht abgeglichen.'
+  }));
+
+  body.appendChild(el('div', { class: 'account-actions' }, [
+    el('button', {
+      class: 'chip', text: 'Jetzt abgleichen',
+      onclick: async () => { await sync.syncNow(); renderStart(); toast('Abgleich erledigt.'); }
+    }),
+    el('button', {
+      class: 'chip', text: 'Abmelden',
+      onclick: async () => { await sync.logout(); renderStart(); toast('Abgemeldet.'); }
+    }),
+    el('button', {
+      class: 'chip', text: 'Konto löschen',
+      onclick: async () => {
+        if (!confirm('Konto und alle gespeicherten Daten auf dem Server löschen?')) return;
+        try {
+          await sync.deleteAccount();
+          toast('Konto gelöscht.');
+        } catch (err) {
+          toast(`Löschen fehlgeschlagen: ${err.message}`);
+        }
+        renderStart();
+      }
+    })
+  ]));
 }
 
 function updatePoolInfo() {
@@ -331,6 +444,7 @@ function nextQuestion() {
   session.current = q;
   session.answered = false;
   session.isRetry = pick.retry;
+  session.questionShownAt = Date.now();
 
   const cat = CAT_BY_ID[q.cat];
   const lvl = LEVEL_BY_ID[q.level];
@@ -377,6 +491,11 @@ function checkAnswer() {
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
   if (correct) clearRetry(state.round, q.id);
   else queueRetry(state.round, q.id, session.pool.length);
+  sync.queueAnswer({
+    questionId: q.id,
+    correct,
+    ms: session.questionShownAt ? Date.now() - session.questionShownAt : null
+  });
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
 
   session.ui.reveal(correct);
@@ -629,6 +748,12 @@ showScreen('start');
 
 // In der Einzeldatei-Version (tools/build-single-file.mjs) gibt es keine sw.js.
 const isSingleFile = !!document.querySelector('meta[name="build"][content="single-file"]');
+
+// Konto und Abgleich: Anzeige aktualisieren, sobald sich am Status etwas tut.
+sync.onSyncChange(() => {
+  if (activeScreen === 'start') renderAccount();
+});
+sync.startAutoSync();
 
 if ('serviceWorker' in navigator && !isSingleFile) {
   window.addEventListener('load', () => {

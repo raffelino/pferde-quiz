@@ -17,6 +17,9 @@ const DEFAULT_STATE = () => ({
   cards: {},
   // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
   round: { pass: 1, asked: [], retry: [], counts: {}, recent: [] },
+  // Konto und noch nicht gesendete Antworten (siehe js/sync.js)
+  account: {},
+  outbox: [],
   totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
   seq: 0                 // Zähler der beantworteten Fragen (für "zuletzt gesehen")
 });
@@ -35,6 +38,8 @@ export function loadState() {
       state.cards = parsed.cards || {};
       state.settings.prio = parsed.settings?.prio || {};
       state.round = parsed.round || DEFAULT_STATE().round;
+      state.account = parsed.account && typeof parsed.account === 'object' ? parsed.account : {};
+      state.outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
     }
   } catch (err) {
     console.warn('Gespeicherter Fortschritt konnte nicht gelesen werden:', err);
@@ -68,9 +73,10 @@ export function saveNow() {
 }
 
 export function resetProgress() {
-  const settings = state.settings;
+  const { settings, account } = state;
   state = DEFAULT_STATE();
   state.settings = settings;
+  state.account = account;      // Anmeldung bleibt bestehen
   saveNow();
   return state;
 }

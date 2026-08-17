@@ -12,7 +12,16 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const problems = [];
 page.on('pageerror', err => problems.push(`pageerror: ${err.message}`));
 page.on('console', msg => {
-  if (msg.type() === 'error') problems.push(`console: ${msg.text()}`);
+  if (msg.type() !== 'error') return;
+  // Ohne Backend läuft die einmalige Abfrage von /api/config erwartungsgemäß
+  // ins Leere; die App bleibt dann lokal. Das ist kein Fehler.
+  const url = msg.location()?.url || '';
+  if (/\/api\//.test(url) || /\/api\//.test(msg.text())) return;
+  problems.push(`console: ${msg.text()}${url ? ` (${url})` : ''}`);
+});
+page.on('requestfailed', req => {
+  if (/\/api\//.test(req.url())) return;
+  problems.push(`Anfrage fehlgeschlagen: ${req.url()}`);
 });
 
 await page.goto(base, { waitUntil: 'networkidle' });
@@ -50,7 +59,10 @@ for (let i = 0; i < ROUNDS; i++) {
   } else if (kind === 'match') {
     const n = await page.locator('#answer-area select').count();
     for (let k = 0; k < n; k++) {
-      await page.locator('#answer-area select').nth(k).selectOption({ index: 1 + (k % n) });
+      const sel = page.locator('#answer-area select').nth(k);
+      // Gruppen-Zuordnungen haben mehr Zeilen als Optionen -> Index begrenzen.
+      const opts = await sel.locator('option').count();
+      await sel.selectOption({ index: 1 + (k % Math.max(1, opts - 1)) });
     }
   } else if (kind === 'input') {
     await page.fill('#answer-area input.text-input', '38');

@@ -1,12 +1,13 @@
 # 🐴 Reitabzeichen Trainer
 
 Eine mobile-optimierte Quiz-App zum Lernen der Theorie für den **Basispass Pferdekunde**
-und die **Reitabzeichen**. Läuft komplett im Browser – ohne Server, ohne Account,
-ohne Build-Schritt.
+und die **Reitabzeichen**. Die App läuft komplett im Browser – ohne Build-Schritt.
+Wer den Lernstand geräteübergreifend sichern möchte, startet zusätzlich das
+mitgelieferte Backend mit Google-Anmeldung.
 
 ## Features
 
-- **250 Fragen** in **17 Kategorien**, die sich einzeln an- und ausschalten lassen
+- **249 Fragen** in **17 Kategorien**, die sich einzeln an- und ausschalten lassen
 - **8 Antwort-Modi**, passend zur jeweiligen Frage:
   | Modus | Beschreibung |
   |---|---|
@@ -47,7 +48,37 @@ ohne Build-Schritt.
   „nur schwierige Fragen"
 - **Mobil zuerst**: große Touch-Flächen, Safe-Area-Unterstützung, Dark- und Light-Mode,
   installierbar als PWA und offline nutzbar
-- **Fortschritt bleibt lokal** im Browser (`localStorage`) – keine Daten verlassen das Gerät
+- **Fortschritt bleibt lokal** im Browser (`localStorage`) – ohne Konto verlässt
+  nichts das Gerät. Mit Konto (siehe unten) wird zusätzlich auf dem eigenen Server gesichert.
+
+## Konto und Backend (optional)
+
+Ohne Backend funktioniert alles wie bisher – der Lernstand liegt dann im Browser.
+Mit dem mitgelieferten Server wird daraus ein Konto:
+
+- **Anmeldung mit Google**, kein Passwort
+- Lernstand, Einstellungen und Rundenstand liegen in einer **SQLite-Datenbank**
+- **mehrere Geräte**: Handy im Stall, Laptop zu Hause – derselbe Stand
+- **offline weiterlernen**: Antworten wandern in eine Outbox und werden später
+  nachgereicht; der Server rechnet die Karteikästen daraus nach
+- **Konto löschen** entfernt alle Daten (ein Klick in der App)
+
+```bash
+npm start                    # http://localhost:8787 – App und API
+npm run dev                  # zusätzlich mit Test-Anmeldung, ohne Google
+```
+
+Einrichtung, Datenmodell und Begründungen stehen in [docs/backend.md](docs/backend.md).
+Kurzfassung für den Betrieb:
+
+| Variable | Bedeutung |
+|---|---|
+| `GOOGLE_CLIENT_ID` | OAuth-Client-ID aus der Google Cloud Console (Typ „Web") |
+| `DB_PATH` | Pfad der SQLite-Datei, Standard `./data/trainer.db` |
+| `ALLOWED_ORIGINS` | nur nötig, wenn das Frontend auf einer anderen Domain liegt |
+| `ALLOW_TEST_LOGIN` | `1` erlaubt eine Anmeldung ohne Google (nur lokal, nie in Produktion) |
+
+Mit Docker: `docker build -t trainer . && docker run -p 8787:8787 -v trainer-data:/data -e GOOGLE_CLIENT_ID=... trainer`
 
 ## Live-Version
 
@@ -126,22 +157,29 @@ Neue Kategorien in `js/data/categories.js` eintragen, neue Fragendateien in
 `js/data/index.js` importieren. Danach die Struktur prüfen:
 
 ```bash
-node tools/validate-questions.mjs   # Struktur des Fragenpools
-node tools/srs-sim.mjs              # Karteikasten-Gewichtung
-node tools/round-sim.mjs            # Runden, Wiederholungen, Priorisierung
+npm test              # Fragenpool, Einheits- und Integrationstests, Simulationen
+npm run test:e2e      # Browser gegen echten Server (benötigt playwright)
 ```
 
-Optionaler Browser-Smoketest (benötigt Playwright und einen laufenden Server auf Port 8080):
+Einzeln:
 
-```bash
-node tools/smoke-test.mjs
-```
+| Befehl | Prüft |
+|---|---|
+| `npm run test:data` | Struktur des Fragenpools |
+| `npm run test:unit` | Lernlogik, Anmeldung, Abgleich, alle API-Endpunkte |
+| `npm run test:sim` | Runden, Wiederholungsabstände, Priorisierung über viele Durchläufe |
+| `npm run test:e2e` | Anmelden, lernen, neu laden, zweites Gerät, offline |
+| `node tools/smoke-test.mjs` | Browser-Durchlauf über alle Antworttypen (Server auf Port 8080) |
+
+Die Tests laufen bei jedem Push über GitHub Actions (`.github/workflows/ci.yml`).
 
 ## Versionen und Updates
 
 Der Service Worker holt die App-Dateien **zuerst aus dem Netz** und nutzt den Cache nur
 als Offline-Reserve. Damit startet die App nach einem Deploy sofort mit dem neuen Code;
-übernimmt eine neue Version, lädt sich die Seite einmal selbst neu.
+übernimmt eine neue Version, lädt sich die Seite einmal selbst neu. Aufrufe an `/api/`
+bleiben bewusst außen vor – eine zwischengespeicherte Serverantwort würde beim
+Abgleich als aktueller Stand durchgehen und den neueren lokalen überschreiben.
 
 Bei jeder Veröffentlichung beide Stellen erhöhen:
 

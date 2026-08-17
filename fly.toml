@@ -1,0 +1,34 @@
+# Beispielkonfiguration für fly.io. Andere Anbieter brauchen nur das Dockerfile
+# und ein beständiges Verzeichnis für die SQLite-Datei.
+app = "reitabzeichen-trainer"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8787"
+  DB_PATH = "/data/trainer.db"
+  NODE_ENV = "production"
+  TRUST_PROXY = "1"
+
+# GOOGLE_CLIENT_ID als Secret setzen:
+#   fly secrets set GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+
+[[mounts]]
+  source = "trainer_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/api/health"

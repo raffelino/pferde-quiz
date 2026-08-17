@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          # Ab Node 24 ist node:sqlite stabil, der Schalter in den Skripten
+          # bleibt für Node 22 wirkungslos vorhanden.
+          node-version: '24'
+
+      - name: Fragenpool prüfen
+        run: npm run test:data
+
+      - name: Einheits- und Integrationstests
+        run: npm run test:unit
+
+      - name: Simulationen der Lernlogik
+        run: npm run test:sim
+
+      - name: Einzeldatei bauen
+        run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Playwright installieren
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Ende-zu-Ende (Anmeldung, Abgleich, zweites Gerät)
+        run: npm run test:e2e

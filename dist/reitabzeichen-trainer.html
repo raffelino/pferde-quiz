@@ -385,6 +385,36 @@ p:last-child { margin-bottom: 0; }
 .level-pill input { position: absolute; opacity: 0; pointer-events: none; }
 .level-pill.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 
+/* ---------- Konto ---------- */
+.account-row { display: flex; align-items: center; gap: 10px; }
+.account-avatar {
+  width: 40px; height: 40px; flex: none;
+  border-radius: 50%;
+  background: var(--bg-elev-2);
+  display: grid; place-items: center;
+  font-size: 1.1rem;
+  overflow: hidden;
+}
+.account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.account-main { flex: 1; min-width: 0; }
+.account-name { font-weight: 600; font-size: .95rem; }
+.account-mail { font-size: .8rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.google-slot { display: flex; justify-content: center; margin: 10px 0 4px; min-height: 44px; }
+
+.sync-badge {
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--bg-elev-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.sync-badge.ok { color: var(--ok); }
+.sync-badge.pending { color: var(--warn); }
+.sync-badge.bad { color: var(--bad); background: var(--bad-bg); }
+
 /* ---------- Sitzungslänge ---------- */
 .session-list {
   list-style: none;
@@ -864,6 +894,14 @@ p:last-child { margin-bottom: 0; }
       beantwortest, kommen automatisch häufiger dran – bis sie sitzen.
     </p>
     <div class="progress-summary" id="global-progress"></div>
+  </section>
+
+  <section class="card account-card" id="account-card" hidden>
+    <div class="card-head">
+      <h2>Konto</h2>
+      <span class="sync-badge" id="sync-badge"></span>
+    </div>
+    <div id="account-body"></div>
   </section>
 
   <section class="card">
@@ -4371,6 +4409,9 @@ var DEFAULT_STATE = () => ({
   cards: {},
   // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
   round: { pass: 1, asked: [], retry: [], counts: {}, recent: [] },
+  // Konto und noch nicht gesendete Antworten (siehe js/sync.js)
+  account: {},
+  outbox: [],
   totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
   seq: 0
   // Zähler der beantworteten Fragen (für "zuletzt gesehen")
@@ -4388,6 +4429,8 @@ function loadState() {
       state.cards = parsed.cards || {};
       state.settings.prio = parsed.settings?.prio || {};
       state.round = parsed.round || DEFAULT_STATE().round;
+      state.account = parsed.account && typeof parsed.account === "object" ? parsed.account : {};
+      state.outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
     }
   } catch (err) {
     console.warn("Gespeicherter Fortschritt konnte nicht gelesen werden:", err);
@@ -4417,9 +4460,10 @@ function saveNow() {
   }
 }
 function resetProgress() {
-  const settings = state.settings;
+  const { settings, account } = state;
   state = DEFAULT_STATE();
   state.settings = settings;
+  state.account = account;
   saveNow();
   return state;
 }
@@ -4435,38 +4479,77 @@ function hasCard(id) {
   return Object.prototype.hasOwnProperty.call(state.cards, id);
 }
 
-// js/srs.js
+// js/core/srs-core.js
 var MAX_BOX = 5;
 var BOX_WEIGHT = { 1: 24, 2: 12, 3: 6, 4: 3, 5: 1 };
 var NEW_WEIGHT = 14;
 var RECENT_PENALTY = 0.08;
-function isMastered(id) {
-  return hasCard(id) && getState().cards[id].box >= MAX_BOX;
+function newCard() {
+  return { box: 1, right: 0, wrong: 0, streak: 0, seenAt: -1 };
 }
-function isHard(id) {
-  if (!hasCard(id)) return false;
-  const c = getState().cards[id];
-  return c.box < MAX_BOX && (c.wrong > 0 || c.box <= 2);
+function normalizeCard(card) {
+  const base = newCard();
+  if (!card || typeof card !== "object") return base;
+  const num = (v, fallback) => Number.isFinite(v) ? v : fallback;
+  return {
+    box: Math.min(MAX_BOX, Math.max(1, Math.round(num(card.box, 1)))),
+    right: Math.max(0, Math.round(num(card.right, 0))),
+    wrong: Math.max(0, Math.round(num(card.wrong, 0))),
+    streak: Math.max(0, Math.round(num(card.streak, 0))),
+    seenAt: Math.round(num(card.seenAt, -1))
+  };
 }
-function weightOf(id, recentWindow) {
-  const state3 = getState();
-  if (!hasCard(id)) return NEW_WEIGHT;
-  const card = state3.cards[id];
+function isMasteredCard(card) {
+  return !!card && card.box >= MAX_BOX;
+}
+function isHardCard(card) {
+  if (!card) return false;
+  return card.box < MAX_BOX && (card.wrong > 0 || card.box <= 2);
+}
+function applyAnswer(card, correct, seq) {
+  const before = card ? normalizeCard(card) : newCard();
+  const next = { ...before };
+  if (correct) {
+    next.right += 1;
+    next.streak += 1;
+    next.box = Math.min(MAX_BOX, next.box + 1);
+  } else {
+    next.wrong += 1;
+    next.streak = 0;
+    next.box = 1;
+  }
+  next.seenAt = seq;
+  return {
+    card: next,
+    move: {
+      boxBefore: before.box,
+      boxAfter: next.box,
+      mastered: correct && next.box >= MAX_BOX && before.box < MAX_BOX
+    }
+  };
+}
+function cardWeight(card, { seq = 0, recentWindow = 0 } = {}) {
+  if (!card) return NEW_WEIGHT;
   let w = BOX_WEIGHT[card.box] ?? 1;
   w *= 1 + Math.min(card.wrong, 5) * 0.35;
-  if (card.seenAt >= 0 && state3.seq - card.seenAt < recentWindow) w *= RECENT_PENALTY;
+  if (card.seenAt >= 0 && seq - card.seenAt < recentWindow) w *= RECENT_PENALTY;
   return Math.max(w, 0.05);
 }
-function pickNext(pool, useSrs, lastId, prio = {}) {
+function pickWeighted(pool, getCard2, {
+  useSrs = true,
+  lastId = null,
+  prio = {},
+  seq = 0,
+  random = Math.random
+} = {}) {
   if (!pool.length) return null;
   const candidates = pool.length > 1 ? pool.filter((q) => q.id !== lastId) : pool;
-  if (!useSrs) {
-    return candidates[Math.floor(Math.random() * candidates.length)];
-  }
+  if (!candidates.length) return null;
+  if (!useSrs) return candidates[Math.floor(random() * candidates.length)];
   const recentWindow = Math.min(Math.max(3, Math.floor(candidates.length / 3)), 12);
-  const weights = candidates.map((q) => weightOf(q.id, recentWindow) * (prio[q.cat] || 1));
+  const weights = candidates.map((q) => cardWeight(getCard2(q.id), { seq, recentWindow }) * (prio[q.cat] || 1));
   const sum = weights.reduce((a, b) => a + b, 0);
-  let roll = Math.random() * sum;
+  let roll = random() * sum;
   for (let i = 0; i < candidates.length; i++) {
     roll -= weights[i];
     if (roll <= 0) return candidates[i];
@@ -4476,9 +4559,9 @@ function pickNext(pool, useSrs, lastId, prio = {}) {
 var MAX_RETRIES = 2;
 var RETRY_MIN_GAP = 8;
 var RETRY_SPREAD = 10;
-function retryDelay(attempt = 1, poolSize = Infinity) {
+function retryDelay(attempt = 1, poolSize = Infinity, random = Math.random) {
   const min = RETRY_MIN_GAP * attempt;
-  const delay = min + Math.floor(Math.random() * RETRY_SPREAD * attempt);
+  const delay = min + Math.floor(random() * RETRY_SPREAD * attempt);
   const maxUseful = Math.max(2, poolSize - 2);
   return Math.min(delay, maxUseful);
 }
@@ -4487,16 +4570,29 @@ function newRound(pass = 1) {
 }
 function normalizeRound(round) {
   if (!round || typeof round !== "object") return newRound();
-  const retry = (Array.isArray(round.retry) ? round.retry : []).map((entry) => typeof entry === "string" ? { id: entry, dueAt: 0 } : entry).filter((entry) => entry && typeof entry.id === "string");
+  const retry = (Array.isArray(round.retry) ? round.retry : []).map((entry) => typeof entry === "string" ? { id: entry, dueAt: 0 } : entry).filter((entry) => entry && typeof entry.id === "string").map((entry) => ({ id: entry.id, dueAt: Number.isFinite(entry.dueAt) ? entry.dueAt : 0 }));
+  const counts = {};
+  if (round.counts && typeof round.counts === "object") {
+    for (const [id, n] of Object.entries(round.counts)) {
+      if (Number.isFinite(n)) counts[id] = Math.max(0, Math.round(n));
+    }
+  }
   return {
     pass: Number.isInteger(round.pass) && round.pass > 0 ? round.pass : 1,
     asked: Array.isArray(round.asked) ? round.asked.filter((id) => typeof id === "string") : [],
     retry,
-    counts: round.counts && typeof round.counts === "object" ? round.counts : {},
+    counts,
     recent: Array.isArray(round.recent) ? round.recent.filter((id) => typeof id === "string") : []
   };
 }
-function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = {}, _newPass = false) {
+function pickInRound(pool, round, {
+  useSrs = true,
+  lastId = null,
+  prio = {},
+  getCard: getCard2 = () => null,
+  seq = 0,
+  random = Math.random
+} = {}, _newPass = false) {
   if (!pool.length) return { question: null, newPass: false, retry: false };
   const byId = new Map(pool.map((q) => [q.id, q]));
   const recent = new Set((round.recent || []).slice(-RETRY_MIN_GAP));
@@ -4525,7 +4621,7 @@ function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = 
   if (open.length) {
     const preferred = open.filter((q) => free(q.id));
     if (preferred.length) open = preferred;
-    const question = pickNext(open, useSrs, lastId, prio) || open[0];
+    const question = pickWeighted(open, getCard2, { useSrs, lastId, prio, seq, random }) || open[0];
     round.asked.push(question.id);
     return serve(question);
   }
@@ -4533,15 +4629,15 @@ function pickInRound(pool, round, { useSrs = true, lastId = null, prio = {} } = 
   round.pass += 1;
   round.asked = [];
   round.counts = {};
-  round.retry = round.retry.filter((e) => byId.has(e.id)).map((e) => ({ id: e.id, dueAt: retryDelay(1, pool.length) }));
-  return pickInRound(pool, round, { useSrs, lastId, prio }, true);
+  round.retry = round.retry.filter((e) => byId.has(e.id)).map((e) => ({ id: e.id, dueAt: retryDelay(1, pool.length, random) }));
+  return pickInRound(pool, round, { useSrs, lastId, prio, getCard: getCard2, seq, random }, true);
 }
-function queueRetry(round, id, poolSize = Infinity) {
+function queueRetry(round, id, poolSize = Infinity, random = Math.random) {
   const used = round.counts[id] || 0;
   if (used >= MAX_RETRIES || round.retry.some((e) => e.id === id)) return false;
   const attempt = used + 1;
   round.counts[id] = attempt;
-  round.retry.push({ id, dueAt: round.asked.length + retryDelay(attempt, poolSize) });
+  round.retry.push({ id, dueAt: round.asked.length + retryDelay(attempt, poolSize, random) });
   return true;
 }
 function clearRetry(round, id) {
@@ -4554,39 +4650,50 @@ function roundProgress(pool, round) {
   const seen2 = round.asked.filter((id) => ids.has(id)).length;
   return { pass: round.pass, seen: seen2, total: pool.length, retry: round.retry.length };
 }
+function poolProgress(pool, getCard2) {
+  let mastered = 0, seen2 = 0, hard = 0;
+  const boxes = [0, 0, 0, 0, 0];
+  for (const q of pool) {
+    const card = getCard2(q.id);
+    if (!card) continue;
+    seen2++;
+    boxes[card.box - 1]++;
+    if (isMasteredCard(card)) mastered++;
+    else if (isHardCard(card)) hard++;
+  }
+  return { total: pool.length, seen: seen2, mastered, hard, boxes };
+}
+
+// js/srs.js
+var MAX_BOX2 = MAX_BOX;
+var newRound2 = newRound;
+var normalizeRound2 = normalizeRound;
+var queueRetry2 = queueRetry;
+var clearRetry2 = clearRetry;
+var roundProgress2 = roundProgress;
+var cardOf = (id) => hasCard(id) ? getState().cards[id] : null;
+function isMastered(id) {
+  return isMasteredCard(cardOf(id));
+}
+function isHard(id) {
+  return isHardCard(cardOf(id));
+}
+function pickInRound2(pool, round, opts = {}) {
+  return pickInRound(pool, round, { ...opts, getCard: cardOf, seq: getState().seq });
+}
 function recordAnswer(id, correct) {
   const state3 = getState();
   const card = getCard(id);
-  const boxBefore = card.box;
-  if (correct) {
-    card.right++;
-    card.streak++;
-    card.box = Math.min(MAX_BOX, card.box + 1);
-  } else {
-    card.wrong++;
-    card.streak = 0;
-    card.box = 1;
-  }
-  card.seenAt = state3.seq;
+  const { card: next, move } = applyAnswer(card, correct, state3.seq);
+  Object.assign(card, next);
   state3.seq++;
   state3.totals.total++;
   if (correct) state3.totals.right++;
   else state3.totals.wrong++;
-  return { boxBefore, boxAfter: card.box, mastered: correct && card.box >= MAX_BOX };
+  return move;
 }
-function poolProgress(pool) {
-  const state3 = getState();
-  let mastered = 0, seen2 = 0, hard = 0;
-  const boxes = [0, 0, 0, 0, 0];
-  for (const q of pool) {
-    const card = state3.cards[q.id];
-    if (!card) continue;
-    seen2++;
-    boxes[card.box - 1]++;
-    if (card.box >= MAX_BOX) mastered++;
-    else if (card.wrong > 0 || card.box <= 2) hard++;
-  }
-  return { total: pool.length, seen: seen2, mastered, hard, boxes };
+function poolProgress2(pool) {
+  return poolProgress(pool, cardOf);
 }
 
 // js/types.js
@@ -5078,11 +5185,337 @@ function matchUI(q, { onChange } = {}) {
 }
 
 // js/version.js
-var APP_VERSION = "v7";
+var APP_VERSION = "v9";
+
+// js/api.js
+var OVERRIDE_KEY = "reitabzeichen-trainer.api";
+function apiBase() {
+  try {
+    const override = localStorage.getItem(OVERRIDE_KEY);
+    if (override !== null) return override.replace(/\/$/, "");
+  } catch {
+  }
+  const meta = document.querySelector('meta[name="api-base"]')?.content;
+  if (meta === void 0 || meta === null) return null;
+  const value = meta.trim();
+  if (!value) return null;
+  if (value === "auto") return "";
+  return value.replace(/\/$/, "");
+}
+var ApiError = class extends Error {
+  constructor(status2, code, message, body) {
+    super(message);
+    this.status = status2;
+    this.code = code;
+    this.body = body;
+  }
+  get offline() {
+    return this.status === 0;
+  }
+};
+async function apiFetch(path, { method = "GET", body, token, timeoutMs = 1e4 } = {}) {
+  const base = apiBase();
+  if (base === null) throw new ApiError(0, "no_backend", "Kein Backend konfiguriert");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(`${base}${path}`, {
+      method,
+      headers: {
+        ...body !== void 0 ? { "content-type": "application/json" } : {},
+        ...token ? { authorization: `Bearer ${token}` } : {}
+      },
+      body: body === void 0 ? void 0 : JSON.stringify(body),
+      signal: controller.signal
+    });
+  } catch (err) {
+    throw new ApiError(0, "network", err.name === "AbortError" ? "Zeit\xFCberschreitung" : "Keine Verbindung");
+  } finally {
+    clearTimeout(timer);
+  }
+  if (res.status === 204) return null;
+  let data = null;
+  const text = await res.text();
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+    }
+  }
+  if (!res.ok) {
+    const code = data?.error?.code || `http_${res.status}`;
+    const message = data?.error?.message || `Server antwortete mit ${res.status}`;
+    throw new ApiError(res.status, code, message, data);
+  }
+  return data;
+}
+
+// js/sync.js
+var GIS_SRC = "https://accounts.google.com/gsi/client";
+var MAX_OUTBOX = 2e3;
+var serverConfig = null;
+var syncing = false;
+var syncTimer = null;
+var listeners = /* @__PURE__ */ new Set();
+var onSyncChange = (fn) => {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
+var emit = () => listeners.forEach((fn) => {
+  try {
+    fn(status());
+  } catch (err) {
+    console.warn(err);
+  }
+});
+function isConfigured() {
+  return apiBase() !== null;
+}
+function isLoggedIn() {
+  return !!getState().account?.token;
+}
+function status() {
+  const account = getState().account || {};
+  return {
+    configured: isConfigured(),
+    loggedIn: !!account.token,
+    user: account.user || null,
+    pending: (getState().outbox || []).length,
+    lastSyncAt: account.lastSyncAt || 0,
+    lastError: account.lastError || null,
+    googleClientId: serverConfig?.googleClientId || null,
+    testLogin: !!serverConfig?.testLogin
+  };
+}
+function setAccount(patch) {
+  const state3 = getState();
+  state3.account = { ...state3.account || {}, ...patch };
+  save();
+  emit();
+}
+async function probeServer() {
+  if (!isConfigured()) return null;
+  try {
+    serverConfig = await apiFetch("/api/config", { timeoutMs: 4e3 });
+  } catch {
+    serverConfig = null;
+  }
+  emit();
+  return serverConfig;
+}
+function queueAnswer({ questionId, correct, ms }) {
+  const state3 = getState();
+  state3.outbox = state3.outbox || [];
+  state3.outbox.push({
+    eventId: newEventId(),
+    questionId,
+    correct: !!correct,
+    ms: Number.isFinite(ms) ? Math.round(ms) : null,
+    answeredAt: Date.now()
+  });
+  if (state3.outbox.length > MAX_OUTBOX) state3.outbox = state3.outbox.slice(-MAX_OUTBOX);
+  save();
+  scheduleSync();
+  emit();
+}
+function newEventId() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  return `e-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+function scheduleSync(delay = 4e3) {
+  if (!isLoggedIn()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    syncNow().catch(() => {
+    });
+  }, delay);
+}
+async function mountGoogleButton(container, { onDone } = {}) {
+  const clientId = serverConfig?.googleClientId;
+  if (!clientId) return false;
+  await loadScript(GIS_SRC);
+  if (!globalThis.google?.accounts?.id) return false;
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: async (response) => {
+      try {
+        await loginWithGoogle(response.credential);
+        onDone?.(null);
+      } catch (err) {
+        onDone?.(err);
+      }
+    }
+  });
+  container.textContent = "";
+  google.accounts.id.renderButton(container, {
+    theme: "outline",
+    size: "large",
+    text: "signin_with",
+    locale: "de",
+    width: 260
+  });
+  return true;
+}
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const el2 = document.createElement("script");
+    el2.src = src;
+    el2.async = true;
+    el2.onload = () => resolve();
+    el2.onerror = () => reject(new Error("Google-Anmeldung konnte nicht geladen werden"));
+    document.head.appendChild(el2);
+  });
+}
+async function loginWithGoogle(credential) {
+  const answer = await apiFetch("/api/auth/google", { method: "POST", body: { credential } });
+  return afterLogin(answer);
+}
+async function loginForTest(sub = "test-user") {
+  const answer = await apiFetch("/api/auth/test", { method: "POST", body: { sub } });
+  return afterLogin(answer);
+}
+async function afterLogin(answer) {
+  const state3 = getState();
+  const localCards = state3.cards || {};
+  const serverHasProgress = Object.keys(answer.cards || {}).length > 0 || (answer.state?.totals?.total || 0) > 0;
+  let imported = 0;
+  let localDiscarded = false;
+  setAccount({
+    token: answer.token,
+    user: answer.user,
+    expiresAt: answer.expiresAt,
+    revision: answer.state?.revision ?? 0,
+    lastError: null
+  });
+  if (!serverHasProgress && Object.keys(localCards).length) {
+    try {
+      const result = await apiFetch("/api/import", {
+        method: "POST",
+        token: answer.token,
+        body: { cards: localCards, totals: state3.totals }
+      });
+      imported = result.imported;
+      state3.outbox = [];
+      applyServerState({ state: result.state, cards: result.cards });
+    } catch (err) {
+      if (!(err instanceof ApiError) || err.status !== 409) throw err;
+      localDiscarded = true;
+      applyServerState(answer);
+    }
+  } else {
+    localDiscarded = serverHasProgress && Object.keys(localCards).length > 0;
+    applyServerState(answer);
+  }
+  saveNow();
+  emit();
+  await syncNow().catch(() => {
+  });
+  return { imported, localDiscarded, user: answer.user };
+}
+async function logout() {
+  const token = getState().account?.token;
+  try {
+    if (token) await apiFetch("/api/auth/logout", { method: "POST", token });
+  } catch {
+  }
+  const state3 = getState();
+  state3.account = {};
+  saveNow();
+  emit();
+}
+async function deleteAccount() {
+  const token = getState().account?.token;
+  if (!token) return false;
+  await apiFetch("/api/me", { method: "DELETE", token });
+  const state3 = getState();
+  state3.account = {};
+  state3.outbox = [];
+  saveNow();
+  emit();
+  return true;
+}
+function applyServerState({ state: remote, cards }) {
+  const state3 = getState();
+  if (cards) state3.cards = { ...cards };
+  if (remote) {
+    if (remote.settings) state3.settings = { ...state3.settings, ...remote.settings };
+    if (remote.round) state3.round = remote.round;
+    if (remote.totals) state3.totals = { ...state3.totals, ...remote.totals };
+    if (Number.isFinite(remote.seq)) state3.seq = remote.seq;
+    state3.account = { ...state3.account || {}, revision: remote.revision };
+  }
+  save();
+}
+async function syncNow({ pull = true } = {}) {
+  if (!isLoggedIn() || syncing) return status();
+  syncing = true;
+  const state3 = getState();
+  const token = state3.account.token;
+  try {
+    while ((state3.outbox || []).length) {
+      const batch = state3.outbox.slice(0, 200);
+      const result = await apiFetch("/api/answers", { method: "POST", token, body: { events: batch } });
+      state3.outbox = state3.outbox.slice(batch.length);
+      state3.cards = { ...state3.cards, ...result.cards };
+      if (result.totals) state3.totals = { ...state3.totals, ...result.totals };
+      if (Number.isFinite(result.seq)) state3.seq = result.seq;
+      setAccount({ revision: result.revision });
+      save();
+    }
+    const push = await apiFetch("/api/state", {
+      method: "PUT",
+      token,
+      body: {
+        settings: state3.settings,
+        round: state3.round,
+        timeMs: state3.totals?.timeMs,
+        revision: state3.account.revision
+      }
+    }).catch((err) => {
+      if (err instanceof ApiError && err.status === 409) return err.body;
+      throw err;
+    });
+    if (push?.state) applyServerState({ state: push.state });
+    if (pull) {
+      const me = await apiFetch("/api/me", { token });
+      applyServerState(me);
+    }
+    setAccount({ lastSyncAt: Date.now(), lastError: null });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      getState().account = {};
+      saveNow();
+    } else {
+      setAccount({ lastError: err.message || "Abgleich fehlgeschlagen" });
+    }
+  } finally {
+    syncing = false;
+    saveNow();
+    emit();
+  }
+  return status();
+}
+function startAutoSync() {
+  if (!isConfigured()) return;
+  probeServer().then(() => {
+    if (isLoggedIn()) syncNow().catch(() => {
+    });
+  });
+  globalThis.addEventListener?.("online", () => scheduleSync(500));
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) scheduleSync(1e3);
+  });
+  globalThis.addEventListener?.("pagehide", () => {
+    if (isLoggedIn() && (getState().outbox || []).length) syncNow({ pull: false }).catch(() => {
+    });
+  });
+}
 
 // js/app.js
 var state2 = loadState();
-state2.round = normalizeRound(state2.round);
+state2.round = normalizeRound2(state2.round);
 var SESSION_MODES = [
   { id: "endless", label: "Ohne Limit", hint: "bis du beendest" },
   { id: "t5", kind: "time", value: 5, label: "5 Minuten", hint: "Speed-Runde" },
@@ -5207,7 +5640,7 @@ function renderStart() {
   list.textContent = "";
   for (const cat of CATEGORIES) {
     const qs = QUESTIONS.filter((q) => q.cat === cat.id && levels.has(q.level));
-    const prog = poolProgress(qs);
+    const prog = poolProgress2(qs);
     const pct = qs.length ? Math.round(prog.mastered / qs.length * 100) : 0;
     const input = el("input", { type: "checkbox" });
     input.checked = cats.has(cat.id);
@@ -5300,7 +5733,7 @@ function renderStart() {
   $("#opt-srs").checked = state2.settings.srs;
   $("#opt-hard").checked = state2.settings.hardOnly;
   $("#opt-shuffle").checked = state2.settings.shuffle;
-  const all = poolProgress(QUESTIONS);
+  const all = poolProgress2(QUESTIONS);
   const quote = state2.totals.total ? Math.round(state2.totals.right / state2.totals.total * 100) : 0;
   const summary = $("#global-progress");
   summary.textContent = "";
@@ -5310,11 +5743,118 @@ function renderStart() {
     `\u23F1 ${formatTime(state2.totals.timeMs)} ge\xFCbt`
   ].forEach((t) => summary.appendChild(el("span", { class: "pill", text: t })));
   $("#app-version").textContent = `Version ${APP_VERSION}`;
+  renderAccount();
   updatePoolInfo();
+}
+function renderAccount() {
+  const card = $("#account-card");
+  const info = status();
+  if (!info.configured || !info.googleClientId && !info.testLogin && !info.loggedIn) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  const badge = $("#sync-badge");
+  if (!info.loggedIn) {
+    badge.textContent = "nur auf diesem Ger\xE4t";
+    badge.className = "sync-badge";
+  } else if (info.lastError) {
+    badge.textContent = "Abgleich klemmt";
+    badge.className = "sync-badge bad";
+  } else if (info.pending) {
+    badge.textContent = `${info.pending} offen`;
+    badge.className = "sync-badge pending";
+  } else {
+    badge.textContent = "gesichert";
+    badge.className = "sync-badge ok";
+  }
+  const body = $("#account-body");
+  body.textContent = "";
+  if (!info.loggedIn) {
+    body.appendChild(el("p", {
+      class: "muted small",
+      text: "Ohne Anmeldung bleibt dein Lernstand nur auf diesem Ger\xE4t. Mit Google-Konto wird er gesichert und du kannst auf mehreren Ger\xE4ten weiterlernen."
+    }));
+    const slot = el("div", { class: "google-slot", id: "google-slot" });
+    body.appendChild(slot);
+    mountGoogleButton(slot, {
+      onDone: (err) => {
+        if (err) toast(`Anmeldung fehlgeschlagen: ${err.message}`);
+        renderStart();
+      }
+    }).then((ok) => {
+      if (!ok && info.testLogin) {
+        slot.appendChild(el("button", {
+          class: "btn",
+          text: "Test-Anmeldung (nur lokal)",
+          onclick: async () => {
+            try {
+              await loginForTest();
+              renderStart();
+            } catch (err) {
+              toast(err.message);
+            }
+          }
+        }));
+      } else if (!ok && !info.testLogin) {
+        slot.appendChild(el("p", { class: "muted small", text: "Anmeldung derzeit nicht verf\xFCgbar." }));
+      }
+    });
+    return;
+  }
+  const user = info.user || {};
+  body.appendChild(el("div", { class: "account-row" }, [
+    el("span", { class: "account-avatar" }, [
+      user.picture ? el("img", { src: user.picture, alt: "", referrerpolicy: "no-referrer" }) : el("span", { text: "\u{1F434}" })
+    ]),
+    el("span", { class: "account-main" }, [
+      el("div", { class: "account-name", text: user.name || "Angemeldet" }),
+      el("div", { class: "account-mail", text: user.email || "" })
+    ])
+  ]));
+  const zeit = info.lastSyncAt ? new Date(info.lastSyncAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : null;
+  body.appendChild(el("p", {
+    class: "muted small",
+    text: info.lastError ? `Letzter Abgleich fehlgeschlagen: ${info.lastError}` : zeit ? `Zuletzt gesichert um ${zeit} Uhr.` : "Noch nicht abgeglichen."
+  }));
+  body.appendChild(el("div", { class: "account-actions" }, [
+    el("button", {
+      class: "chip",
+      text: "Jetzt abgleichen",
+      onclick: async () => {
+        await syncNow();
+        renderStart();
+        toast("Abgleich erledigt.");
+      }
+    }),
+    el("button", {
+      class: "chip",
+      text: "Abmelden",
+      onclick: async () => {
+        await logout();
+        renderStart();
+        toast("Abgemeldet.");
+      }
+    }),
+    el("button", {
+      class: "chip",
+      text: "Konto l\xF6schen",
+      onclick: async () => {
+        if (!confirm("Konto und alle gespeicherten Daten auf dem Server l\xF6schen?")) return;
+        try {
+          await deleteAccount();
+          toast("Konto gel\xF6scht.");
+        } catch (err) {
+          toast(`L\xF6schen fehlgeschlagen: ${err.message}`);
+        }
+        renderStart();
+      }
+    })
+  ]));
 }
 function updatePoolInfo() {
   const base = basePool();
-  const prog = poolProgress(base);
+  const prog = poolProgress2(base);
   const info = $("#pool-info");
   if (!base.length) {
     info.textContent = "Keine Fragen ausgew\xE4hlt \u2013 bitte mindestens eine Kategorie aktivieren.";
@@ -5323,7 +5863,7 @@ function updatePoolInfo() {
   }
   $("#btn-start").disabled = false;
   info.textContent = `${base.length} Fragen ausgew\xE4hlt \xB7 ${prog.mastered} sitzen \xB7 ${prog.hard} zu wiederholen`;
-  const rp = roundProgress(base, state2.round);
+  const rp = roundProgress2(base, state2.round);
   const rest = Math.max(0, rp.total - rp.seen);
   $("#round-info").textContent = rest ? `Runde ${rp.pass}: ${rp.seen} von ${rp.total} Fragen gesehen \u2013 ${rest} noch offen.` : `Runde ${rp.pass} ist komplett \u2013 die n\xE4chste Runde startet automatisch.`;
 }
@@ -5354,7 +5894,7 @@ function nextQuestion() {
     const refreshed = basePool().filter((q2) => isHard(q2.id));
     if (refreshed.length) session.pool = refreshed;
   }
-  const pick = pickInRound(session.pool, state2.round, {
+  const pick = pickInRound2(session.pool, state2.round, {
     useSrs: state2.settings.srs,
     lastId: session.lastId,
     prio: state2.settings.prio || {}
@@ -5370,13 +5910,14 @@ function nextQuestion() {
   session.current = q;
   session.answered = false;
   session.isRetry = pick.retry;
+  session.questionShownAt = Date.now();
   const cat = CAT_BY_ID[q.cat];
   const lvl = LEVEL_BY_ID[q.level];
   const card = state2.cards[q.id];
   $("#q-cat").textContent = `${cat.emoji} ${cat.name}`;
   $("#q-level").textContent = lvl ? lvl.name : "";
-  $("#q-box").textContent = card ? `Fach ${card.box}/${MAX_BOX}` : "neu";
-  const rp = roundProgress(session.pool, state2.round);
+  $("#q-box").textContent = card ? `Fach ${card.box}/${MAX_BOX2}` : "neu";
+  const rp = roundProgress2(session.pool, state2.round);
   $("#q-round").textContent = pick.retry ? `Nachholrunde ${state2.round.pass}` : `Runde ${rp.pass} \xB7 ${rp.seen}/${rp.total}`;
   $("#quiz-question").textContent = q.q;
   $("#q-hint").textContent = TYPE_HINTS[q.type] || "";
@@ -5411,8 +5952,13 @@ function checkAnswer() {
   if (correct) session.right++;
   else session.wrong++;
   if (!correct && !session.wrongIds.includes(q.id)) session.wrongIds.push(q.id);
-  if (correct) clearRetry(state2.round, q.id);
-  else queueRetry(state2.round, q.id, session.pool.length);
+  if (correct) clearRetry2(state2.round, q.id);
+  else queueRetry2(state2.round, q.id, session.pool.length);
+  queueAnswer({
+    questionId: q.id,
+    correct,
+    ms: session.questionShownAt ? Date.now() - session.questionShownAt : null
+  });
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
   session.ui.reveal(correct);
   const fb = $("#feedback");
@@ -5423,7 +5969,7 @@ function checkAnswer() {
   $("#fb-solution").textContent = correct ? "" : `Richtige Antwort: ${solution}`;
   $("#fb-solution").hidden = correct;
   $("#fb-explain").textContent = q.explain ? q.explain + `  \xB7  Karteikasten: Fach ${move.boxBefore} \u2192 Fach ${move.boxAfter}` : `Karteikasten: Fach ${move.boxBefore} \u2192 Fach ${move.boxAfter}`;
-  $("#q-box").textContent = `Fach ${move.boxAfter}/${MAX_BOX}`;
+  $("#q-box").textContent = `Fach ${move.boxAfter}/${MAX_BOX2}`;
   $("#btn-check").hidden = true;
   $("#btn-skip").hidden = true;
   $("#btn-next").hidden = false;
@@ -5442,7 +5988,7 @@ function updateStatbar() {
   $("#s-total-lbl").textContent = counted ? "Fragen" : "gesamt";
 }
 function updateQuota() {
-  const prog = poolProgress(session.pool.length ? session.pool : basePool());
+  const prog = poolProgress2(session.pool.length ? session.pool : basePool());
   const pct = prog.total ? prog.mastered / prog.total * 100 : 0;
   const bar = $("#quota-fill");
   bar.style.width = `${pct}%`;
@@ -5506,13 +6052,13 @@ function renderStats() {
   $("#t-total").textContent = t.total;
   $("#t-quote").textContent = t.total ? `${Math.round(t.right / t.total * 100)}%` : "\u2013";
   $("#t-time").textContent = formatTime(t.timeMs);
-  const all = poolProgress(QUESTIONS);
+  const all = poolProgress2(QUESTIONS);
   $("#t-mastered").textContent = `${all.mastered}/${QUESTIONS.length}`;
   const list = $("#statcat-list");
   list.textContent = "";
   for (const cat of CATEGORIES) {
     const qs = QUESTIONS.filter((q) => q.cat === cat.id);
-    const prog = poolProgress(qs);
+    const prog = poolProgress2(qs);
     const pct = qs.length ? Math.round(prog.mastered / qs.length * 100) : 0;
     list.appendChild(el("li", { class: "statcat-row" }, [
       el("div", { class: "statcat-top" }, [
@@ -5576,7 +6122,7 @@ $("#btn-home").addEventListener("click", () => {
 });
 $("#btn-res-home").addEventListener("click", () => showScreen("start"));
 $("#btn-round-reset").addEventListener("click", () => {
-  state2.round = newRound(1);
+  state2.round = newRound2(1);
   save();
   renderStart();
   toast("Runde zur\xFCckgesetzt \u2013 alle Fragen kommen wieder dran.");
@@ -5633,6 +6179,10 @@ document.addEventListener("keydown", (ev) => {
 });
 showScreen("start");
 var isSingleFile = !!document.querySelector('meta[name="build"][content="single-file"]');
+onSyncChange(() => {
+  if (activeScreen === "start") renderAccount();
+});
+startAutoSync();
 if ("serviceWorker" in navigator && !isSingleFile) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register(new URL("../sw.js", import.meta.url)).catch((err) => console.warn("Service Worker nicht registriert:", err));

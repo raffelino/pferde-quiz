@@ -1,0 +1,21 @@
+{
+  "name": "reitabzeichen-trainer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quiz-Training für Basispass Pferdekunde und Reitabzeichen – App und Backend",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node --experimental-sqlite server/index.js",
+    "dev": "ALLOW_TEST_LOGIN=1 node --experimental-sqlite --watch server/index.js",
+    "test": "npm run test:data && npm run test:unit && npm run test:sim",
+    "test:data": "node tools/validate-questions.mjs",
+    "test:unit": "node --experimental-sqlite --test test/*.test.js server/test/*.test.js",
+    "test:sim": "node tools/round-sim.mjs && node tools/srs-sim.mjs && node tools/round-stress.mjs 3",
+    "test:e2e": "node tools/e2e.mjs",
+    "build": "node tools/build-single-file.mjs"
+  },
+  "license": "UNLICENSED"
+}

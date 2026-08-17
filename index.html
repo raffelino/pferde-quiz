@@ -7,6 +7,8 @@
 <meta name="theme-color" content="#f6f2ea" media="(prefers-color-scheme: light)">
 <meta name="description" content="Lern-App zum Training für die Reitabzeichen und den Basispass Pferdekunde – mit Karteikarten-System, Kategorien und Statistik.">
 <title>Reitabzeichen Trainer</title>
+<!-- Adresse des Backends: "auto" = gleiche Herkunft, leer/fehlend = rein lokal -->
+<meta name="api-base" content="auto">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon.svg">
@@ -33,6 +35,14 @@
       beantwortest, kommen automatisch häufiger dran – bis sie sitzen.
     </p>
     <div class="progress-summary" id="global-progress"></div>
+  </section>
+
+  <section class="card account-card" id="account-card" hidden>
+    <div class="card-head">
+      <h2>Konto</h2>
+      <span class="sync-badge" id="sync-badge"></span>
+    </div>
+    <div id="account-body"></div>
   </section>
 
   <section class="card">

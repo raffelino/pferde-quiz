@@ -1,7 +1,7 @@
 // Service Worker: App offline verfügbar machen.
 // Bei jeder inhaltlichen Änderung CACHE_VERSION erhöhen.
 
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v9';
 const CACHE_NAME = `reitabzeichen-trainer-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -12,6 +12,9 @@ const ASSETS = [
   'icons/icon.svg',
   'js/app.js',
   'js/version.js',
+  'js/api.js',
+  'js/sync.js',
+  'js/core/srs-core.js',
   'js/util.js',
   'js/store.js',
   'js/srs.js',
@@ -46,6 +49,12 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+
+  // API-Aufrufe gehören nie in den Cache: Eine zwischengespeicherte Antwort auf
+  // /api/me würde ohne Netz als gültiger Serverstand gelten – und der gewinnt
+  // beim Abgleich gegen den lokalen. Lieber ein ehrlicher Netzfehler, dann
+  // bleibt der lokale Stand stehen und die Outbox reicht später nach.
+  if (new URL(req.url).pathname.includes('/api/')) return;
 
   // Navigationen: erst Netz (frische Version), sonst Cache.
   if (req.mode === 'navigate') {
