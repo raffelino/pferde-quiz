@@ -42,8 +42,22 @@ jobs:
       - name: flyctl einrichten
         uses: superfly/flyctl-actions/setup-flyctl@master
 
+      # --ha=false: genau eine Maschine. Zwei Maschinen hätten zwei Volumes und
+      # damit zwei getrennte SQLite-Datenbanken – siehe Kommentar in fly.toml.
       - name: Ausliefern
-        run: flyctl deploy --remote-only
+        run: flyctl deploy --remote-only --ha=false
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Es darf nur eine Maschine geben
+        run: |
+          anzahl=$(flyctl machines list --json | grep -c '"id"' || true)
+          echo "Maschinen: $anzahl"
+          if [ "$anzahl" -gt 1 ]; then
+            echo "Mehr als eine Maschine: Jede hat ihr eigenes Volume, die"
+            echo "Lernstände laufen auseinander. Mit 'fly scale count 1' beheben."
+            exit 1
+          fi
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 

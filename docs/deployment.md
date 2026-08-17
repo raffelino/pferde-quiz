@@ -60,16 +60,54 @@ kein `npm install` – es gibt keine Laufzeit-Abhängigkeiten.
 
 ### Mit fly.io (vorbereitet)
 
+Das Anlegen der App passiert einmalig auf dem eigenen Rechner – ein
+Deploy-Token darf zwar ausliefern, aber keine App und kein Volume anlegen.
+
 ```bash
-flyctl launch --no-deploy                 # nutzt fly.toml, legt Volume an
-fly secrets set GOOGLE_CLIENT_ID=…apps.googleusercontent.com
-flyctl deploy
+# 1. App anlegen. Der Name ist weltweit eindeutig; ist er vergeben, einen
+#    anderen wählen und in fly.toml eintragen.
+flyctl launch --no-deploy --copy-config --name mein-trainer
+
+# 2. Volume für die SQLite-Datei – genau EINES, siehe Kasten unten.
+flyctl volumes create trainer_data --region fra --size 1 --yes
+
+# 3. Client-ID hinterlegen (landet nicht im Repository)
+flyctl secrets set GOOGLE_CLIENT_ID=…apps.googleusercontent.com
+
+# 4. Erstes Deployment
+flyctl deploy --ha=false
+flyctl scale count 1          # zur Sicherheit nachsehen
+flyctl status
 ```
 
-Für Deployments per Push: `fly tokens create deploy` → als Secret
-`FLY_API_TOKEN` hinterlegen und die Variable `DEPLOY_TARGET` auf `fly` setzen.
-Dann liefert `.github/workflows/deploy-api.yml` bei jedem Push auf `main` aus –
-aber erst, nachdem die Tests durchgelaufen sind.
+> **Nur eine Maschine.** Ein Volume gehört immer genau einer Maschine. Legt fly
+> zwei an – beim ersten Deploy die Voreinstellung –, entstehen **zwei getrennte
+> Datenbanken**. Nutzer landen mal auf der einen, mal auf der anderen und sehen
+> unterschiedliche Lernstände, ohne dass irgendwo ein Fehler auftaucht. Deshalb
+> immer `--ha=false`. Der Deploy-Workflow prüft die Anzahl nach jedem
+> Deployment und schlägt fehl, wenn es mehr als eine ist.
+
+Ist es soweit, lässt sich das Ausliefern an GitHub übergeben:
+
+```bash
+flyctl tokens create deploy -a mein-trainer     # nur Deployment, nur diese App
+```
+
+Den ausgegebenen Token im Repository unter **Settings → Secrets and variables →
+Actions → Secrets** als `FLY_API_TOKEN` hinterlegen und unter **Variables**
+`DEPLOY_TARGET=fly` setzen. Danach liefert `.github/workflows/deploy-api.yml`
+bei jedem Push auf `main` aus – aber erst, nachdem die Tests durchgelaufen sind.
+
+**Zum Token selbst:** `tokens create deploy` gibt einen Schlüssel, der nur
+diese eine App ausliefern darf – kein Zugriff auf Abrechnung, andere Apps oder
+das Konto. Er gehört ausschließlich in den GitHub-Secret-Speicher, nie in eine
+Datei im Repository und nie in einen Chat-Verlauf. Ist er doch einmal irgendwo
+gelandet, wo er nicht hingehört:
+
+```bash
+flyctl tokens list
+flyctl tokens revoke <id>
+```
 
 ### Mit Docker (jeder andere Anbieter)
 

@@ -15,6 +15,17 @@ primary_region = "fra"
 # GOOGLE_CLIENT_ID als Secret setzen:
 #   fly secrets set GOOGLE_CLIENT_ID=...apps.googleusercontent.com
 
+# WICHTIG: genau EINE Maschine.
+#
+# Die gesamte Datenlage steckt in einer SQLite-Datei auf dem Volume, und ein
+# Volume gehört immer genau einer Maschine. Legt fly zwei an (das ist beim
+# ersten Deploy die Voreinstellung), entstehen zwei getrennte Datenbanken:
+# Wer sich anmeldet, landet mal hier, mal dort und sieht unterschiedliche
+# Lernstände – ohne dass irgendwo ein Fehler auftaucht.
+#
+# Deshalb immer mit "--ha=false" ausliefern und einmal "fly scale count 1"
+# prüfen. Erst wenn es echte Ausfallsicherheit braucht, wird aus SQLite
+# Postgres – nicht aus SQLite auf zwei Volumes.
 [[mounts]]
   source = "trainer_data"
   destination = "/data"
