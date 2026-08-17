@@ -22,6 +22,29 @@ import { APP_VERSION } from '../js/version.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Kopfzeilen, die für einen öffentlich erreichbaren Dienst selbstverständlich
+ * sein sollten.
+ *
+ * `cross-origin-opener-policy` steht bewusst auf `same-origin-allow-popups`:
+ * Die Google-Anmeldung öffnet ein Fenster und muss sich zurückmelden können –
+ * mit `same-origin` bliebe die Anmeldung hängen.
+ *
+ * Eine Content-Security-Policy ist nicht fest eingebaut, sondern wird über
+ * CONTENT_SECURITY_POLICY gesetzt. Grund: Eine zu strenge Regel legt still die
+ * Google-Anmeldung lahm, und genau die lässt sich hier nicht durchspielen.
+ * docs/deployment.md nennt eine erprobte Vorlage zum Einschalten.
+ */
+function applySecurityHeaders(res, config) {
+  res.setHeader('x-content-type-options', 'nosniff');
+  res.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
+  res.setHeader('x-frame-options', 'DENY');
+  res.setHeader('cross-origin-opener-policy', 'same-origin-allow-popups');
+  if (config.contentSecurityPolicy) {
+    res.setHeader('content-security-policy', config.contentSecurityPolicy);
+  }
+}
+
 export function createApp(db, options = {}) {
   const config = {
     googleClientId: options.googleClientId || '',
@@ -31,6 +54,7 @@ export function createApp(db, options = {}) {
     serveStatic: options.serveStatic !== false,
     staticRoot: options.staticRoot || resolve(HERE, '..'),
     trustProxy: !!options.trustProxy,
+    contentSecurityPolicy: options.contentSecurityPolicy || '',
     now: options.now || (() => Date.now())
   };
 
@@ -222,6 +246,7 @@ export function createApp(db, options = {}) {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = url.pathname;
 
+    applySecurityHeaders(res, config);
     applyCors(req, res, config.allowedOrigins);
     if (req.method === 'OPTIONS') {
       res.writeHead(204).end();

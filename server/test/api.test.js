@@ -249,4 +249,26 @@ describe('Absicherung', () => {
     assert.equal(res.headers.get('access-control-allow-origin'), 'https://name.github.io');
     await srv.close();
   });
+
+  test('setzt Sicherheits-Kopfzeilen', async () => {
+    const srv = await startTestServer();
+    for (const pfad of ['/api/health', '/index.html']) {
+      const res = await srv.call('GET', pfad);
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff', pfad);
+      assert.equal(res.headers.get('x-frame-options'), 'DENY', pfad);
+      assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin', pfad);
+      // Die Google-Anmeldung öffnet ein Fenster und muss sich zurückmelden können.
+      assert.equal(res.headers.get('cross-origin-opener-policy'), 'same-origin-allow-popups', pfad);
+      assert.equal(res.headers.get('content-security-policy'), null, `${pfad}: CSP nur auf Wunsch`);
+    }
+    await srv.close();
+  });
+
+  test('sendet eine eingestellte Content-Security-Policy mit', async () => {
+    const regel = "default-src 'self'";
+    const srv = await startTestServer({ app: { contentSecurityPolicy: regel } });
+    const res = await srv.call('GET', '/api/health');
+    assert.equal(res.headers.get('content-security-policy'), regel);
+    await srv.close();
+  });
 });

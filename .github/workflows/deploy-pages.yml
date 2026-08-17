@@ -34,6 +34,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Auf Pages läuft nur die statische App. Damit sich dort trotzdem
+      # jemand anmelden kann, muss sie wissen, wo die API liegt. Adresse unter
+      # Settings -> Secrets and variables -> Actions -> Variables als
+      # API_BASE_URL hinterlegen (z. B. https://api.example.com).
+      # Ohne die Variable bleibt es beim bisherigen Verhalten: rein lokal.
+      - name: Adresse der API eintragen
+        if: vars.API_BASE_URL != ''
+        run: node tools/set-api-base.mjs "${{ vars.API_BASE_URL }}"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

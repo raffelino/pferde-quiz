@@ -43,7 +43,8 @@ const app = createApp(db, {
   allowTestLogin,
   serveStatic: env.SERVE_STATIC !== '0',
   staticRoot: resolve(HERE, '..'),
-  trustProxy: env.TRUST_PROXY === '1'
+  trustProxy: env.TRUST_PROXY === '1',
+  contentSecurityPolicy: env.CONTENT_SECURITY_POLICY || ''
 });
 
 const server = createServer(app);

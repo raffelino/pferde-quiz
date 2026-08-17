@@ -75,8 +75,10 @@ npm start                    # http://localhost:8787 – App und API
 npm run dev                  # zusätzlich mit Test-Anmeldung, ohne Google
 ```
 
-Einrichtung, Datenmodell und Begründungen stehen in [docs/backend.md](docs/backend.md).
-Kurzfassung für den Betrieb:
+Wie das Ganze **öffentlich** online geht – Google-Anmeldung einrichten, Server
+betreiben, Sicherungen, Betreiberpflichten – steht Schritt für Schritt in
+[docs/deployment.md](docs/deployment.md). Datenmodell und Begründungen stehen in
+[docs/backend.md](docs/backend.md). Kurzfassung für den Betrieb:
 
 | Variable | Bedeutung |
 |---|---|

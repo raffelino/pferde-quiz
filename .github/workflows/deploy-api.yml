@@ -1,0 +1,65 @@
+# Bringt den Server (API + App) zu fly.io.
+#
+# Voraussetzungen, einmalig:
+#   1. fly.toml anpassen (app-Name, Region)
+#   2. flyctl launch --no-deploy    – legt App und Volume an
+#   3. fly secrets set GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+#   4. fly tokens create deploy    – und als Secret FLY_API_TOKEN hinterlegen
+#
+# Scharf geschaltet wird der Workflow über die Repository-Variable
+# DEPLOY_TARGET=fly. Solange die fehlt, passiert nichts – der Workflow stört
+# also niemanden, der die App nur lokal oder auf Pages betreibt. Andere Anbieter
+# brauchen nur das Dockerfile; siehe docs/deployment.md.
+
+name: Deploy API
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.DEPLOY_TARGET == 'fly' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # Nicht ausliefern, was nicht durchgelaufen ist.
+      - name: Tests
+        run: npm test
+
+      - name: flyctl einrichten
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ausliefern
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Betriebsprüfung
+        run: |
+          ziel="${{ vars.API_BASE_URL }}"
+          if [ -z "$ziel" ]; then
+            echo "API_BASE_URL nicht gesetzt – Prüfung übersprungen."
+            exit 0
+          fi
+          for i in $(seq 1 30); do
+            if curl -sf "$ziel/api/health" > /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Server meldet sich nach dem Deployment nicht unter $ziel/api/health"
+          exit 1
