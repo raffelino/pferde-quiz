@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Persistenz von Lernfortschritt, Statistik und Einstellungen (localStorage).
 
+import { stageForLevels } from './core/stages.js';
+
 const KEY = 'reitabzeichen-trainer.v1';
 
 const DEFAULT_STATE = () => ({
   version: 1,
   settings: {
     cats: null,          // null = alle Kategorien aktiv
-    levels: null,        // null = alle Stufen aktiv
+    levels: null,        // null = alle Schwierigkeiten aktiv
+    stage: 'einsteiger', // Ausbildungsstufe: einsteiger | fortgeschritten | profi
+    stageSeen: null,     // hoechste Stufe, deren Aufstieg schon gefeiert wurde
     srs: true,
     hardOnly: false,
     shuffle: true,
@@ -29,6 +33,7 @@ let state = DEFAULT_STATE();
 let saveTimer = null;
 
 export function loadState() {
+  let migriert = false;
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
@@ -41,11 +46,23 @@ export function loadState() {
       state.round = parsed.round || DEFAULT_STATE().round;
       state.account = parsed.account && typeof parsed.account === 'object' ? parsed.account : {};
       state.outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
+
+      // Stände von vor dem Stufensystem: Die Stufe aus der bisherigen
+      // Schwierigkeitsauswahl ableiten. Sonst würde ein Update den
+      // Trainingsumfang stillschweigend auf "Einsteiger" zusammenstreichen.
+      if (parsed.settings && parsed.settings.stage === undefined) {
+        state.settings.stage = stageForLevels(parsed.settings.levels ?? null);
+        migriert = true;
+      }
     }
   } catch (err) {
     console.warn('Gespeicherter Fortschritt konnte nicht gelesen werden:', err);
     state = DEFAULT_STATE();
   }
+  // Eine Migration wird sofort festgeschrieben: Sonst stünde die abgeleitete
+  // Stufe nur im Arbeitsspeicher und würde weder ein zweites Gerät noch den
+  // Server je erreichen.
+  if (migriert) saveNow();
   return state;
 }
 

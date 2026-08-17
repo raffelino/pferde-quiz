@@ -388,6 +388,63 @@ p:last-child { margin-bottom: 0; }
 .level-pill input { position: absolute; opacity: 0; pointer-events: none; }
 .level-pill.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 
+/* ---------- Ausbildungsstufen ---------- */
+.stage-list { display: flex; flex-direction: column; gap: 8px; }
+.stage-item {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.stage-item.on { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.stage-head { display: flex; align-items: baseline; gap: 8px; }
+.stage-head strong { font-size: 1rem; }
+.stage-hint { font-size: .75rem; color: var(--text-dim); flex: 1; }
+.stage-state {
+  font-size: .78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.stage-item.done .stage-state { color: var(--ok); }
+.stage-blurb { font-size: .78rem; color: var(--text-dim); }
+.stage-bar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.stage-bar i { display: block; height: 100%; background: var(--brand); }
+.stage-item.done .stage-bar i { background: var(--ok); }
+.stage-count { font-size: .74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.stage-badge {
+  font-size: .78rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+}
+
+/* Aufstiegs-Hinweis: der einzige Platz, an dem die App von sich aus etwas
+   vorschlägt – deshalb darf er deutlich sein. */
+.promo-card {
+  border: 1px solid var(--brand);
+  background: linear-gradient(160deg, var(--bg-elev) 0%, var(--bg-elev-2) 100%);
+}
+.promo-card h2 { margin-bottom: 4px; }
+.promo-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.promo-card .stage-bar { margin-top: 10px; }
+
 /* ---------- Konto ---------- */
 .account-row { display: flex; align-items: center; gap: 10px; }
 .account-avatar {
@@ -899,6 +956,19 @@ p:last-child { margin-bottom: 0; }
     <div class="progress-summary" id="global-progress"></div>
   </section>
 
+  <section class="card promo-card" id="promo-card" hidden aria-live="polite"></section>
+
+  <section class="card" id="stage-card">
+    <div class="card-head">
+      <h2>Deine Stufe</h2>
+      <span class="stage-badge" id="stage-badge" hidden></span>
+    </div>
+    <p class="muted small">Wähle, wo du stehst. Sitzen genug Fragen deiner Stufe,
+      steigst du auf und die nächste wird dir vorgeschlagen.</p>
+    <ul class="stage-list" id="stage-list"></ul>
+    <p class="muted small" id="stage-note" hidden></p>
+  </section>
+
   <section class="card account-card" id="account-card" hidden>
     <div class="card-head">
       <h2>Konto</h2>
@@ -1034,6 +1104,8 @@ p:last-child { margin-bottom: 0; }
       <div><span class="bs-val" id="r-learned">0</span><span class="bs-lbl">neu gelernt</span></div>
     </div>
   </section>
+
+  <section class="card promo-card" id="res-stage-card" hidden aria-live="polite"></section>
 
   <section class="card" id="res-learned-card" hidden>
     <h2>Neu gelernt 🎉</h2>
@@ -4391,97 +4463,6 @@ function formatNumberDE(n) {
   return String(n).replace(".", ",");
 }
 
-// js/store.js
-var KEY = "reitabzeichen-trainer.v1";
-var DEFAULT_STATE = () => ({
-  version: 1,
-  settings: {
-    cats: null,
-    // null = alle Kategorien aktiv
-    levels: null,
-    // null = alle Stufen aktiv
-    srs: true,
-    hardOnly: false,
-    shuffle: true,
-    session: "endless",
-    // Sitzungslänge: endless | t5 | t10 | t20 | c20
-    prio: {}
-    // Kategorie-Gewichtung: { katId: 2 } = kommt doppelt so oft
-  },
-  // cards[fragenId] = { box, right, wrong, streak, seenAt }
-  cards: {},
-  // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
-  round: { pass: 1, asked: [], retry: [], counts: {}, recent: [] },
-  // Konto und noch nicht gesendete Antworten (siehe js/sync.js)
-  account: {},
-  outbox: [],
-  totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
-  seq: 0
-  // Zähler der beantworteten Fragen (für "zuletzt gesehen")
-});
-var state = DEFAULT_STATE();
-var saveTimer = null;
-function loadState() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      state = { ...DEFAULT_STATE(), ...parsed };
-      state.settings = { ...DEFAULT_STATE().settings, ...parsed.settings || {} };
-      state.totals = { ...DEFAULT_STATE().totals, ...parsed.totals || {} };
-      state.cards = parsed.cards || {};
-      state.settings.prio = parsed.settings?.prio || {};
-      state.round = parsed.round || DEFAULT_STATE().round;
-      state.account = parsed.account && typeof parsed.account === "object" ? parsed.account : {};
-      state.outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
-    }
-  } catch (err) {
-    console.warn("Gespeicherter Fortschritt konnte nicht gelesen werden:", err);
-    state = DEFAULT_STATE();
-  }
-  return state;
-}
-function getState() {
-  return state;
-}
-function save() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-    } catch (err) {
-      console.warn("Fortschritt konnte nicht gespeichert werden:", err);
-    }
-  }, 120);
-}
-function saveNow() {
-  clearTimeout(saveTimer);
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch (err) {
-    console.warn("Fortschritt konnte nicht gespeichert werden:", err);
-  }
-}
-function resetProgress() {
-  const { settings, account } = state;
-  state = DEFAULT_STATE();
-  state.settings = settings;
-  state.account = account;
-  saveNow();
-  return state;
-}
-function getCard(id) {
-  let card = state.cards[id];
-  if (!card) {
-    card = { box: 1, right: 0, wrong: 0, streak: 0, seenAt: -1 };
-    state.cards[id] = card;
-  }
-  return card;
-}
-function hasCard(id) {
-  return Object.prototype.hasOwnProperty.call(state.cards, id);
-}
-
 // js/core/srs-core.js
 var MAX_BOX = 5;
 var BOX_WEIGHT = { 1: 24, 2: 12, 3: 6, 4: 3, 5: 1 };
@@ -4667,6 +4648,203 @@ function poolProgress(pool, getCard2) {
   return { total: pool.length, seen: seen2, mastered, hard, boxes };
 }
 
+// js/core/stages.js
+var PROMOTION_RATIO = 0.8;
+var STAGES = [
+  {
+    id: "einsteiger",
+    name: "Einsteiger",
+    levels: ["basis"],
+    hint: "Basispass \xB7 RA 10\u20136",
+    blurb: "Grundlagen: Pferdekunde, Umgang, Haltung, Sicherheit."
+  },
+  {
+    id: "fortgeschritten",
+    name: "Fortgeschritten",
+    levels: ["basis", "aufbau"],
+    hint: "RA 5 & 4",
+    blurb: "Reitlehre, Hilfengebung, Gangarten und Bahnregeln kommen dazu."
+  },
+  {
+    id: "profi",
+    name: "Profi",
+    levels: ["basis", "aufbau", "profi"],
+    hint: "RA 3\u20131",
+    blurb: "Der gesamte Stoff, inklusive Ausbildungsskala und Turnierwissen."
+  }
+];
+var STAGE_BY_ID = Object.fromEntries(STAGES.map((s) => [s.id, s]));
+var DEFAULT_STAGE = STAGES[0].id;
+function normalizeStage(id) {
+  return STAGE_BY_ID[id] ? id : DEFAULT_STAGE;
+}
+function stageLevels(id) {
+  return [...STAGE_BY_ID[normalizeStage(id)].levels];
+}
+function stagePool(questions, id) {
+  const levels = new Set(stageLevels(id));
+  return questions.filter((q) => levels.has(q.level));
+}
+function stageForLevels(levels) {
+  const hoechste = STAGES[STAGES.length - 1].id;
+  if (!Array.isArray(levels) || levels.length === 0) return hoechste;
+  const ist = new Set(levels);
+  const genau = STAGES.find((s) => s.levels.length === ist.size && s.levels.every((l) => ist.has(l)));
+  if (genau) return genau.id;
+  const deckt = STAGES.find((s) => [...ist].every((l) => s.levels.includes(l)));
+  return deckt ? deckt.id : hoechste;
+}
+function nextStage(id) {
+  const i = STAGES.findIndex((s) => s.id === normalizeStage(id));
+  return i >= 0 && i + 1 < STAGES.length ? STAGES[i + 1].id : null;
+}
+function stageProgress(questions, cardOf2, id) {
+  const stage = STAGE_BY_ID[normalizeStage(id)];
+  const pool = stagePool(questions, stage.id);
+  let mastered = 0;
+  let seen2 = 0;
+  for (const q of pool) {
+    const card = cardOf2(q.id);
+    if (!card) continue;
+    if (card.right > 0 || card.wrong > 0) seen2++;
+    if (isMasteredCard(card)) mastered++;
+  }
+  const needed = Math.ceil(pool.length * PROMOTION_RATIO);
+  return {
+    id: stage.id,
+    name: stage.name,
+    total: pool.length,
+    seen: seen2,
+    mastered,
+    needed,
+    missing: Math.max(0, needed - mastered),
+    pct: pool.length ? Math.round(mastered / pool.length * 100) : 0,
+    done: pool.length > 0 && mastered >= needed
+  };
+}
+function stageStatus(questions, cardOf2, current = DEFAULT_STAGE) {
+  const currentId = normalizeStage(current);
+  const progress = STAGES.map((s) => stageProgress(questions, cardOf2, s.id));
+  const byId = Object.fromEntries(progress.map((p) => [p.id, p]));
+  const geschafft = progress.filter((p) => p.done);
+  const reached = geschafft.length ? geschafft[geschafft.length - 1].id : null;
+  const weiter = nextStage(currentId);
+  const promote = byId[currentId].done && weiter !== null;
+  return {
+    current: currentId,
+    progress,
+    byId,
+    reached,
+    next: weiter,
+    // Aufstieg empfohlen: aktuelle Stufe sitzt und es geht noch hoeher.
+    promote,
+    recommended: promote ? weiter : currentId,
+    // Alles geschafft – dann gibt es nichts mehr zu empfehlen.
+    completed: byId[STAGES[STAGES.length - 1].id].done
+  };
+}
+
+// js/store.js
+var KEY = "reitabzeichen-trainer.v1";
+var DEFAULT_STATE = () => ({
+  version: 1,
+  settings: {
+    cats: null,
+    // null = alle Kategorien aktiv
+    levels: null,
+    // null = alle Schwierigkeiten aktiv
+    stage: "einsteiger",
+    // Ausbildungsstufe: einsteiger | fortgeschritten | profi
+    stageSeen: null,
+    // hoechste Stufe, deren Aufstieg schon gefeiert wurde
+    srs: true,
+    hardOnly: false,
+    shuffle: true,
+    session: "endless",
+    // Sitzungslänge: endless | t5 | t10 | t20 | c20
+    prio: {}
+    // Kategorie-Gewichtung: { katId: 2 } = kommt doppelt so oft
+  },
+  // cards[fragenId] = { box, right, wrong, streak, seenAt }
+  cards: {},
+  // Laufende Runde: jede Frage einmal, falsche zusätzlich in der Nachholrunde
+  round: { pass: 1, asked: [], retry: [], counts: {}, recent: [] },
+  // Konto und noch nicht gesendete Antworten (siehe js/sync.js)
+  account: {},
+  outbox: [],
+  totals: { right: 0, wrong: 0, total: 0, timeMs: 0 },
+  seq: 0
+  // Zähler der beantworteten Fragen (für "zuletzt gesehen")
+});
+var state = DEFAULT_STATE();
+var saveTimer = null;
+function loadState() {
+  let migriert = false;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...DEFAULT_STATE(), ...parsed };
+      state.settings = { ...DEFAULT_STATE().settings, ...parsed.settings || {} };
+      state.totals = { ...DEFAULT_STATE().totals, ...parsed.totals || {} };
+      state.cards = parsed.cards || {};
+      state.settings.prio = parsed.settings?.prio || {};
+      state.round = parsed.round || DEFAULT_STATE().round;
+      state.account = parsed.account && typeof parsed.account === "object" ? parsed.account : {};
+      state.outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
+      if (parsed.settings && parsed.settings.stage === void 0) {
+        state.settings.stage = stageForLevels(parsed.settings.levels ?? null);
+        migriert = true;
+      }
+    }
+  } catch (err) {
+    console.warn("Gespeicherter Fortschritt konnte nicht gelesen werden:", err);
+    state = DEFAULT_STATE();
+  }
+  if (migriert) saveNow();
+  return state;
+}
+function getState() {
+  return state;
+}
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn("Fortschritt konnte nicht gespeichert werden:", err);
+    }
+  }, 120);
+}
+function saveNow() {
+  clearTimeout(saveTimer);
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch (err) {
+    console.warn("Fortschritt konnte nicht gespeichert werden:", err);
+  }
+}
+function resetProgress() {
+  const { settings, account } = state;
+  state = DEFAULT_STATE();
+  state.settings = settings;
+  state.account = account;
+  saveNow();
+  return state;
+}
+function getCard(id) {
+  let card = state.cards[id];
+  if (!card) {
+    card = { box: 1, right: 0, wrong: 0, streak: 0, seenAt: -1 };
+    state.cards[id] = card;
+  }
+  return card;
+}
+function hasCard(id) {
+  return Object.prototype.hasOwnProperty.call(state.cards, id);
+}
+
 // js/srs.js
 var MAX_BOX2 = MAX_BOX;
 var newRound2 = newRound;
@@ -4697,6 +4875,9 @@ function recordAnswer(id, correct) {
 }
 function poolProgress2(pool) {
   return poolProgress(pool, cardOf);
+}
+function stageStatus2(questions, current) {
+  return stageStatus(questions, cardOf, current);
 }
 
 // js/types.js
@@ -5188,7 +5369,7 @@ function matchUI(q, { onChange } = {}) {
 }
 
 // js/version.js
-var APP_VERSION = "v9";
+var APP_VERSION = "v10";
 
 // js/api.js
 var OVERRIDE_KEY = "reitabzeichen-trainer.api";
@@ -5260,6 +5441,7 @@ var MAX_OUTBOX = 2e3;
 var serverConfig = null;
 var syncing = false;
 var syncTimer = null;
+var pushedSettings = null;
 var listeners = /* @__PURE__ */ new Set();
 var onSyncChange = (fn) => {
   listeners.add(fn);
@@ -5333,6 +5515,11 @@ function scheduleSync(delay = 4e3) {
     syncNow().catch(() => {
     });
   }, delay);
+}
+function hasPendingChanges() {
+  const state3 = getState();
+  if ((state3.outbox || []).length) return true;
+  return JSON.stringify(state3.settings) !== pushedSettings;
 }
 async function mountGoogleButton(container, { onDone } = {}) {
   const clientId = serverConfig?.googleClientId;
@@ -5481,6 +5668,7 @@ async function syncNow({ pull = true } = {}) {
       throw err;
     });
     if (push?.state) applyServerState({ state: push.state });
+    pushedSettings = JSON.stringify(getState().settings);
     if (pull) {
       const me = await apiFetch("/api/me", { token });
       applyServerState(me);
@@ -5511,7 +5699,7 @@ function startAutoSync() {
     if (!document.hidden) scheduleSync(1e3);
   });
   globalThis.addEventListener?.("pagehide", () => {
-    if (isLoggedIn() && (getState().outbox || []).length) syncNow({ pull: false }).catch(() => {
+    if (isLoggedIn() && hasPendingChanges()) syncNow({ pull: false }).catch(() => {
     });
   });
 }
@@ -5620,7 +5808,7 @@ function activeCats() {
 }
 function activeLevels() {
   const set = state2.settings.levels;
-  return set === null ? LEVELS.map((l) => l.id) : set;
+  return set === null ? stageLevels(currentStage()) : set;
 }
 function basePool() {
   const cats = new Set(activeCats());
@@ -5635,6 +5823,136 @@ function buildPool() {
     else toast("Noch keine schwierigen Fragen \u2013 es werden alle abgefragt.");
   }
   return pool;
+}
+function currentStage() {
+  return normalizeStage(state2.settings.stage);
+}
+function levelsMatchStage(id) {
+  const soll = stageLevels(id);
+  const ist = activeLevels();
+  return soll.length === ist.length && soll.every((l) => ist.includes(l));
+}
+function setStage(id) {
+  const next = normalizeStage(id);
+  state2.settings.stage = next;
+  state2.settings.levels = stageLevels(next);
+  state2.settings.stageSeen = null;
+  save();
+  renderStart();
+}
+function checkPromotion({ announce = false } = {}) {
+  const status2 = stageStatus2(QUESTIONS, currentStage());
+  const seen2 = state2.settings.stageSeen;
+  if (seen2 && !status2.byId[seen2]?.done) {
+    state2.settings.stageSeen = null;
+    save();
+  }
+  const frisch = status2.promote && state2.settings.stageSeen !== status2.current;
+  if (frisch && announce) {
+    const naechste = STAGE_BY_ID[status2.next];
+    toast(`\u{1F389} ${STAGE_BY_ID[status2.current].name} sitzt! Weiter mit ${naechste.name}?`);
+  }
+  return status2;
+}
+function renderStages() {
+  const status2 = checkPromotion();
+  const aktuell = status2.current;
+  const list = $("#stage-list");
+  list.textContent = "";
+  for (const stage of STAGES) {
+    const prog = status2.byId[stage.id];
+    const aktiv = stage.id === aktuell;
+    const btn = el("button", {
+      type: "button",
+      class: `stage-item${aktiv ? " on" : ""}${prog.done ? " done" : ""}`,
+      "aria-pressed": aktiv ? "true" : "false",
+      onclick: () => setStage(stage.id)
+    }, [
+      el("span", { class: "stage-head" }, [
+        el("strong", { text: stage.name }),
+        el("span", { class: "stage-hint", text: stage.hint }),
+        el("span", {
+          class: "stage-state",
+          text: prog.done ? "\u2713 geschafft" : `${prog.pct} %`
+        })
+      ]),
+      el("small", { class: "stage-blurb", text: stage.blurb }),
+      el("span", { class: "stage-bar" }, [el("i", { style: `width:${prog.pct}%` })]),
+      el("small", {
+        class: "stage-count",
+        text: prog.done ? `${prog.mastered} von ${prog.total} Fragen sitzen` : `${prog.mastered} von ${prog.total} sitzen \xB7 noch ${prog.missing} bis zum Aufstieg`
+      })
+    ]);
+    list.appendChild(el("li", {}, [btn]));
+  }
+  const badge = $("#stage-badge");
+  badge.hidden = !status2.reached;
+  if (status2.reached) badge.textContent = `\u{1F3C5} ${STAGE_BY_ID[status2.reached].name}`;
+  const note = $("#stage-note");
+  const abweichend = !levelsMatchStage(aktuell);
+  note.hidden = !abweichend;
+  if (abweichend) {
+    note.textContent = 'Unter \u201ESchwierigkeit" ist gerade eine eigene Auswahl aktiv \u2013 trainiert wird diese, nicht der Umfang der Stufe.';
+  }
+  renderPromo(status2);
+}
+function renderPromo(status2) {
+  const card = $("#promo-card");
+  card.textContent = "";
+  const offen = status2.promote && state2.settings.stageSeen !== status2.current;
+  const fertig = status2.completed && state2.settings.stageSeen !== "fertig";
+  card.hidden = !offen && !fertig;
+  if (card.hidden) return;
+  if (fertig) {
+    card.appendChild(el("h2", { text: "\u{1F3C6} Alle Stufen geschafft" }));
+    card.appendChild(el("p", {
+      class: "muted",
+      text: `${status2.byId.profi.mastered} von ${status2.byId.profi.total} Fragen sitzen. Bleib dran, damit es so bleibt \u2013 am besten mit \u201ENur schwierige Fragen".`
+    }));
+    card.appendChild(el("div", { class: "promo-actions" }, [
+      el("button", {
+        type: "button",
+        class: "btn",
+        text: "Alles klar",
+        onclick: () => {
+          state2.settings.stageSeen = "fertig";
+          save();
+          renderStart();
+        }
+      })
+    ]));
+    return;
+  }
+  const jetzt = STAGE_BY_ID[status2.current];
+  const naechste = STAGE_BY_ID[status2.next];
+  const prog = status2.byId[status2.current];
+  const dazu = status2.byId[status2.next].total - prog.total;
+  card.appendChild(el("h2", { text: `\u{1F389} ${jetzt.name} sitzt!` }));
+  card.appendChild(el("p", {
+    class: "muted",
+    text: `${prog.mastered} von ${prog.total} Fragen liegen im letzten Fach. Zeit f\xFCr ${naechste.name} \u2013 das sind ${dazu} neue Fragen: ${naechste.blurb}`
+  }));
+  card.appendChild(el("div", { class: "promo-actions" }, [
+    el("button", {
+      type: "button",
+      class: "btn primary",
+      text: `Auf ${naechste.name} wechseln`,
+      onclick: () => {
+        setStage(status2.next);
+        toast(`Neue Stufe: ${naechste.name}`);
+      }
+    }),
+    el("button", {
+      type: "button",
+      class: "btn",
+      text: "Sp\xE4ter",
+      onclick: () => {
+        state2.settings.stageSeen = status2.current;
+        save();
+        renderStart();
+      }
+    })
+  ]));
 }
 function renderStart() {
   const cats = new Set(activeCats());
@@ -5746,6 +6064,7 @@ function renderStart() {
     `\u23F1 ${formatTime(state2.totals.timeMs)} ge\xFCbt`
   ].forEach((t) => summary.appendChild(el("span", { class: "pill", text: t })));
   $("#app-version").textContent = `Version ${APP_VERSION}`;
+  renderStages();
   renderAccount();
   updatePoolInfo();
 }
@@ -5963,6 +6282,7 @@ function checkAnswer() {
     ms: session.questionShownAt ? Date.now() - session.questionShownAt : null
   });
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
+  if (move.mastered) checkPromotion({ announce: true });
   session.ui.reveal(correct);
   const fb = $("#feedback");
   fb.hidden = false;
@@ -6030,6 +6350,46 @@ function renderResult(reason) {
   $("#r-learned").textContent = session.learnedIds.length;
   fillResultList("#res-learned-card", "#res-learned-list", session.learnedIds, "\u{1F389}");
   fillResultList("#res-wrong-card", "#res-wrong-list", session.wrongIds, "\u2717");
+  renderStageResult();
+}
+function renderStageResult() {
+  const status2 = stageStatus2(QUESTIONS, currentStage());
+  const prog = status2.byId[status2.current];
+  const card = $("#res-stage-card");
+  card.textContent = "";
+  card.hidden = false;
+  if (status2.completed) {
+    card.appendChild(el("h2", { text: "\u{1F3C6} Alle Stufen geschafft" }));
+    card.appendChild(el("p", { class: "muted", text: "Der komplette Fragenpool sitzt. Respekt." }));
+    return;
+  }
+  if (status2.promote) {
+    const naechste = STAGE_BY_ID[status2.next];
+    card.appendChild(el("h2", { text: `\u{1F389} ${STAGE_BY_ID[status2.current].name} geschafft` }));
+    card.appendChild(el("p", {
+      class: "muted",
+      text: `${prog.mastered} von ${prog.total} Fragen sitzen. Empfohlen: weiter mit ${naechste.name} (${naechste.hint}).`
+    }));
+    card.appendChild(el("div", { class: "promo-actions" }, [
+      el("button", {
+        type: "button",
+        class: "btn primary",
+        text: `Auf ${naechste.name} wechseln`,
+        onclick: () => {
+          setStage(status2.next);
+          showScreen("start");
+          toast(`Neue Stufe: ${naechste.name}`);
+        }
+      })
+    ]));
+    return;
+  }
+  card.appendChild(el("h2", { text: `Stufe ${STAGE_BY_ID[status2.current].name}` }));
+  card.appendChild(el("p", {
+    class: "muted",
+    text: `${prog.mastered} von ${prog.total} Fragen sitzen \u2013 noch ${prog.missing} bis zum Aufstieg.`
+  }));
+  card.appendChild(el("span", { class: "stage-bar" }, [el("i", { style: `width:${prog.pct}%` })]));
 }
 function fillResultList(cardSel, listSel, ids, mark) {
   const card = $(cardSel);

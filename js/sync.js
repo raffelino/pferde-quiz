@@ -14,6 +14,11 @@ const MAX_OUTBOX = 2000;
 let serverConfig = null;      // { googleClientId, testLogin } oder null
 let syncing = false;
 let syncTimer = null;
+// Zuletzt erfolgreich gesicherte Einstellungen. Ohne das würde eine reine
+// Einstellungsänderung (Stufe, Kategorien, Priorität) erst mit der nächsten
+// Antwort beim Server ankommen – wer sie ändert und die App zumacht, hätte sie
+// auf dem zweiten Gerät nicht.
+let pushedSettings = null;
 const listeners = new Set();
 
 export const onSyncChange = fn => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -91,6 +96,13 @@ function scheduleSync(delay = 4000) {
   if (!isLoggedIn()) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(() => { syncNow().catch(() => {}); }, delay);
+}
+
+/** Gibt es überhaupt etwas zu sichern? */
+export function hasPendingChanges() {
+  const state = getState();
+  if ((state.outbox || []).length) return true;
+  return JSON.stringify(state.settings) !== pushedSettings;
 }
 
 /* ---------------------------------------------------------- Anmeldung */
@@ -267,6 +279,7 @@ export async function syncNow({ pull = true } = {}) {
       throw err;
     });
     if (push?.state) applyServerState({ state: push.state });
+    pushedSettings = JSON.stringify(getState().settings);
 
     // 3. Frischen Gesamtstand holen (anderes Gerät kann geschrieben haben)
     if (pull) {
@@ -302,7 +315,8 @@ export function startAutoSync() {
     if (!document.hidden) scheduleSync(1000);
   });
   globalThis.addEventListener?.('pagehide', () => {
-    // Letzter Versuch, das Ausstehende loszuwerden
-    if (isLoggedIn() && (getState().outbox || []).length) syncNow({ pull: false }).catch(() => {});
+    // Letzter Versuch, das Ausstehende loszuwerden – auch reine
+    // Einstellungsänderungen, für die noch keine Antwort gefallen ist.
+    if (isLoggedIn() && hasPendingChanges()) syncNow({ pull: false }).catch(() => {});
   });
 }

@@ -8,6 +8,12 @@ mitgelieferte Backend mit Google-Anmeldung.
 ## Features
 
 - **249 Fragen** in **17 Kategorien**, die sich einzeln an- und ausschalten lassen
+- **Stufensystem**: Einsteiger (Basispass · RA 10–6), Fortgeschritten (RA 5 & 4)
+  oder Profi (RA 3–1). Die Stufe bestimmt, welche Fragen drankommen; die Stufen
+  bauen aufeinander auf, Fortgeschrittene wiederholen also die Basis mit. Sitzen
+  **80 %** der Fragen einer Stufe im letzten Karteikasten-Fach, meldet die App den
+  Aufstieg und schlägt die nächste Stufe vor. Der Stand wird immer frisch aus dem
+  Karteikasten gerechnet – auf dem Gerät und auf dem Server mit demselben Code.
 - **8 Antwort-Modi**, passend zur jeweiligen Frage:
   | Modus | Beschreibung |
   |---|---|
@@ -45,7 +51,8 @@ mitgelieferte Backend mit Google-Anmeldung.
   Auswertung mit Quote, Tempo, neu gelernten und falsch beantworteten Fragen.
   Über den Pfeil links oben lässt sich jede Sitzung vorzeitig beenden.
 - **Filter**: nach Kategorie, nach Schwierigkeitsstufe (Basis / Aufbau / Profi) und
-  „nur schwierige Fragen"
+  „nur schwierige Fragen". Eine eigene Schwierigkeitsauswahl sticht die Stufe –
+  die App sagt dann auch, dass gerade eine eigene Auswahl aktiv ist.
 - **Mobil zuerst**: große Touch-Flächen, Safe-Area-Unterstützung, Dark- und Light-Mode,
   installierbar als PWA und offline nutzbar
 - **Fortschritt bleibt lokal** im Browser (`localStorage`) – ohne Konto verlässt
@@ -169,7 +176,8 @@ Einzeln:
 | `npm run test:unit` | Lernlogik, Anmeldung, Abgleich, alle API-Endpunkte |
 | `npm run test:sim` | Runden, Wiederholungsabstände, Priorisierung über viele Durchläufe |
 | `npm run test:e2e` | Anmelden, lernen, neu laden, zweites Gerät, offline |
-| `node tools/smoke-test.mjs` | Browser-Durchlauf über alle Antworttypen (Server auf Port 8080) |
+| `npm run test:ui` | Browser: alle Antworttypen und das Stufensystem (Server auf Port 8080) |
+| `node tools/stage-ui.mjs` | nur Stufen: Auswahl, Aufstieg, Empfehlung, alte Stände |
 
 Die Tests laufen bei jedem Push über GitHub Actions (`.github/workflows/ci.yml`).
 

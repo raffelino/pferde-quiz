@@ -6,6 +6,7 @@
 
 import { getState, getCard, hasCard } from './store.js';
 import * as core from './core/srs-core.js';
+import * as stages from './core/stages.js';
 
 export const MAX_BOX = core.MAX_BOX;
 export const MAX_RETRIES = core.MAX_RETRIES;
@@ -64,4 +65,9 @@ export function recordAnswer(id, correct) {
 /** Fortschrittszahlen für eine Fragenmenge. */
 export function poolProgress(pool) {
   return core.poolProgress(pool, cardOf);
+}
+
+/** Stand der Ausbildungsstufen – aus denselben Karten gerechnet wie alles andere. */
+export function stageStatus(questions, current) {
+  return stages.stageStatus(questions, cardOf, current);
 }

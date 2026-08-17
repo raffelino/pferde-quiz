@@ -8,13 +8,14 @@
 
 import { transaction } from './db.js';
 import { newRound, normalizeRound, rebuildCard, MAX_BOX } from '../js/core/srs-core.js';
+import { DEFAULT_STAGE, stageStatus } from '../js/core/stages.js';
 
 export const MAX_EVENTS_PER_REQUEST = 500;
 const MAX_ID_LENGTH = 64;
 
 export const DEFAULT_SETTINGS = {
-  cats: null, levels: null, srs: true, hardOnly: false,
-  shuffle: true, session: 'endless', prio: {}
+  cats: null, levels: null, stage: DEFAULT_STAGE, stageSeen: null,
+  srs: true, hardOnly: false, shuffle: true, session: 'endless', prio: {}
 };
 
 const DEFAULT_TOTALS = { right: 0, wrong: 0, total: 0, timeMs: 0 };
@@ -333,7 +334,20 @@ export function buildStats(db, userId, questionsById = new Map()) {
     frage: questionsById.get(r.question_id)?.q || null
   }));
 
-  return { ...readState(db, userId), cardCount: Object.keys(cards).length, mastered, boxes, byCategory, perDay, hardest };
+  // Die Stufe wird hier genauso gerechnet wie im Browser – gleicher Kern,
+  // gleiche Karten, gleiches Ergebnis. Sie wird nirgends gespeichert, damit
+  // Server und Gerät nicht auseinanderlaufen können.
+  const state = readState(db, userId);
+  const questions = [...questionsById.values()];
+  const stages = questions.length
+    ? stageStatus(questions, id => cards[id] || null, state.settings?.stage || DEFAULT_STAGE)
+    : null;
+
+  return {
+    ...state,
+    cardCount: Object.keys(cards).length,
+    mastered, boxes, byCategory, perDay, hardest, stages
+  };
 }
 
 export function deleteUser(db, userId) {

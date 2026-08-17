@@ -38,6 +38,19 @@
     <div class="progress-summary" id="global-progress"></div>
   </section>
 
+  <section class="card promo-card" id="promo-card" hidden aria-live="polite"></section>
+
+  <section class="card" id="stage-card">
+    <div class="card-head">
+      <h2>Deine Stufe</h2>
+      <span class="stage-badge" id="stage-badge" hidden></span>
+    </div>
+    <p class="muted small">Wähle, wo du stehst. Sitzen genug Fragen deiner Stufe,
+      steigst du auf und die nächste wird dir vorgeschlagen.</p>
+    <ul class="stage-list" id="stage-list"></ul>
+    <p class="muted small" id="stage-note" hidden></p>
+  </section>
+
   <section class="card account-card" id="account-card" hidden>
     <div class="card-head">
       <h2>Konto</h2>
@@ -173,6 +186,8 @@
       <div><span class="bs-val" id="r-learned">0</span><span class="bs-lbl">neu gelernt</span></div>
     </div>
   </section>
+
+  <section class="card promo-card" id="res-stage-card" hidden aria-live="polite"></section>
 
   <section class="card" id="res-learned-card" hidden>
     <h2>Neu gelernt 🎉</h2>

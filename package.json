@@ -15,7 +15,8 @@
     "test:unit": "node --experimental-sqlite --test test/*.test.js server/test/*.test.js",
     "test:sim": "node tools/round-sim.mjs && node tools/srs-sim.mjs && node tools/round-stress.mjs 3",
     "test:e2e": "node tools/e2e.mjs",
-    "build": "node tools/build-single-file.mjs"
+    "build": "node tools/build-single-file.mjs",
+    "test:ui": "node tools/smoke-test.mjs && node tools/stage-ui.mjs"
   },
   "license": "Apache-2.0"
 }

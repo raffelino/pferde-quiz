@@ -6,9 +6,10 @@ import { CATEGORIES, LEVELS, CAT_BY_ID, LEVEL_BY_ID } from './data/categories.js
 import { $, el, formatTime } from './util.js';
 import { loadState, save, saveNow, resetProgress } from './store.js';
 import {
-  recordAnswer, poolProgress, isHard, isMastered, MAX_BOX,
+  recordAnswer, poolProgress, isHard, isMastered, MAX_BOX, stageStatus,
   pickInRound, queueRetry, clearRetry, roundProgress, newRound, normalizeRound
 } from './srs.js';
+import { STAGES, STAGE_BY_ID, normalizeStage, stageLevels } from './core/stages.js';
 import { createAnswerUI, TYPE_HINTS } from './types.js';
 import { APP_VERSION } from './version.js';
 import * as sync from './sync.js';
@@ -130,7 +131,9 @@ function activeCats() {
 
 function activeLevels() {
   const set = state.settings.levels;
-  return set === null ? LEVELS.map(l => l.id) : set;
+  // Ohne eigene Auswahl gibt die Stufe den Umfang vor – sonst wäre "Einsteiger"
+  // nur eine Beschriftung und man bekäme trotzdem alle Profi-Fragen.
+  return set === null ? stageLevels(currentStage()) : set;
 }
 
 function basePool() {
@@ -147,6 +150,161 @@ function buildPool() {
     else toast('Noch keine schwierigen Fragen – es werden alle abgefragt.');
   }
   return pool;
+}
+
+/* ---------------------------------------------------- Ausbildungsstufe */
+
+function currentStage() {
+  return normalizeStage(state.settings.stage);
+}
+
+/** Stimmt die Schwierigkeitsauswahl noch mit der Stufe überein? */
+function levelsMatchStage(id) {
+  const soll = stageLevels(id);
+  const ist = activeLevels();
+  return soll.length === ist.length && soll.every(l => ist.includes(l));
+}
+
+/**
+ * Stufe wechseln. Die Stufe bestimmt, welche Schwierigkeiten abgefragt werden –
+ * sonst hätte man zwei Regler für dieselbe Sache, die sich widersprechen können.
+ */
+function setStage(id) {
+  const next = normalizeStage(id);
+  state.settings.stage = next;
+  state.settings.levels = stageLevels(next);
+  // Der Wechsel gilt als Kenntnisnahme: Der Aufstiegs-Hinweis der alten Stufe
+  // hat seine Arbeit getan.
+  state.settings.stageSeen = null;
+  save();
+  renderStart();
+}
+
+/**
+ * Aufstieg prüfen. Der Stand kommt immer frisch aus den Karten; gemerkt wird
+ * nur, ob der Hinweis schon gezeigt wurde. Fällt eine Stufe wieder unter die
+ * Schwelle (etwa nach dem Zurücksetzen), wird auch das wieder freigegeben.
+ */
+function checkPromotion({ announce = false } = {}) {
+  const status = stageStatus(QUESTIONS, currentStage());
+  const seen = state.settings.stageSeen;
+
+  if (seen && !status.byId[seen]?.done) {
+    state.settings.stageSeen = null;
+    save();
+  }
+
+  const frisch = status.promote && state.settings.stageSeen !== status.current;
+  if (frisch && announce) {
+    const naechste = STAGE_BY_ID[status.next];
+    toast(`🎉 ${STAGE_BY_ID[status.current].name} sitzt! Weiter mit ${naechste.name}?`);
+  }
+  return status;
+}
+
+function renderStages() {
+  const status = checkPromotion();
+  const aktuell = status.current;
+
+  const list = $('#stage-list');
+  list.textContent = '';
+  for (const stage of STAGES) {
+    const prog = status.byId[stage.id];
+    const aktiv = stage.id === aktuell;
+
+    const btn = el('button', {
+      type: 'button',
+      class: `stage-item${aktiv ? ' on' : ''}${prog.done ? ' done' : ''}`,
+      'aria-pressed': aktiv ? 'true' : 'false',
+      onclick: () => setStage(stage.id)
+    }, [
+      el('span', { class: 'stage-head' }, [
+        el('strong', { text: stage.name }),
+        el('span', { class: 'stage-hint', text: stage.hint }),
+        el('span', {
+          class: 'stage-state',
+          text: prog.done ? '✓ geschafft' : `${prog.pct} %`
+        })
+      ]),
+      el('small', { class: 'stage-blurb', text: stage.blurb }),
+      el('span', { class: 'stage-bar' }, [el('i', { style: `width:${prog.pct}%` })]),
+      el('small', {
+        class: 'stage-count',
+        text: prog.done
+          ? `${prog.mastered} von ${prog.total} Fragen sitzen`
+          : `${prog.mastered} von ${prog.total} sitzen · noch ${prog.missing} bis zum Aufstieg`
+      })
+    ]);
+    list.appendChild(el('li', {}, [btn]));
+  }
+
+  // Höchste geschaffte Stufe als Abzeichen
+  const badge = $('#stage-badge');
+  badge.hidden = !status.reached;
+  if (status.reached) badge.textContent = `🏅 ${STAGE_BY_ID[status.reached].name}`;
+
+  // Ehrlich bleiben, wenn die Schwierigkeitsfilter von der Stufe abweichen
+  const note = $('#stage-note');
+  const abweichend = !levelsMatchStage(aktuell);
+  note.hidden = !abweichend;
+  if (abweichend) {
+    note.textContent = 'Unter „Schwierigkeit" ist gerade eine eigene Auswahl aktiv – '
+      + 'trainiert wird diese, nicht der Umfang der Stufe.';
+  }
+
+  renderPromo(status);
+}
+
+function renderPromo(status) {
+  const card = $('#promo-card');
+  card.textContent = '';
+
+  const offen = status.promote && state.settings.stageSeen !== status.current;
+  const fertig = status.completed && state.settings.stageSeen !== 'fertig';
+  card.hidden = !offen && !fertig;
+  if (card.hidden) return;
+
+  if (fertig) {
+    card.appendChild(el('h2', { text: '🏆 Alle Stufen geschafft' }));
+    card.appendChild(el('p', {
+      class: 'muted',
+      text: `${status.byId.profi.mastered} von ${status.byId.profi.total} Fragen sitzen. `
+        + 'Bleib dran, damit es so bleibt – am besten mit „Nur schwierige Fragen".'
+    }));
+    card.appendChild(el('div', { class: 'promo-actions' }, [
+      el('button', {
+        type: 'button', class: 'btn', text: 'Alles klar',
+        onclick: () => { state.settings.stageSeen = 'fertig'; save(); renderStart(); }
+      })
+    ]));
+    return;
+  }
+
+  const jetzt = STAGE_BY_ID[status.current];
+  const naechste = STAGE_BY_ID[status.next];
+  const prog = status.byId[status.current];
+  const dazu = status.byId[status.next].total - prog.total;
+
+  card.appendChild(el('h2', { text: `🎉 ${jetzt.name} sitzt!` }));
+  card.appendChild(el('p', {
+    class: 'muted',
+    text: `${prog.mastered} von ${prog.total} Fragen liegen im letzten Fach. `
+      + `Zeit für ${naechste.name} – das sind ${dazu} neue Fragen: ${naechste.blurb}`
+  }));
+  card.appendChild(el('div', { class: 'promo-actions' }, [
+    el('button', {
+      type: 'button', class: 'btn primary', text: `Auf ${naechste.name} wechseln`,
+      onclick: () => { setStage(status.next); toast(`Neue Stufe: ${naechste.name}`); }
+    }),
+    el('button', {
+      type: 'button', class: 'btn', text: 'Später',
+      onclick: () => {
+        state.settings.stageSeen = status.current;
+        save();
+        renderStart();
+      }
+    })
+  ]));
 }
 
 /* ------------------------------------------------------- Startbildschirm */
@@ -267,6 +425,7 @@ function renderStart() {
   ].forEach(t => summary.appendChild(el('span', { class: 'pill', text: t })));
 
   $('#app-version').textContent = `Version ${APP_VERSION}`;
+  renderStages();
   renderAccount();
   updatePoolInfo();
 }
@@ -498,6 +657,9 @@ function checkAnswer() {
     ms: session.questionShownAt ? Date.now() - session.questionShownAt : null
   });
   if (move.mastered && !session.learnedIds.includes(q.id)) session.learnedIds.push(q.id);
+  // Ein Aufstieg kann nur entstehen, wenn gerade eine Frage ins letzte Fach
+  // gerutscht ist – sonst muss auch nichts nachgerechnet werden.
+  if (move.mastered) checkPromotion({ announce: true });
 
   session.ui.reveal(correct);
 
@@ -583,6 +745,45 @@ function renderResult(reason) {
 
   fillResultList('#res-learned-card', '#res-learned-list', session.learnedIds, '🎉');
   fillResultList('#res-wrong-card', '#res-wrong-list', session.wrongIds, '✗');
+  renderStageResult();
+}
+
+/** Stand der Stufe in der Auswertung – dort schaut man ohnehin hin. */
+function renderStageResult() {
+  const status = stageStatus(QUESTIONS, currentStage());
+  const prog = status.byId[status.current];
+  const card = $('#res-stage-card');
+  card.textContent = '';
+  card.hidden = false;
+
+  if (status.completed) {
+    card.appendChild(el('h2', { text: '🏆 Alle Stufen geschafft' }));
+    card.appendChild(el('p', { class: 'muted', text: 'Der komplette Fragenpool sitzt. Respekt.' }));
+    return;
+  }
+
+  if (status.promote) {
+    const naechste = STAGE_BY_ID[status.next];
+    card.appendChild(el('h2', { text: `🎉 ${STAGE_BY_ID[status.current].name} geschafft` }));
+    card.appendChild(el('p', {
+      class: 'muted',
+      text: `${prog.mastered} von ${prog.total} Fragen sitzen. Empfohlen: weiter mit ${naechste.name} (${naechste.hint}).`
+    }));
+    card.appendChild(el('div', { class: 'promo-actions' }, [
+      el('button', {
+        type: 'button', class: 'btn primary', text: `Auf ${naechste.name} wechseln`,
+        onclick: () => { setStage(status.next); showScreen('start'); toast(`Neue Stufe: ${naechste.name}`); }
+      })
+    ]));
+    return;
+  }
+
+  card.appendChild(el('h2', { text: `Stufe ${STAGE_BY_ID[status.current].name}` }));
+  card.appendChild(el('p', {
+    class: 'muted',
+    text: `${prog.mastered} von ${prog.total} Fragen sitzen – noch ${prog.missing} bis zum Aufstieg.`
+  }));
+  card.appendChild(el('span', { class: 'stage-bar' }, [el('i', { style: `width:${prog.pct}%` })]));
 }
 
 function fillResultList(cardSel, listSel, ids, mark) {

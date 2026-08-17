@@ -236,6 +236,44 @@ describe('Auswertung und Löschung', () => {
     db.close();
   });
 
+  test('rechnet den Stufenstand mit – aus den Karten, nicht aus dem Gespeicherten', () => {
+    const { db, userId } = setup();
+    const stats = buildStats(db, userId, QUESTIONS_BY_ID);
+
+    assert.ok(stats.stages, 'die Auswertung soll die Stufen enthalten');
+    assert.equal(stats.stages.current, 'einsteiger', 'ohne Angabe gilt die erste Stufe');
+    assert.equal(stats.stages.reached, null, 'ohne Antworten ist nichts geschafft');
+    assert.equal(stats.stages.progress.length, 3);
+    assert.ok(stats.stages.byId.einsteiger.total > 0);
+    assert.equal(stats.stages.byId.einsteiger.mastered, 0);
+    db.close();
+  });
+
+  test('folgt bei der Stufe der Einstellung des Nutzers', () => {
+    const { db, userId } = setup();
+    writeState(db, userId, { settings: { stage: 'profi' }, revision: readState(db, userId).revision });
+    assert.equal(buildStats(db, userId, QUESTIONS_BY_ID).stages.current, 'profi');
+
+    // Unsinn vom Client darf die Auswertung nicht kippen
+    writeState(db, userId, { settings: { stage: 'reitmeister' }, revision: readState(db, userId).revision });
+    assert.equal(buildStats(db, userId, QUESTIONS_BY_ID).stages.current, 'einsteiger');
+    db.close();
+  });
+
+  test('zählt eine gelernte Frage in der Stufe mit', () => {
+    const { db, userId } = setup();
+    const basisFrage = [...QUESTIONS_BY_ID.values()].find(q => q.level === 'basis');
+    const t = Date.now();
+    // Vier richtige Antworten schieben die Karte ins letzte Fach
+    applyAnswers(db, userId, [0, 1, 2, 3].map(i =>
+      answerEvent(basisFrage.id, true, { answeredAt: t + i })));
+
+    const stats = buildStats(db, userId, QUESTIONS_BY_ID);
+    assert.equal(stats.stages.byId.einsteiger.mastered, 1);
+    assert.equal(stats.stages.byId.profi.mastered, 1, 'Profi schliesst die Basis mit ein');
+    db.close();
+  });
+
   test('löscht mit dem Konto alle Daten', () => {
     const { db, userId } = setup();
     applyAnswers(db, userId, [answerEvent(FRAGE_A, true)]);

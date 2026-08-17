@@ -2,7 +2,7 @@
 // Service Worker: App offline verfügbar machen.
 // Bei jeder inhaltlichen Änderung CACHE_VERSION erhöhen.
 
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = `reitabzeichen-trainer-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -16,6 +16,7 @@ const ASSETS = [
   'js/api.js',
   'js/sync.js',
   'js/core/srs-core.js',
+  'js/core/stages.js',
   'js/util.js',
   'js/store.js',
   'js/srs.js',
