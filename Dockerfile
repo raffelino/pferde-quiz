@@ -10,7 +10,7 @@ COPY server ./server
 COPY js ./js
 COPY css ./css
 COPY icons ./icons
-COPY index.html manifest.webmanifest sw.js ./
+COPY index.html datenschutz.html impressum.html manifest.webmanifest sw.js ./
 
 # Datenbank liegt auf einem beständigen Volume
 ENV DB_PATH=/data/trainer.db
