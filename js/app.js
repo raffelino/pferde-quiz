@@ -436,15 +436,22 @@ function renderAccount() {
   const card = $('#account-card');
   const info = sync.status();
 
-  // Ohne erreichbares Backend bleibt die App rein lokal – dann keine Karte.
-  if (!info.configured || (!info.googleClientId && !info.testLogin && !info.loggedIn)) {
+  // Ohne Backend bleibt die App rein lokal – dann keine Karte. Ist der Server
+  // dagegen bloß nicht erreichbar, wird das gesagt: Eine stumm verschwundene
+  // Anmeldung sieht für den Nutzer aus wie eine App, die gar keine hat.
+  const unreachable = info.probeState === 'failed' && !info.loggedIn;
+  if (!info.configured
+      || (!unreachable && !info.googleClientId && !info.testLogin && !info.loggedIn)) {
     card.hidden = true;
     return;
   }
   card.hidden = false;
 
   const badge = $('#sync-badge');
-  if (!info.loggedIn) {
+  if (unreachable) {
+    badge.textContent = 'Server nicht erreichbar';
+    badge.className = 'sync-badge bad';
+  } else if (!info.loggedIn) {
     badge.textContent = 'nur auf diesem Gerät';
     badge.className = 'sync-badge';
   } else if (info.lastError) {
@@ -460,6 +467,20 @@ function renderAccount() {
 
   const body = $('#account-body');
   body.textContent = '';
+
+  if (unreachable) {
+    body.appendChild(el('p', {
+      class: 'muted small',
+      text: 'Der Server antwortet gerade nicht, die Anmeldung ist deshalb nicht '
+          + 'verfügbar. Gelernt wird weiter – dein Stand bleibt auf diesem Gerät '
+          + 'und wird später abgeglichen.'
+    }));
+    body.appendChild(el('button', {
+      class: 'btn', text: 'Erneut versuchen',
+      onclick: async () => { await sync.probeServer(); renderStart(); }
+    }));
+    return;
+  }
 
   if (!info.loggedIn) {
     body.appendChild(el('p', {

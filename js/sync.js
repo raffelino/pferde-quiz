@@ -12,6 +12,7 @@ const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const MAX_OUTBOX = 2000;
 
 let serverConfig = null;      // { googleClientId, testLogin } oder null
+let probeState = 'pending';   // 'pending' | 'ok' | 'failed' – siehe probeServer()
 let syncing = false;
 let syncTimer = null;
 // Zuletzt erfolgreich gesicherte Einstellungen. Ohne das würde eine reine
@@ -44,7 +45,8 @@ export function status() {
     lastSyncAt: account.lastSyncAt || 0,
     lastError: account.lastError || null,
     googleClientId: serverConfig?.googleClientId || null,
-    testLogin: !!serverConfig?.testLogin
+    testLogin: !!serverConfig?.testLogin,
+    probeState
   };
 }
 
@@ -55,16 +57,44 @@ function setAccount(patch) {
   emit();
 }
 
-/** Fragt beim Server nach, ob und wie angemeldet werden kann. */
+// Anläufe für probeServer: Zeitlimit je Versuch, Pause davor.
+const PROBE_ATTEMPTS = [
+  { timeoutMs: 8000,  waitBefore: 0 },
+  { timeoutMs: 8000,  waitBefore: 1000 },
+  { timeoutMs: 12_000, waitBefore: 3000 }
+];
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Fragt beim Server nach, ob und wie angemeldet werden kann.
+ *
+ * Mehrere Anläufe, weil ein einziger Fehlversuch sonst die Anmeldung für die
+ * ganze Sitzung abschaltet. Das trifft ausgerechnet den ersten Besucher nach
+ * einer Ruhephase: Läuft die App mit `auto_stop_machines` (siehe fly.toml),
+ * startet die Maschine für ihn kalt, der Aufruf braucht länger – und ohne
+ * zweiten Versuch verschwände die Konto-Karte wortlos.
+ *
+ * Bleibt der Server auch dann stumm, wird das über `probeState` gemeldet.
+ * Die Anzeige sagt es dann, statt die Anmeldung einfach auszublenden: Ein
+ * unerreichbarer Server und ein Server ganz ohne Anmeldung sehen sonst für
+ * den Nutzer identisch aus.
+ */
 export async function probeServer() {
   if (!isConfigured()) return null;
-  try {
-    serverConfig = await apiFetch('/api/config', { timeoutMs: 4000 });
-  } catch {
-    serverConfig = null;      // kein erreichbares Backend – App bleibt lokal
+  for (const attempt of PROBE_ATTEMPTS) {
+    if (attempt.waitBefore) await sleep(attempt.waitBefore);
+    try {
+      serverConfig = await apiFetch('/api/config', { timeoutMs: attempt.timeoutMs });
+      probeState = 'ok';
+      emit();
+      return serverConfig;
+    } catch { /* nächster Anlauf */ }
   }
+  serverConfig = null;
+  probeState = 'failed';
   emit();
-  return serverConfig;
+  return null;
 }
 
 /* ------------------------------------------------------------- Outbox */

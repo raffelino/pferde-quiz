@@ -1,6 +1,6 @@
 # Beispielkonfiguration für fly.io. Andere Anbieter brauchen nur das Dockerfile
 # und ein beständiges Verzeichnis für die SQLite-Datei.
-app = "reitabzeichen-trainer"
+app = "pferde-quiz"
 primary_region = "fra"
 
 [build]
