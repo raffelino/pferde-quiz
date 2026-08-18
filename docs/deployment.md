@@ -63,6 +63,12 @@ kein `npm install` – es gibt keine Laufzeit-Abhängigkeiten.
 Das Anlegen der App passiert einmalig auf dem eigenen Rechner – ein
 Deploy-Token darf zwar ausliefern, aber keine App und kein Volume anlegen.
 
+**Reihenfolge beachten:** Der App-Name legt die Adresse fest
+(`https://<app-name>.fly.dev`), und genau die braucht Google als autorisierten
+JavaScript-Ursprung. Also zuerst den Namen wählen, dann den OAuth-Client damit
+anlegen (Schritt 1 oben), dann ausliefern. Wer erst deployt und den Namen
+später ändert, darf beim OAuth-Client nachbessern.
+
 ```bash
 # 1. App anlegen. Der Name ist weltweit eindeutig; ist er vergeben, einen
 #    anderen wählen und in fly.toml eintragen.
