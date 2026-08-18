@@ -2,7 +2,7 @@
 // Service Worker: App offline verfügbar machen.
 // Bei jeder inhaltlichen Änderung CACHE_VERSION erhöhen.
 
-const CACHE_VERSION = 'v15';
+const CACHE_VERSION = 'v18';
 const CACHE_NAME = `reitabzeichen-trainer-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -34,10 +34,21 @@ const ASSETS = [
   'js/data/q-ausbildung.js'
 ];
 
+// Beim Vorrätiglegen am Browser-Cache vorbei ("reload").
+//
+// Ohne das holt cache.addAll() die Dateien aus dem HTTP-Cache – und der ist
+// nach server/static.js fünf Minuten gültig. Direkt nach einer Auslieferung
+// legte der neue Service Worker deshalb die *alten* Dateien unter seinem
+// neuen Cache-Namen ab und blieb dauerhaft darauf sitzen. Nachgemessen:
+// Cache "…-v17" enthielt v16, während das Netz v17 lieferte.
+const frisch = url => new Request(url, { cache: 'reload' });
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS.map(p => new URL(p, self.registration.scope).toString())))
+      .then(cache => cache.addAll(
+        ASSETS.map(p => frisch(new URL(p, self.registration.scope).toString()))
+      ))
       .then(() => self.skipWaiting())
   );
 });
@@ -74,18 +85,25 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Assets: erst Netz, dann Cache. Die App ist klein (rund 200 KB), dafür
-  // startet sie nach einem Update garantiert mit dem neuen Code. Ohne Netz
-  // kommt weiterhin alles aus dem Cache.
+  // Assets: erst der eigene Cache, dann Netz.
+  //
+  // Vorher stand hier "erst Netz" mit der Begründung, so starte die App nach
+  // einem Update garantiert mit neuem Code. Das galt aber nicht: `fetch` geht
+  // durch den HTTP-Cache, und der liefert nach server/static.js fünf Minuten
+  // lang die alte Datei – die dann auch noch im neuen Cache landete.
+  //
+  // Jetzt gilt: Der Cache trägt die Version im Namen und wird beim Installieren
+  // am HTTP-Cache vorbei gefüllt. Was drinsteht, gehört also zwingend zu dieser
+  // Fassung. Neue Versionen kommen über den Service-Worker-Ablauf herein
+  // (sw.js selbst wird mit no-cache ausgeliefert), nicht über einzelne Dateien.
+  // Deshalb muss bei jeder inhaltlichen Änderung CACHE_VERSION hoch – siehe oben.
   event.respondWith(
-    fetch(req)
-      .then(res => {
-        if (res && res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(req, copy));
-        }
-        return res;
-      })
-      .catch(() => caches.match(req))
+    caches.match(req).then(hit => hit || fetch(req).then(res => {
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, copy));
+      }
+      return res;
+    }))
   );
 });

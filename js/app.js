@@ -1036,4 +1036,27 @@ if ('serviceWorker' in navigator && !isSingleFile) {
       toast('Neue Version geladen – wird beim nächsten Start aktiv.');
     }
   });
+
+  // Von sich aus sucht der Browser nur beim Laden der Seite nach einer neuen
+  // sw.js – danach erst wieder nach rund einem Tag. Eine als PWA installierte
+  // App bleibt aber gern wochenlang offen und liefe bis dahin mit altem Code.
+  // Also selbst nachfragen: wenn die App wieder sichtbar wird und stündlich.
+  // Findet sich etwas, übernimmt der Weg oben (skipWaiting -> claim ->
+  // controllerchange) und die App lädt sich selbst neu.
+  const UPDATE_ABSTAND = 5 * 60 * 1000;   // nicht öfter als alle 5 Minuten fragen
+  let zuletztGeprueft = 0;
+
+  const nachUpdateSehen = () => {
+    const jetzt = Date.now();
+    if (jetzt - zuletztGeprueft < UPDATE_ABSTAND) return;
+    zuletztGeprueft = jetzt;
+    navigator.serviceWorker.getRegistration()
+      .then(reg => reg?.update())
+      .catch(() => { /* offline oder keine Registrierung – beim nächsten Mal */ });
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) nachUpdateSehen();
+  });
+  setInterval(nachUpdateSehen, 60 * 60 * 1000);
 }

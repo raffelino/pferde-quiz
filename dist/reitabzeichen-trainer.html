@@ -5408,7 +5408,7 @@ function matchUI(q, { onChange } = {}) {
 }
 
 // js/version.js
-var APP_VERSION = "v15";
+var APP_VERSION = "v18";
 
 // js/api.js
 var OVERRIDE_KEY = "reitabzeichen-trainer.api";
@@ -6649,6 +6649,19 @@ if ("serviceWorker" in navigator && !isSingleFile) {
       toast("Neue Version geladen \u2013 wird beim n\xE4chsten Start aktiv.");
     }
   });
+  const UPDATE_ABSTAND = 5 * 60 * 1e3;
+  let zuletztGeprueft = 0;
+  const nachUpdateSehen = () => {
+    const jetzt = Date.now();
+    if (jetzt - zuletztGeprueft < UPDATE_ABSTAND) return;
+    zuletztGeprueft = jetzt;
+    navigator.serviceWorker.getRegistration().then((reg) => reg?.update()).catch(() => {
+    });
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) nachUpdateSehen();
+  });
+  setInterval(nachUpdateSehen, 60 * 60 * 1e3);
 }
 
 </script>
