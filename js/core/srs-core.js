@@ -278,6 +278,38 @@ export function roundProgress(pool, round) {
   return { pass: round.pass, seen, total: pool.length, retry: round.retry.length };
 }
 
+/**
+ * Übungssatz für den Modus „Nur schwierige Fragen“.
+ *
+ * Schwierig ist nur, was schon einmal beantwortet wurde – eine nie gesehene
+ * Frage hat keine Karte und fällt durch `isHardCard`. Wer wenig geübt hat, hat
+ * deshalb kaum schwierige Fragen, und ein 20er-Block müsste dieselben drei
+ * Fragen sieben Mal stellen, um voll zu werden.
+ *
+ * Darum wird auf `wanted` aufgefüllt, und zwar mit Fragen, die noch nicht
+ * sitzen – bevorzugt also neue statt bereits beherrschter. Sitzt am Ende
+ * wirklich alles, kommt die ganze Menge zurück: lieber Wiederholung als eine
+ * leere Sitzung.
+ *
+ * @param {Array<{id: string}>} pool   Fragen der aktuellen Auswahl
+ * @param {(id: string) => object|null} getCard
+ * @param {number} wanted              gewünschter Umfang
+ * @returns {{set: Array, hard: number, filled: number}}
+ */
+export function practiceSet(pool, getCard, wanted) {
+  const hard = pool.filter(q => isHardCard(getCard(q.id)));
+  if (hard.length >= wanted) return { set: hard, hard: hard.length, filled: 0 };
+
+  const offen = pool.filter(q => {
+    const card = getCard(q.id);
+    return !isHardCard(card) && !isMasteredCard(card);
+  });
+
+  let set = hard.concat(offen.slice(0, wanted - hard.length));
+  if (!set.length) set = pool.slice();
+  return { set, hard: hard.length, filled: set.length - hard.length };
+}
+
 /** Fortschrittszahlen für eine Fragenmenge. */
 export function poolProgress(pool, getCard) {
   let mastered = 0, seen = 0, hard = 0;

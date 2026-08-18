@@ -4652,6 +4652,17 @@ function roundProgress(pool, round) {
   const seen2 = round.asked.filter((id) => ids.has(id)).length;
   return { pass: round.pass, seen: seen2, total: pool.length, retry: round.retry.length };
 }
+function practiceSet(pool, getCard2, wanted) {
+  const hard = pool.filter((q) => isHardCard(getCard2(q.id)));
+  if (hard.length >= wanted) return { set: hard, hard: hard.length, filled: 0 };
+  const offen = pool.filter((q) => {
+    const card = getCard2(q.id);
+    return !isHardCard(card) && !isMasteredCard(card);
+  });
+  let set = hard.concat(offen.slice(0, wanted - hard.length));
+  if (!set.length) set = pool.slice();
+  return { set, hard: hard.length, filled: set.length - hard.length };
+}
 function poolProgress(pool, getCard2) {
   let mastered = 0, seen2 = 0, hard = 0;
   const boxes = [0, 0, 0, 0, 0];
@@ -4890,6 +4901,9 @@ function recordAnswer(id, correct) {
   if (correct) state3.totals.right++;
   else state3.totals.wrong++;
   return move;
+}
+function practiceSet2(pool, wanted) {
+  return practiceSet(pool, cardOf, wanted);
 }
 function poolProgress2(pool) {
   return poolProgress(pool, cardOf);
@@ -5394,7 +5408,7 @@ function matchUI(q, { onChange } = {}) {
 }
 
 // js/version.js
-var APP_VERSION = "v14";
+var APP_VERSION = "v15";
 
 // js/api.js
 var OVERRIDE_KEY = "reitabzeichen-trainer.api";
@@ -5855,14 +5869,23 @@ function basePool() {
   const levels = new Set(activeLevels());
   return QUESTIONS.filter((q) => cats.has(q.cat) && levels.has(q.level));
 }
+var MIN_UEBUNGSSATZ = 20;
+function wunschUmfang() {
+  const mode = SESSION_BY_ID[state2.settings.session] || SESSION_MODES[0];
+  return mode.kind === "count" ? mode.value : MIN_UEBUNGSSATZ;
+}
+function uebungssatz() {
+  const base = basePool();
+  if (!state2.settings.hardOnly) return { set: base, hard: base.length, filled: 0 };
+  return practiceSet2(base, wunschUmfang());
+}
 function buildPool() {
-  let pool = basePool();
-  if (state2.settings.hardOnly) {
-    const hard = pool.filter((q) => isHard(q.id));
-    if (hard.length >= 1) pool = hard;
-    else toast("Noch keine schwierigen Fragen \u2013 es werden alle abgefragt.");
-  }
-  return pool;
+  const base = basePool();
+  if (!state2.settings.hardOnly) return base;
+  const { set, hard, filled } = practiceSet2(base, wunschUmfang());
+  if (!hard) toast("Noch keine schwierigen Fragen \u2013 es wird mit neuen ge\xFCbt.");
+  else if (filled) toast(`Nur ${hard} schwierige Fragen \u2013 mit ${filled} weiteren aufgef\xFCllt.`);
+  return set;
 }
 function currentStage() {
   return normalizeStage(state2.settings.stage);
@@ -6243,7 +6266,12 @@ function updatePoolInfo() {
     return;
   }
   $("#btn-start").disabled = false;
-  info.textContent = `${base.length} Fragen ausgew\xE4hlt \xB7 ${prog.mastered} sitzen \xB7 ${prog.hard} zu wiederholen`;
+  if (state2.settings.hardOnly) {
+    const { set, hard, filled } = uebungssatz();
+    info.textContent = filled ? `${set.length} Fragen im \xDCbungssatz \xB7 ${hard} schwierige, ${filled} aufgef\xFCllt` : `${set.length} schwierige Fragen \xB7 von ${base.length} ausgew\xE4hlten`;
+  } else {
+    info.textContent = `${base.length} Fragen ausgew\xE4hlt \xB7 ${prog.mastered} sitzen \xB7 ${prog.hard} zu wiederholen`;
+  }
   const rp = roundProgress2(base, state2.round);
   const rest = Math.max(0, rp.total - rp.seen);
   $("#round-info").textContent = rest ? `Runde ${rp.pass}: ${rp.seen} von ${rp.total} Fragen gesehen \u2013 ${rest} noch offen.` : `Runde ${rp.pass} ist komplett \u2013 die n\xE4chste Runde startet automatisch.`;
@@ -6272,8 +6300,9 @@ function endSession(reason) {
 }
 function nextQuestion() {
   if (state2.settings.hardOnly) {
-    const refreshed = basePool().filter((q2) => isHard(q2.id));
-    if (refreshed.length) session.pool = refreshed;
+    const drin = new Set(session.pool.map((q2) => q2.id));
+    const dazu = basePool().filter((q2) => isHard(q2.id) && !drin.has(q2.id));
+    if (dazu.length) session.pool = session.pool.concat(dazu);
   }
   const pick = pickInRound2(session.pool, state2.round, {
     useSrs: state2.settings.srs,

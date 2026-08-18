@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 
 import {
   MAX_BOX, RETRY_MIN_GAP, applyAnswer, cardWeight, clearRetry, newCard, newRound,
-  normalizeCard, normalizeRound, pickInRound, queueRetry, rebuildCard, retryDelay
+  normalizeCard, normalizeRound, pickInRound, practiceSet, queueRetry, rebuildCard,
+  retryDelay, isHardCard
 } from '../js/core/srs-core.js';
 
 const pool = (n, cat = 'a') => Array.from({ length: n }, (_, i) => ({ id: `q${i}`, cat }));
@@ -253,5 +254,90 @@ describe('Runde', () => {
     assert.deepEqual(round.asked, []);
     assert.deepEqual(round.retry, [{ id: 'x', dueAt: 0 }, { id: 'alt', dueAt: 0 }]);
     assert.deepEqual(round.counts, {});
+  });
+});
+
+describe('Übungssatz „Nur schwierige Fragen"', () => {
+  // Karten so bauen, wie sie nach echten Antworten aussähen.
+  const karten = spec => {
+    const map = {};
+    for (const [id, art] of Object.entries(spec)) {
+      if (art === 'neu') continue;                       // keine Karte
+      if (art === 'falsch') map[id] = { box: 1, right: 0, wrong: 1, streak: 0, seenAt: 1 };
+      if (art === 'einmalRichtig') map[id] = { box: 2, right: 1, wrong: 0, streak: 1, seenAt: 1 };
+      if (art === 'laeuft') map[id] = { box: 3, right: 2, wrong: 0, streak: 2, seenAt: 1 };
+      if (art === 'sitzt') map[id] = { box: MAX_BOX, right: 5, wrong: 0, streak: 5, seenAt: 1 };
+    }
+    return id => map[id] || null;
+  };
+
+  test('nie beantwortete Fragen gelten nicht als schwierig', () => {
+    const getCard = karten({ q0: 'neu', q1: 'neu', q2: 'falsch' });
+    const { hard } = practiceSet(pool(3), getCard, 20);
+    assert.equal(hard, 1, 'nur die tatsächlich falsche zählt');
+  });
+
+  test('füllt einen zu kleinen Satz auf den gewünschten Umfang auf', () => {
+    // Genau die Lage der Testerin: kaum etwas beantwortet, 20er-Block.
+    const getCard = karten({ q0: 'falsch', q1: 'einmalRichtig' });
+    const { set, hard, filled } = practiceSet(pool(50), getCard, 20);
+    assert.equal(hard, 2);
+    assert.equal(set.length, 20, 'ein 20er-Block bekommt auch 20 Fragen');
+    assert.equal(filled, 18);
+  });
+
+  test('füllt mit noch nicht sitzenden Fragen auf, nicht mit beherrschten', () => {
+    const spec = { q0: 'falsch' };
+    for (let i = 1; i <= 10; i++) spec[`q${i}`] = 'sitzt';   // q1..q10 sitzen
+    const getCard = karten(spec);
+    const { set } = practiceSet(pool(20), getCard, 5);
+    const beherrscht = set.filter(q => getCard(q.id)?.box === MAX_BOX);
+    assert.equal(beherrscht.length, 0, 'beherrschte Fragen bleiben draußen');
+    assert.equal(set.length, 5);
+  });
+
+  test('lässt große schwierige Mengen unangetastet', () => {
+    const spec = {};
+    for (let i = 0; i < 30; i++) spec[`q${i}`] = 'falsch';
+    const { set, filled } = practiceSet(pool(50), karten(spec), 20);
+    assert.equal(set.length, 30, 'mehr als gewünscht wird nicht gekürzt');
+    assert.equal(filled, 0);
+  });
+
+  test('gibt lieber alles zurück als eine leere Sitzung', () => {
+    const spec = {};
+    for (let i = 0; i < 5; i++) spec[`q${i}`] = 'sitzt';
+    const { set } = practiceSet(pool(5), karten(spec), 20);
+    assert.equal(set.length, 5, 'sitzt alles, wird eben wiederholt');
+  });
+
+  test('eine Sitzung rastet nicht auf der ersten beantworteten Frage ein', () => {
+    // Regression: früher ersetzte nextQuestion() den Pool durch die schwierige
+    // Menge. Nach der ersten Antwort war das genau eine Frage – 20-mal dieselbe.
+    const alle = pool(50);
+    const cards = {};
+    const getCard = id => cards[id] || null;
+    let seq = 0;
+
+    let satz = practiceSet(alle, getCard, 20).set;      // buildPool()
+    const round = newRound();
+    const gesehen = new Set();
+    let last = null;
+
+    for (let i = 0; i < 20; i++) {
+      // nextQuestion(): ergänzen statt ersetzen
+      const drin = new Set(satz.map(q => q.id));
+      const dazu = alle.filter(q => isHardCard(getCard(q.id)) && !drin.has(q.id));
+      if (dazu.length) satz = satz.concat(dazu);
+
+      const { question } = pickInRound(satz, round, { lastId: last, getCard, seq });
+      assert.ok(question);
+      gesehen.add(question.id);
+      cards[question.id] = applyAnswer(getCard(question.id), i % 3 !== 0, ++seq).card;
+      last = question.id;
+    }
+
+    assert.ok(gesehen.size >= 15,
+      `20 Fragen sollen viele verschiedene sein, waren aber nur ${gesehen.size}`);
   });
 });

@@ -62,6 +62,11 @@ export function recordAnswer(id, correct) {
   return move;
 }
 
+/** Übungssatz für „Nur schwierige Fragen“, aufgefüllt auf `wanted`. */
+export function practiceSet(pool, wanted) {
+  return core.practiceSet(pool, cardOf, wanted);
+}
+
 /** Fortschrittszahlen für eine Fragenmenge. */
 export function poolProgress(pool) {
   return core.poolProgress(pool, cardOf);

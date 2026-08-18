@@ -7,7 +7,8 @@ import { $, el, formatTime } from './util.js';
 import { loadState, save, saveNow, resetProgress } from './store.js';
 import {
   recordAnswer, poolProgress, isHard, isMastered, MAX_BOX, stageStatus,
-  pickInRound, queueRetry, clearRetry, roundProgress, newRound, normalizeRound
+  pickInRound, queueRetry, clearRetry, roundProgress, newRound, normalizeRound,
+  practiceSet
 } from './srs.js';
 import { STAGES, STAGE_BY_ID, normalizeStage, stageLevels } from './core/stages.js';
 import { createAnswerUI, TYPE_HINTS } from './types.js';
@@ -142,14 +143,33 @@ function basePool() {
   return QUESTIONS.filter(q => cats.has(q.cat) && levels.has(q.level));
 }
 
+/**
+ * Gewünschter Umfang einer Sitzung. Bei Zeit- und Endlos-Modi gibt es keine
+ * feste Zahl – dann gilt eine Untergrenze, damit der Übungssatz auch dort
+ * nicht auf eine Handvoll Fragen zusammenfällt.
+ */
+const MIN_UEBUNGSSATZ = 20;
+
+function wunschUmfang() {
+  const mode = SESSION_BY_ID[state.settings.session] || SESSION_MODES[0];
+  return mode.kind === 'count' ? mode.value : MIN_UEBUNGSSATZ;
+}
+
+/** Übungssatz der aktuellen Auswahl – mit „Nur schwierige“ bereits angewandt. */
+function uebungssatz() {
+  const base = basePool();
+  if (!state.settings.hardOnly) return { set: base, hard: base.length, filled: 0 };
+  return practiceSet(base, wunschUmfang());
+}
+
 function buildPool() {
-  let pool = basePool();
-  if (state.settings.hardOnly) {
-    const hard = pool.filter(q => isHard(q.id));
-    if (hard.length >= 1) pool = hard;
-    else toast('Noch keine schwierigen Fragen – es werden alle abgefragt.');
-  }
-  return pool;
+  const base = basePool();
+  if (!state.settings.hardOnly) return base;
+
+  const { set, hard, filled } = practiceSet(base, wunschUmfang());
+  if (!hard) toast('Noch keine schwierigen Fragen – es wird mit neuen geübt.');
+  else if (filled) toast(`Nur ${hard} schwierige Fragen – mit ${filled} weiteren aufgefüllt.`);
+  return set;
 }
 
 /* ---------------------------------------------------- Ausbildungsstufe */
@@ -572,7 +592,17 @@ function updatePoolInfo() {
     return;
   }
   $('#btn-start').disabled = false;
-  info.textContent = `${base.length} Fragen ausgewählt · ${prog.mastered} sitzen · ${prog.hard} zu wiederholen`;
+
+  if (state.settings.hardOnly) {
+    // Zeigen, was der Filter wirklich übrig lässt – sonst verspricht die Zeile
+    // 73 Fragen und die Sitzung stellt drei.
+    const { set, hard, filled } = uebungssatz();
+    info.textContent = filled
+      ? `${set.length} Fragen im Übungssatz · ${hard} schwierige, ${filled} aufgefüllt`
+      : `${set.length} schwierige Fragen · von ${base.length} ausgewählten`;
+  } else {
+    info.textContent = `${base.length} Fragen ausgewählt · ${prog.mastered} sitzen · ${prog.hard} zu wiederholen`;
+  }
 
   const rp = roundProgress(base, state.round);
   const rest = Math.max(0, rp.total - rp.seen);
@@ -606,10 +636,18 @@ function endSession(reason) {
 }
 
 function nextQuestion() {
-  // Pool bei aktivem "Nur schwierige"-Modus laufend aktualisieren.
+  // Bei "Nur schwierige" neu hinzugekommene Fragen aufnehmen – aber nur
+  // ergänzen, nie ersetzen.
+  //
+  // Vorher wurde der Pool durch die schwierige Menge ersetzt. Da eine Frage
+  // ab der ersten Antwort schwierig ist (Fach 1 oder 2), schrumpfte er nach
+  // der ersten Frage auf genau diese eine zusammen und wuchs nie wieder: Wer
+  // ohne Vorgeschichte startete, bekam 20-mal dieselbe Frage – direkt nach
+  // der Meldung, es würden alle abgefragt.
   if (state.settings.hardOnly) {
-    const refreshed = basePool().filter(q => isHard(q.id));
-    if (refreshed.length) session.pool = refreshed;
+    const drin = new Set(session.pool.map(q => q.id));
+    const dazu = basePool().filter(q => isHard(q.id) && !drin.has(q.id));
+    if (dazu.length) session.pool = session.pool.concat(dazu);
   }
 
   const pick = pickInRound(session.pool, state.round, {
