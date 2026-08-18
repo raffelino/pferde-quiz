@@ -552,6 +552,8 @@ p:last-child { margin-bottom: 0; }
 .pool-info { text-align: center; color: var(--text-dim); font-size: .88rem; margin: 0; }
 .disclaimer { font-size: .74rem; color: var(--text-dim); text-align: center; margin: 6px 0 0; }
 .version { display: block; margin-top: 4px; opacity: .7; font-variant-numeric: tabular-nums; }
+.legal-links { display: block; margin-top: 6px; }
+.legal-links a { color: inherit; }
 
 .progress-summary {
   display: flex;
