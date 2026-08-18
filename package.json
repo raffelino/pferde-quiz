@@ -18,5 +18,8 @@
     "build": "node tools/build-single-file.mjs",
     "test:ui": "node tools/smoke-test.mjs && node tools/stage-ui.mjs && node tools/order-ui.mjs"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
 }
